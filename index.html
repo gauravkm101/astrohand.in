@@ -257,6 +257,43 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
   cursor:pointer;font-family:'Inter',sans-serif;transition:all .25s;}
 .gbtn:hover{box-shadow:0 0 28px var(--glow);}
 .gbtn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── Premium Lock Overlay (gates AI-personalized content) ── */
+.lock-wrap{position:relative;}
+.lock-blurred{filter:blur(7px);user-select:none;pointer-events:none;-webkit-mask-image:linear-gradient(to bottom,black 0%,black 30%,transparent 95%);mask-image:linear-gradient(to bottom,black 0%,black 30%,transparent 95%);}
+.lock-card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:24px 18px;z-index:5;}
+.lock-icon{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--g2c));display:flex;align-items:center;justify-content:center;font-size:1.25rem;box-shadow:0 8px 24px rgba(200,150,60,.35);}
+.lock-title{font-family:'Cinzel',serif;font-size:1.02rem;color:var(--g3);}
+.lock-sub{font-size:.78rem;color:var(--muted);max-width:340px;line-height:1.55;}
+.lock-btn{margin-top:4px;padding:11px 26px;background:linear-gradient(135deg,var(--gold),var(--g2c));border:none;border-radius:var(--r2);color:var(--ink);font-size:.84rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .25s;letter-spacing:.02em;}
+.lock-btn:hover{box-shadow:0 0 24px var(--glow);transform:translateY(-1px);}
+.lock-note{font-size:.66rem;color:var(--sub);margin-top:2px;}
+
+/* ── Inline upsell button (non-blur, e.g. for instant→personalized upgrade) ── */
+.upsell-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(200,150,60,.06);border:1px solid rgba(200,150,60,.18);border-radius:var(--r2);padding:13px 16px;margin-top:14px;flex-wrap:wrap;}
+.upsell-txt{font-size:.78rem;color:var(--muted);flex:1;min-width:200px;}
+.upsell-txt strong{color:var(--g2c);}
+.upsell-btn{padding:9px 18px;background:linear-gradient(135deg,var(--gold),var(--g2c));border:none;border-radius:100px;color:var(--ink);font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif;transition:all .2s;}
+.upsell-btn:hover{box-shadow:0 0 18px var(--glow);}
+
+/* ── Ad Interstitial (shown briefly when a tool modal opens) ── */
+.ad-interstitial{position:fixed;inset:0;background:rgba(4,3,15,.97);backdrop-filter:blur(10px);z-index:2500;display:none;align-items:center;justify-content:center;padding:16px;}
+.ad-interstitial.open{display:flex;}
+.ad-int-box{background:var(--card);border:1px solid rgba(200,150,60,.25);border-radius:20px;padding:18px;max-width:420px;width:100%;text-align:center;position:relative;}
+.ad-int-label{position:absolute;top:10px;left:14px;font-size:.6rem;letter-spacing:.1em;color:var(--sub);text-transform:uppercase;}
+.ad-int-close{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.06);border:none;color:var(--muted);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.ad-int-close:hover{background:rgba(255,255,255,.1);color:var(--text);}
+.ad-slot{background:rgba(255,255,255,.03);border:1px dashed var(--bdr2);border-radius:var(--r2);min-height:250px;display:flex;align-items:center;justify-content:center;margin-top:24px;color:var(--sub);font-size:.74rem;text-align:center;padding:14px;}
+.ad-int-cd{font-size:.7rem;color:var(--muted);margin-top:12px;}
+
+/* ── Small Ad Card (shown briefly after closing a tool modal) ── */
+.ad-card-popup{position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--surface);border:1px solid var(--bdr);border-radius:var(--r2);padding:10px;max-width:300px;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none;}
+.ad-card-popup.show{transform:translateY(0);opacity:1;pointer-events:auto;}
+.ad-card-popup .ad-int-label{position:static;display:block;margin-bottom:6px;}
+.ad-card-close{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.07);border:none;color:var(--muted);font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.ad-slot-sm{background:rgba(255,255,255,.03);border:1px dashed var(--bdr2);border-radius:var(--r);min-height:90px;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.68rem;text-align:center;padding:8px;}
+
+
 .rbox{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.18);border-radius:var(--r2);padding:22px;}
 .rtxt{font-family:'Cormorant Garamond',serif;font-size:1.04rem;line-height:1.86;color:var(--g3);white-space:pre-wrap;}
 
@@ -589,6 +626,15 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- ═══ GOOGLE ADSENSE ═══
+Once your AdSense account is approved, uncomment the line below and replace
+ca-pub-XXXXXXXXXXXXXXXX with your real Publisher ID (find it in your AdSense
+dashboard under Account > Settings > Account information).
+This single script enables ALL ad units on the page, including every
+.ad-slot and .ad-slot-sm placeholder inside the 9 tool modals.
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+-->
 </head>
 <body>
 
@@ -1167,6 +1213,32 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
   </div>
 </footer>
 
+<!-- ═══ AD INTERSTITIAL (shown briefly when any tool opens) ═══ -->
+<div class="ad-interstitial" id="adInterstitial">
+  <div class="ad-int-box">
+    <span class="ad-int-label">Advertisement</span>
+    <button class="ad-int-close" onclick="dismissAdInterstitial()">✕</button>
+    <div class="ad-slot" id="adInterstitialSlot">
+      <!-- AdSense unit goes here once approved. Example:
+      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      -->
+      Ad space — 300×250 or responsive unit
+    </div>
+    <div class="ad-int-cd" id="adInterstitialCd">Continuing in 5s…</div>
+  </div>
+</div>
+
+<!-- ═══ AD CARD (shown briefly after closing any tool) ═══ -->
+<div class="ad-card-popup" id="adClosePopup">
+  <button class="ad-card-close" onclick="document.getElementById('adClosePopup').classList.remove('show')">✕</button>
+  <span class="ad-int-label">Advertisement</span>
+  <div class="ad-slot-sm" id="adClosePopupSlot">
+    <!-- AdSense unit goes here once approved -->
+    Ad space — 300×100 unit
+  </div>
+</div>
+
 <!-- ═══ TOOL MODALS ═══ -->
 <!-- KUNDLI -->
 <div class="ov" id="mKundli" onclick="cov(event,'mKundli')">
@@ -1317,7 +1389,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
           </div>
         </div>
         <div id="kp-da" style="display:none;"><div style="background:rgba(255,255,255,.025);border:1px solid var(--bdr2);border-radius:var(--r2);padding:18px;"><div style="font-size:.64rem;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:11px;font-weight:600;">Vimshottari Mahadasha Timeline</div><div id="k-dasha"></div></div></div>
-        <div id="kp-pr" style="display:none;"><div class="rbox"><p class="rtxt" id="k-pred">Loading AI predictions…</p></div></div>
+        <div id="kp-pr" style="display:none;"><div class="lock-wrap"><div class="rbox" id="k-pred-wrap"><p class="rtxt" id="k-pred">Loading AI predictions…</p></div><div id="k-pred-lock" style="display:none;"></div></div></div>
       </div>
     </div>
   </div>
@@ -1418,7 +1490,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
           <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--g2c);margin-top:12px;" id="m-lbl">—</div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px;" id="m-gunas"></div>
-        <div class="rbox"><p class="rtxt" id="m-txt">—</p></div>
+        <div class="lock-wrap"><div class="rbox" id="m-txt-wrap"><p class="rtxt" id="m-txt">—</p></div><div id="m-txt-lock" style="display:none;"></div></div>
       </div>
     </div>
   </div>
@@ -1591,6 +1663,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
     <div id="rem-res" style="display:none;margin-top:16px;">
       <div id="rem-ldr" style="text-align:center;padding:16px;"><div class="lorb"></div><p style="color:var(--muted);font-size:.77rem;">Generating personalized Vedic remedies…</p></div>
       <div id="rem-grid-out" style="display:none;"></div>
+      <div id="rem-upsell" style="display:none;"></div>
     </div>
   </div>
 </div>
@@ -1730,6 +1803,30 @@ function setBtnLoading(id,isLoading,loadingText,normalText){
   }
 }
 
+/* ── Premium gating: free vs paid feature access ── */
+function isPaid(){
+  return !!(CU&&(CU.plan==='gold'||CU.plan==='vip'));
+}
+function upgradePrompt(){
+  if(!CU){router('login');toast('Sign in to unlock personalized AI readings.','');return;}
+  openPay('gold','Gold','₹499','/mo');
+}
+function lockCardHTML(title,sub){
+  return `<div class="lock-card">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">${title}</div>
+    <div class="lock-sub">${sub}</div>
+    <button class="lock-btn" onclick="upgradePrompt()">✦ Unlock with Gold ✦</button>
+    <div class="lock-note">Starting at ₹499/mo · Cancel anytime</div>
+  </div>`;
+}
+function inlineUpsellHTML(text,handler){
+  return `<div class="upsell-row">
+    <div class="upsell-txt">✦ <strong>Get AI-personalized remedies</strong> — ${text}</div>
+    <button class="upsell-btn" onclick="${handler||'upgradePrompt()'}">Unlock ✦</button>
+  </div>`;
+}
+
 /* ── Supabase client getter ── */
 function getSB(){
   if(_sb)return _sb;
@@ -1774,7 +1871,10 @@ function polPage(p){
   router('home');
   document.querySelectorAll('.pol-page').forEach(x=>x.classList.remove('on'));
   const el=document.getElementById('pol-'+p);
-  if(el){el.classList.add('on');window.scrollTo(0,0);}
+  if(el){
+    el.classList.add('on');
+    setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),50);
+  }
 }
 
 /* ── Nav header: toggles Sign In/Join vs Account widget ── */
@@ -1888,13 +1988,76 @@ function showSO(){
 ═══════════════════════════════════════════════════ */
 
 /* ── Tool modal open/close (mKundli, mAI, mHoro, mMatch, mNum, mPalm, mPanch, mGem, mRem) ── */
-function openTool(id){
-  const el=document.getElementById(id);
-  if(el){el.classList.add('open');document.body.style.overflow='hidden';}
+const AD_TOOL_IDS=['mKundli','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem'];
+let _adInterstitialTimer=null;
+
+function shouldShowAd(){
+  if(isPaid())return false; // paid users never see ads
+  const n=parseInt(sessionStorage.getItem('ah_ad_count')||'0',10)+1;
+  sessionStorage.setItem('ah_ad_count',n);
+  return (n%3)===1; // show on 1st, 4th, 7th... tool open per session
 }
+
+function openTool(id){
+  if(!AD_TOOL_IDS.includes(id)){
+    const el=document.getElementById(id);
+    if(el){el.classList.add('open');document.body.style.overflow='hidden';}
+    return;
+  }
+  if(shouldShowAd()){
+    showAdInterstitial(id);
+  }else{
+    const el=document.getElementById(id);
+    if(el){el.classList.add('open');document.body.style.overflow='hidden';}
+  }
+}
+
+function showAdInterstitial(toolId){
+  const intEl=document.getElementById('adInterstitial');
+  const cdEl=document.getElementById('adInterstitialCd');
+  intEl.dataset.pendingTool=toolId;
+  intEl.classList.add('open');
+  let secs=5;
+  cdEl.textContent='Continuing in '+secs+'s…';
+  clearInterval(_adInterstitialTimer);
+  _adInterstitialTimer=setInterval(()=>{
+    secs--;
+    if(secs<=0){
+      clearInterval(_adInterstitialTimer);
+      proceedAfterAdInterstitial();
+    }else{
+      cdEl.textContent='Continuing in '+secs+'s…';
+    }
+  },1000);
+}
+
+function proceedAfterAdInterstitial(){
+  clearInterval(_adInterstitialTimer);
+  const intEl=document.getElementById('adInterstitial');
+  const toolId=intEl.dataset.pendingTool;
+  intEl.classList.remove('open');
+  if(toolId){
+    const el=document.getElementById(toolId);
+    if(el){el.classList.add('open');document.body.style.overflow='hidden';}
+  }
+}
+function dismissAdInterstitial(){
+  proceedAfterAdInterstitial();
+}
+
 function closeOv(id){
   const el=document.getElementById(id);
   if(el){el.classList.remove('open');document.body.style.overflow='';}
+  if(AD_TOOL_IDS.includes(id)&&!isPaid()){
+    showAdClosePopup();
+  }
+}
+function showAdClosePopup(){
+  const el=document.getElementById('adClosePopup');
+  if(!el)return;
+  el.classList.add('show');
+  clearTimeout(el._hideTimer);
+  el._hideTimer=setTimeout(()=>{el.classList.remove('show');},6000);
 }
 function cov(ev,id){
   if(ev.target===document.getElementById(id))closeOv(id);
@@ -2567,11 +2730,20 @@ async function genKundli(){
   let stY=yr;document.getElementById('k-dasha').innerHTML=DASHA_P.map((p,i)=>{const s=stY,e=stY+DASHA_Y[i];stY=e;const active=new Date().getFullYear()>=s&&new Date().getFullYear()<e;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;${active?'color:var(--g2c);font-weight:600':''}"><span style="color:${active?'var(--g2c)':'var(--muted)'};">${p} Mahadasha${active?' ← Current':''}</span><span style="color:${active?'var(--g2c)':'var(--text)'};">${s}–${e} (${DASHA_Y[i]} yrs)</span></div>`;}).join('');
   const lang=v('kl')||'English',gender=v('kg')||'person',place=v('kp');
   const prompt=`You are AstroHand's master Vedic astrologer. Write a deeply personalized 360-word reading in ${lang} for ${n} (${gender}), born ${dt.toDateString()}${place?' in '+place:''}. Moon sign: ${RASHIS[ri]}, Lagna: ${RASHIS[li]}, Nakshatra: ${NAK[ni]}, Ruling planet: ${rp}, Gemstone: ${ln}. Cover: (1) Soul purpose from Lagna+Moon, (2) Karmic gifts from ${NAK[ni]} Nakshatra, (3) Current ${rp} dasha insights, (4) Love & marriage destiny, (5) Career & financial trajectory, (6) One specific remedy. Be mystical yet precise. End with: "These stars illuminate possibilities — your free will determines the journey."`;
-  try{
-    const txt=await callAI('You are AstroHand\'s master Vedic astrologer. Be mystical yet precise.',[{role:'user',content:prompt}],1000)||fallbackKundli(n,ri,li,ni,rp);
-    document.getElementById('k-pred').textContent=txt;
-    if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});
-  }catch{const txt=fallbackKundli(n,ri,li,ni,rp);document.getElementById('k-pred').textContent=txt;if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});}
+  const predWrap=document.getElementById('k-pred-wrap'),predLock=document.getElementById('k-pred-lock');
+  if(isPaid()){
+    predWrap.classList.remove('lock-blurred');predLock.style.display='none';
+    try{
+      const txt=await callAI('You are AstroHand\'s master Vedic astrologer. Be mystical yet precise.',[{role:'user',content:prompt}],1000)||fallbackKundli(n,ri,li,ni,rp);
+      document.getElementById('k-pred').textContent=txt;
+      if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});
+    }catch{const txt=fallbackKundli(n,ri,li,ni,rp);document.getElementById('k-pred').textContent=txt;if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});}
+  }else{
+    document.getElementById('k-pred').textContent=fallbackKundli(n,ri,li,ni,rp);
+    predWrap.classList.add('lock-blurred');
+    predLock.style.display='block';
+    predLock.innerHTML=lockCardHTML('Your Full Prediction is Ready','Unlock your complete 360-word personalized reading covering soul purpose, love & marriage destiny, career trajectory, and specific remedies — written just for your chart.');
+  }
   document.getElementById('k-ldr').style.display='none';document.getElementById('k-cnt').style.display='block';
   btn.disabled=false;btn.textContent='✨ Generate Free Kundli Now';
 }
@@ -2666,9 +2838,19 @@ async function doMatch(){
     document.getElementById('m-arc').style.strokeDashoffset=Math.round(327*(1-pct/100));
     const gs=[s1,s2,s1+s2,s1*2,s2*2,s1+s2*2,s1*2+s2,s1+s2+3];
     document.getElementById('m-gunas').innerHTML=GUNAS_L.map((g,i)=>{const sc=Math.min(GMAX[i],Math.round(GMAX[i]*.5+((gs[i]*(i+3))%GMAX[i])*.5));const col=sc>=Math.ceil(GMAX[i]*.6)?'var(--g2c)':'var(--rose)';return`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r);padding:11px;text-align:center;"><div style="font-size:.6rem;color:var(--muted);letter-spacing:.06em;margin-bottom:3px;">${g}</div><div style="font-family:'Cinzel',serif;font-size:.98rem;color:${col};">${sc}<span style="font-size:.6rem;color:var(--sub);">/${GMAX[i]}</span></div></div>`;}).join('');
-    const prompt=`Provide a warm 200-word Kundali compatibility reading for ${gn} (groom) and ${bn} (bride). Guna Milan score: ${score}/36 (${pct}%), classified: "${lbl}". Cover: (1) Overall verdict, (2) Strengths, (3) Areas needing attention + remedy, (4) Marriage timing, (5) One specific remedy. Be encouraging yet realistic. Close with: "Even challenging charts lead to beautiful unions with awareness, effort, and remedies."`;
-    try{const txt=await callAI('You are AstroHand\'s Vedic compatibility expert. Be encouraging yet realistic.',[{role:'user',content:prompt}],600);document.getElementById('m-txt').textContent=txt||`With ${score}/36 compatibility, this union shows ${lbl.toLowerCase()} potential.`;}
-    catch{document.getElementById('m-txt').textContent=`With a Guna Milan score of ${score}/36 (${pct}% compatibility), this union is classified as ${lbl}. The planetary energies suggest strong potential for a harmonious partnership. Even challenging charts lead to beautiful unions with awareness, effort, and remedies.`;}
+    const fallbackTxt=`With a Guna Milan score of ${score}/36 (${pct}% compatibility), this union is classified as ${lbl}. The planetary energies suggest strong potential for a harmonious partnership. Even challenging charts lead to beautiful unions with awareness, effort, and remedies.`;
+    const mWrap=document.getElementById('m-txt-wrap'),mLock=document.getElementById('m-txt-lock');
+    if(isPaid()){
+      mWrap.classList.remove('lock-blurred');mLock.style.display='none';
+      const prompt=`Provide a warm 200-word Kundali compatibility reading for ${gn} (groom) and ${bn} (bride). Guna Milan score: ${score}/36 (${pct}%), classified: "${lbl}". Cover: (1) Overall verdict, (2) Strengths, (3) Areas needing attention + remedy, (4) Marriage timing, (5) One specific remedy. Be encouraging yet realistic. Close with: "Even challenging charts lead to beautiful unions with awareness, effort, and remedies."`;
+      try{const txt=await callAI('You are AstroHand\'s Vedic compatibility expert. Be encouraging yet realistic.',[{role:'user',content:prompt}],600);document.getElementById('m-txt').textContent=txt||fallbackTxt;}
+      catch{document.getElementById('m-txt').textContent=fallbackTxt;}
+    }else{
+      document.getElementById('m-txt').textContent=fallbackTxt;
+      mWrap.classList.add('lock-blurred');
+      mLock.style.display='block';
+      mLock.innerHTML=lockCardHTML('Full Compatibility Reading Locked','Unlock the complete 200-word analysis covering strengths, areas needing attention, marriage timing, and a specific remedy for '+gn+' & '+bn+'.');
+    }
   },1800);
 }
 
@@ -2836,7 +3018,26 @@ function runRemedies(){
     outEl.innerHTML=html;ldrEl.style.display='none';outEl.style.display='grid';outEl.style.gridTemplateColumns='repeat(auto-fit,minmax(200px,1fr))';outEl.style.gap='12px';
   }
   showRems(fallback);
+  const upsellEl=document.getElementById('rem-upsell');
+  if(isPaid()){
+    upsellEl.style.display='none';
+    fetchPersonalizedRemedies(lagna,moon,nak,rp,dasha,manglik,c,showRems);
+  }else{
+    upsellEl.style.display='block';
+    upsellEl.innerHTML=inlineUpsellHTML('remedies tailored to your exact dosha, Mahadasha, and stated concern instead of general guidance.','unlockPersonalizedRemedies()');
+    window._remGateArgs={lagna,moon,nak,rp,dasha,manglik,c,showRems};
+  }
+}
+function fetchPersonalizedRemedies(lagna,moon,nak,rp,dasha,manglik,c,showRems){
   callAI('Reply ONLY with a JSON array. No markdown.',[{role:'user',content:'Lagna:'+lagna+' Moon:'+moon+' Nakshatra:'+nak+' Planet:'+rp+' Mahadasha:'+dasha+' Manglik:'+(manglik?'Yes':'No')+' Concern:'+(c||'general')+'. 6 remedy categories JSON:[{"icon":"emoji","title":"Name","remedies":["r1","r2","r3","r4"]}]'}],900).then(txt=>{try{const s=txt.indexOf('['),e=txt.lastIndexOf(']');if(s>=0&&e>s){const r=JSON.parse(txt.substring(s,e+1));if(r&&r.length>=4){showRems(r);toast('AI remedies ready!','ok');}}}catch(ex){}}).catch(()=>{});
+}
+function unlockPersonalizedRemedies(){
+  if(!isPaid()){upgradePrompt();return;}
+  const args=window._remGateArgs;
+  if(!args)return;
+  document.getElementById('rem-upsell').style.display='none';
+  toast('Generating your personalized remedies…','');
+  fetchPersonalizedRemedies(args.lagna,args.moon,args.nak,args.rp,args.dasha,args.manglik,args.c,args.showRems);
 }
 
 /* ══ PDF EXPORT ══ */
