@@ -2245,6 +2245,41 @@ function shareKundliWA(){
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
+
+/* ══ CORE MODAL FUNCTIONS ══ */
+function openTool(id){
+  const el=document.getElementById(id);
+  if(el){el.classList.add('open');document.body.style.overflow='hidden';}
+}
+function closeOv(id){
+  const el=document.getElementById(id);
+  if(el){el.classList.remove('open');document.body.style.overflow='';}
+}
+function cov(e,id){
+  if(e.target===document.getElementById(id))closeOv(id);
+}
+function closeMnav(){
+  const mn=document.getElementById('mnav');
+  if(mn)mn.classList.remove('open');
+  document.body.style.overflow='';
+}
+function openMnav(){
+  const mn=document.getElementById('mnav');
+  if(mn)mn.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+/* ══ DOM READY ══ */
+document.addEventListener('DOMContentLoaded',function(){
+  restoreSession();
+  initAList();
+  initHoro();
+  loadPanch();
+  // Close mnav on backdrop click
+  const mn=document.getElementById('mnav');
+  if(mn)mn.addEventListener('click',function(e){if(e.target===mn)closeMnav();});
+});
+
 </script>
 </body>
 </html>
