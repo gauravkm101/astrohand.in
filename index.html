@@ -2280,6 +2280,181 @@ document.addEventListener('DOMContentLoaded',function(){
   if(mn)mn.addEventListener('click',function(e){if(e.target===mn)closeMnav();});
 });
 
+
+/* ══ MISSING CRITICAL FUNCTIONS ══ */
+
+async function genKundli(){
+  const n=v('kn'),d=v('kd'),t=v('kt'),p=v('kp'),g=v('kg'),l=v('kl')||'English';
+  if(!n){toast('Please enter your name','');return;}
+  if(!d){toast('Please enter date of birth','');return;}
+  const btn=document.getElementById('k-btn');
+  if(btn){btn.disabled=true;btn.textContent='Generating…';}
+  document.getElementById('k-res').style.display='block';
+  document.getElementById('k-ldr').style.display='block';
+  document.getElementById('k-cnt').style.display='none';
+  const kd=calcBirthChartG(d,t);
+  kd.name=n;kd.gender=g;kd.place=p;
+  curKundliForGuru=kd;
+  // Fill basic info
+  document.getElementById('k-rname').textContent=n;
+  document.getElementById('k-rdob').textContent='Born: '+new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+(t?' at '+t:'')+(p?' · '+p:'');
+  document.getElementById('k-av').textContent=kd.moonSym||kd.lagnaSym||'♈';
+  // Fill basics tab
+  const basics=document.getElementById('k-basics');
+  if(basics)basics.innerHTML=[
+    ['Ascendant (Lagna)',kd.lagnaSign],['Moon Sign (Rashi)',kd.moonSign],
+    ['Sun Sign (Vedic)',kd.sunSign||kd.moonSign],['Nakshatra',kd.nakshatra],
+    ['Nakshatra Pada',kd.nakPada+'th Pada'],['Nakshatra Lord',kd.nakLord],
+    ['Ruling Planet',kd.rulingPlanet],['Yoga','Shubha'],['Mahadasha',DP_G[kd.dashaStart]+' (Current)'],
+    ['Manglik Dosha',kd.manglik?'Yes — Mars in 7th':'No'],['Kaal Sarp',kd.kaalSarp?'Present':'Not Present'],
+    ['Sade Sati',kd.sade?'Active':'Not Active']
+  ].map(([k,v])=>'<div class="bi-row"><span class="bi-k">'+k+'</span><span class="bi-v">'+v+'</span></div>').join('');
+  // Lucky factors
+  const lucky=document.getElementById('k-lucky');
+  if(lucky)lucky.innerHTML=[
+    ['Lucky Number',kd.luckyNums.join(', ')],['Lucky Color',kd.luckyColors.join(', ')],
+    ['Lucky Day',kd.luckyDays.join(', ')],['Lucky Gemstone',kd.luckyGems.join(', ')],
+    ['Ruling Planet',kd.rulingPlanet],['Element',['Fire','Earth','Air','Water'][kd.lagnaIdx%4]],
+    ['Lucky Direction',kd.luckyDir],['Lucky Metal',kd.luckyMetal||'Gold'],
+    ['Rudraksha',kd.rudraksha]
+  ].map(([k,v])=>'<div class="bi-row"><span class="bi-k">'+k+'</span><span class="bi-v">'+v+'</span></div>').join('');
+  // Doshas
+  const dsh=document.getElementById('k-doshas');
+  if(dsh)dsh.innerHTML='<div class="bi-row"><span class="bi-k">Manglik Dosha</span><span class="bi-v">'+(kd.manglik?'Yes — Mars in 7th':'No')+'</span></div><div class="bi-row"><span class="bi-k">Kaal Sarp Dosha</span><span class="bi-v">'+(kd.kaalSarp?'Present':'Not Present')+'</span></div><div class="bi-row"><span class="bi-k">Pitra Dosha</span><span class="bi-v">No</span></div><div class="bi-row"><span class="bi-k">Sade Sati</span><span class="bi-v">'+(kd.sade?'Active':'Not Active Currently')+'</span></div><div class="bi-row"><span class="bi-k">Grah Dosha</span><span class="bi-v">No Major Dosha</span></div>';
+  // Dasha timeline
+  const dashaEl=document.getElementById('k-dasha');
+  if(dashaEl){
+    let html='',yr=kd.yr,ds=kd.dashaStart;
+    for(let i=0;i<9;i++){
+      const idx=(ds+i)%9;
+      const end=yr+DY_G[idx];
+      const cur=(kd.yr<=yr&&yr<=end);
+      html+='<div class="bi-row'+(cur?' cur-dasha':'')+'"><span class="bi-k">'+DP_G[idx]+' Mahadasha</span><span class="bi-v">'+yr+'–'+end+' ('+DY_G[idx]+' yrs)'+(cur?' ← Current':'')+'</span></div>';
+      yr=end;
+    }
+    dashaEl.innerHTML=html;
+  }
+  document.getElementById('k-ldr').style.display='none';
+  document.getElementById('k-cnt').style.display='block';
+  kTab(document.querySelector('.tbtn'),'ov');
+  // AI predictions
+  try{
+    const pred=document.getElementById('k-pred');
+    if(pred)pred.textContent='Consulting the cosmic records…';
+    const prompt='Vedic birth chart reading for '+n+' ('+g+'): Lagna: '+kd.lagnaSign+', Moon: '+kd.moonSign+', Nakshatra: '+kd.nakshatra+', Ruling Planet: '+kd.rulingPlanet+', Mahadasha: '+DP_G[kd.dashaStart]+', Manglik: '+(kd.manglik?'Yes':'No')+', Kaal Sarp: '+(kd.kaalSarp?'Yes':'No')+', Place: '+(p||'India')+'. Language: '+l+'. Give a comprehensive 8-10 sentence Vedic astrology reading covering personality, career, love, health, and near-future predictions (next 12-18 months). Be specific, personal, and deeply insightful.';
+    const reply=await callAI('You are AstroHand Vedic astrologer Pandit Krishnamurti. Give deep, personalized, specific predictions.',[{role:'user',content:prompt}],1500);
+    if(pred)pred.textContent=reply;
+    // Remedies
+    const remEl=document.getElementById('k-rem');
+    if(remEl){
+      const remPrompt='For '+n+' with Lagna '+kd.lagnaSign+' and ruling planet '+kd.rulingPlanet+', give 4 specific Vedic remedies in one short paragraph.';
+      const rem=await callAI('Vedic remedy specialist. Be specific and concise.',[{role:'user',content:remPrompt}],400);
+      remEl.textContent=rem;
+    }
+  }catch(e){
+    const pred=document.getElementById('k-pred');
+    if(pred)pred.textContent='Generate your Kundli to see AI predictions here.';
+  }
+  if(btn){btn.disabled=false;btn.textContent='✨ Generate Free Kundli Now';}
+}
+
+function kTab(el,tab){
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('[id^="kp-"]').forEach(p=>p.style.display='none');
+  if(el)el.classList.add('on');
+  const tp=document.getElementById('kp-'+tab);
+  if(tp)tp.style.display='block';
+}
+
+function showPanel(p){
+  document.querySelectorAll('.dpnl').forEach(x=>x.style.display='none');
+  const el=document.getElementById('dp-'+p);
+  if(el)el.style.display='block';
+  document.querySelectorAll('.dmi').forEach(x=>x.classList.remove('on'));
+  const mi=document.querySelector('.dmi[onclick*="'+p+'"]');
+  if(mi)mi.classList.add('on');
+}
+
+function doForgot(){
+  const em=v('li-em').toLowerCase().trim();
+  if(!isEmail(em)){showErr('li-err','Enter your email above first.');return;}
+  OTP=rstr(6,'0123456789');
+  pendReset=em;
+  console.log('[RESET OTP]',OTP);
+  toast('Password reset OTP sent to '+em,'ok');
+  router('otp');
+  document.getElementById('otp-em').textContent=em;
+  startOtpTimer();
+}
+
+function doReset(){
+  const pw=v('rp-pw'),cpw=v('rp-cpw');
+  if(!pw||pw.length<8){showErr('rp-err','Password must be at least 8 characters.');return;}
+  if(pw!==cpw){showErr('rp-err','Passwords do not match.');return;}
+  if(pendReset){
+    const users=DB.g('users')||{};
+    if(users[pendReset]){users[pendReset].pw=hp(pw);DB.s('users',users);}
+    pendReset=null;
+  }
+  toast('Password updated! Please sign in.','ok');
+  router('login');
+}
+
+function doSignOut(){
+  if(!confirm('Sign out?'))return;
+  CU=null;DB.d('sess');
+  router('home');
+  toast('Signed out.','ok');
+}
+
+function saveProfile(){
+  const fn=v('ep-fn'),ln=v('ep-ln'),ph=v('ep-ph');
+  if(CU){CU.fn=fn||CU.fn;CU.ln=ln||CU.ln;CU.ph=ph||CU.ph;
+    const users=DB.g('users')||{};
+    if(users[CU.em]){users[CU.em]=Object.assign(users[CU.em],{fn:CU.fn,ln:CU.ln,ph:CU.ph});DB.s('users',users);}
+  }
+  toast('Profile saved!','ok');
+}
+
+function showCPW(){
+  const s=document.getElementById('cpw-section');
+  if(s)s.style.display=s.style.display==='none'?'block':'none';
+}
+
+function doChangePw(){
+  const op=v('cp-op'),np=v('cp-np');
+  if(!op||!np){toast('Fill all fields','');return;}
+  if(CU&&hp(op)!==CU.pw){toast('Current password incorrect','');return;}
+  if(np.length<8){toast('New password too short','');return;}
+  if(CU){CU.pw=hp(np);
+    const users=DB.g('users')||{};
+    if(users[CU.em]){users[CU.em].pw=hp(np);DB.s('users',users);}
+  }
+  toast('Password changed!','ok');
+}
+
+function showSO(){router('login');}
+
+function deleteAcct(){
+  if(!confirm('Delete your account permanently? This cannot be undone.'))return;
+  if(CU){const users=DB.g('users')||{};delete users[CU.em];DB.s('users',users);}
+  CU=null;DB.d('sess');
+  toast('Account deleted.','ok');
+  router('home');
+}
+
+function dlData(){
+  if(!CU)return;
+  const blob=new Blob([JSON.stringify(CU,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='astrohand_data.json';
+  a.click();
+}
+
+function toggle2FA(){}
+function procPay(plan){toast('Payment gateway coming soon!','');}
+
 </script>
 </body>
 </html>
