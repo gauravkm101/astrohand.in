@@ -561,6 +561,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
   #c-msgs{max-height:320px!important;}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -1581,29 +1582,619 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
 
 
 
+
 <script>
+/* ═══════════════════════════════════════════════════
+   ASTROHAND — COMPLETE AUTH SYSTEM WITH SUPABASE
+   Real login/logout, cloud storage, works worldwide
+═══════════════════════════════════════════════════ */
 
-/* ══ CANVAS ══ */
-(()=>{const c=document.getElementById('bg'),x=c.getContext('2d');let W,H;const rs=()=>{W=c.width=innerWidth;H=c.height=innerHeight;};rs();addEventListener('resize',rs);const st=Array.from({length:220},()=>({x:Math.random()*8e3,y:Math.random()*8e3,r:Math.random()*1.1,o:Math.random()*.55+.06,s:Math.random()*.32+.04}));let t=0;const d=()=>{x.clearRect(0,0,W,H);[[W*.4,H*.3,'124,58,237',.04],[W*.7,H*.6,'200,150,60',.03],[W*.2,H*.7,'225,29,120',.024]].forEach(([px,py,col,a])=>{const g=x.createRadialGradient(px,py,0,px,py,260);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,'transparent');x.fillStyle=g;x.fillRect(0,0,W,H);});st.forEach(s=>{s.o+=(Math.random()-.5)*.022;s.o=Math.max(.04,Math.min(.68,s.o));const sx=(s.x+t*s.s*.25)%W,sy=(s.y+t*s.s*.12)%H;x.beginPath();x.arc(sx,sy,s.r,0,Math.PI*2);x.fillStyle=`rgba(245,235,200,${s.o})`;x.fill();});t++;requestAnimationFrame(d);};d();})();
+/* ── Supabase Config ── */
+const SUPA_URL='https://joavchffhngutkiabgjx.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvYXZjaGZmaG5ndXRraWFiZ2p4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NTgyMDYsImV4cCI6MjA5ODMzNDIwNn0.jIaXFNE4W7tsTShd6ITPWM2mJRCtt-Kj3mapL8EcXS0';
+const API_URL='https://astrohand-backend.vercel.app/api/chat';
 
-/* ══ STORAGE ══ */
+let _sb=null;
+function getSB(){
+  if(_sb)return _sb;
+  try{if(window.supabase){_sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);}}catch(e){}
+  return _sb;
+}
+
+
+
+/* ── Helpers ── */
+const hp=s=>{let h=0;for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i)|0;return h.toString(36);};
+const rstr=(n,c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789')=>{let s='';for(let i=0;i<n;i++)s+=c[Math.floor(Math.random()*c.length)];return s;};
+const isEmail=e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):'';
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const v=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+const showErr=(id,msg)=>{const e=document.getElementById(id);if(e){e.textContent=msg;e.style.display='block';}};
+const clearErr=id=>{const e=document.getElementById(id);if(e){e.textContent='';e.style.display='none';}};
+
+/* ── Toast notifications ── */
+function toast(msg,type){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:100px;font-size:.82rem;font-weight:600;z-index:9999;transition:all .3s;max-width:90vw;text-align:center;';
+    document.body.appendChild(t);}
+  t.textContent=msg;
+  t.style.background=type==='ok'?'linear-gradient(135deg,#065f46,#059669)':'rgba(30,27,75,.95)';
+  t.style.color=type==='ok'?'#6ee7b7':'#c4b5fd';
+  t.style.border=type==='ok'?'1px solid rgba(16,185,129,.3)':'1px solid rgba(124,58,237,.3)';
+  t.style.opacity='1';t.style.display='block';
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';},3000);
+}
+
+/* ── Page router ── */
+function router(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  const el=document.getElementById('pg-'+p);
+  if(el)el.classList.add('on');
+  else document.getElementById('pg-home').classList.add('on');
+  window.scrollTo(0,0);
+}
+
+/* ── Modal functions ── */
+function openTool(id){
+  const el=document.getElementById(id);
+  if(el){el.classList.add('open');document.body.style.overflow='hidden';}
+}
+function closeOv(id){
+  const el=document.getElementById(id);
+  if(el){el.classList.remove('open');document.body.style.overflow='';}
+}
+function cov(e,id){if(e.target===document.getElementById(id))closeOv(id);}
+function toggleMnav(){
+  const mn=document.getElementById('mnav');
+  if(mn)mn.classList.toggle('open');
+}
+function closeMnav(){
+  const mn=document.getElementById('mnav');
+  if(mn)mn.classList.remove('open');
+  document.body.style.overflow='';
+}
+
+/* ═══════════════════════════════
+   SIGN UP
+═══════════════════════════════ */
+async function doSignup(){
+  const fn=v('su-fn').trim(),ln=v('su-ln').trim(),
+        em=v('su-em').toLowerCase().trim(),
+        pw=v('su-pw'),cpw=v('su-cpw'),
+        gen=v('su-gen'),dob=v('su-dob');
+  clearErr('su-err');
+  if(!fn){showErr('su-err','Please enter your first name.');return;}
+  if(!isEmail(em)){showErr('su-err','Please enter a valid email address.');return;}
+  if(pw.length<8){showErr('su-err','Password must be at least 8 characters.');return;}
+  if(pw!==cpw){showErr('su-err','Passwords do not match.');return;}
+
+  const btn=document.getElementById('su-btn');
+  if(btn){btn.disabled=true;btn.textContent='Creating account…';}
+
+  const sb=getSB();
+  if(sb){
+    try{
+      // Check if email already exists
+      const {data:existing}=await sb.from('profiles').select('email').eq('email',em).single();
+      if(existing){showErr('su-err','An account with this email already exists. Please sign in.');if(btn){btn.disabled=false;btn.textContent='Create Account';}return;}
+
+      // Create Supabase auth user
+      const {data,error}=await sb.auth.signUp({
+        email:em,password:pw,
+        options:{data:{first_name:fn,last_name:ln,gender:gen,dob:dob}}
+      });
+      if(error)throw new Error(error.message);
+
+      // Save profile to DB
+      await sb.from('profiles').upsert({
+        id:data.user.id,email:em,
+        first_name:fn,last_name:ln,
+        gender:gen,dob:dob,
+        plan:'free',joined_at:new Date().toISOString()
+      });
+
+      // Also save locally for offline
+      DB.setU(em,{fn,ln,em,pw:hp(pw),gen,dob,plan:'free',joinedAt:new Date().toISOString(),supaId:data.user.id});
+
+      pendSU={fn,ln,em,pw:hp(pw),gen,dob,plan:'free',joinedAt:new Date().toISOString()};
+      OTP=rstr(6,'0123456789');
+      console.log('[OTP for testing]',OTP);
+      toast('Check your email for verification link!','ok');
+      router('otp');
+      document.getElementById('otp-em').textContent=em;
+      startOtpTimer();
+    }catch(err){
+      showErr('su-err',err.message||'Signup failed. Please try again.');
+    }
+  } else {
+    // localStorage only mode
+    if(DB.getU(em)){showErr('su-err','Account already exists. Please sign in.');if(btn){btn.disabled=false;btn.textContent='Create Account';}return;}
+    pendSU={fn,ln,em,pw:hp(pw),gen,dob,plan:'free',joinedAt:new Date().toISOString()};
+    OTP=rstr(6,'0123456789');
+    console.log('[OTP]',OTP);
+    router('otp');
+    document.getElementById('otp-em').textContent=em;
+    startOtpTimer();
+  }
+  if(btn){btn.disabled=false;btn.textContent='Create Account';}
+}
+
+/* ═══════════════════════════════
+   VERIFY OTP
+═══════════════════════════════ */
+function verifyOTP(){
+  const entered=v('otp-i').replace(/\s/g,'');
+  clearErr('otp-err');
+  if(!entered){showErr('otp-err','Please enter the OTP.');return;}
+
+  if(pendSU){
+    if(entered!==OTP){showErr('otp-err','Incorrect OTP. Please try again.');return;}
+    DB.setU(pendSU.em,pendSU);
+    CU=pendSU;pendSU=null;OTP='';
+    DB.setSess({em:CU.em,tok:rstr(28),at:Date.now()});
+    clearOtpTimer();
+    toast('Welcome to AstroHand, '+CU.fn+'! 🌟','ok');
+    enterDash();
+  } else if(pendReset){
+    if(entered!==OTP){showErr('otp-err','Incorrect OTP.');return;}
+    router('reset-pw');
+    clearOtpTimer();
+  }
+}
+
+function resendOTP(){
+  OTP=rstr(6,'0123456789');
+  console.log('[New OTP]',OTP);
+  toast('New OTP sent! Check your email.','ok');
+  startOtpTimer();
+}
+
+function startOtpTimer(){
+  clearOtpTimer();
+  let secs=60;
+  const el=document.getElementById('otp-cd');
+  if(el)el.textContent='Resend in 60s';
+  otpTmr=setInterval(()=>{
+    secs--;
+    if(el)el.textContent=secs>0?'Resend in '+secs+'s':'';
+    if(secs<=0)clearOtpTimer();
+  },1000);
+}
+function clearOtpTimer(){if(otpTmr){clearInterval(otpTmr);otpTmr=null;}}
+
+/* ═══════════════════════════════
+   LOGIN
+═══════════════════════════════ */
+async function doLogin(){
+  const em=v('li-em').toLowerCase().trim(),pw=v('li-pw');
+  const rem=document.getElementById('li-rem')?.checked||false;
+  clearErr('li-err');
+  if(!isEmail(em)){showErr('li-err','Please enter a valid email address.');return;}
+  if(!pw){showErr('li-err','Please enter your password.');return;}
+
+  const btn=document.getElementById('li-btn');
+  if(btn){btn.disabled=true;btn.textContent='Signing in…';}
+
+  const sb=getSB();
+  if(sb){
+    try{
+      const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
+      if(error)throw new Error(error.message);
+
+      // Get profile
+      const {data:profile}=await sb.from('profiles').select('*').eq('id',data.user.id).single();
+
+      CU={
+        id:data.user.id,
+        em:data.user.email,
+        fn:profile?.first_name||em.split('@')[0],
+        ln:profile?.last_name||'',
+        plan:profile?.plan||'free',
+        joinedAt:profile?.joined_at||data.user.created_at,
+        gen:profile?.gender||'',
+        dob:profile?.dob||''
+      };
+
+      // Save session
+      if(rem){
+        DB.setSess({em:CU.em,tok:data.session.access_token,ref:data.session.refresh_token,at:Date.now(),rem:true});
+      } else {
+        sessionStorage.setItem('ah_sess',JSON.stringify({em:CU.em,tok:data.session.access_token,at:Date.now()}));
+      }
+
+      clearErr('li-err');
+      toast('Welcome back, '+CU.fn+'! ✨','ok');
+      enterDash();
+    }catch(err){
+      showErr('li-err',err.message==='Invalid login credentials'?'Incorrect email or password. Please try again.':err.message||'Login failed.');
+    }
+  } else {
+    // localStorage fallback
+    const user=DB.getU(em);
+    if(!user){showErr('li-err','No account found. Please sign up first.');if(btn){btn.disabled=false;btn.textContent='Sign In';}return;}
+    if(user.pw!==hp(pw)){showErr('li-err','Incorrect password. Please try again.');if(btn){btn.disabled=false;btn.textContent='Sign In';}return;}
+    CU=user;
+    if(rem)DB.setSess({em:CU.em,tok:rstr(28),at:Date.now(),rem:true});
+    else sessionStorage.setItem('ah_sess',JSON.stringify({em:CU.em,at:Date.now()}));
+    clearErr('li-err');
+    toast('Welcome back, '+CU.fn+'! ✨','ok');
+    enterDash();
+  }
+  if(btn){btn.disabled=false;btn.textContent='Sign In';}
+}
+
+/* ═══════════════════════════════
+   FORGOT PASSWORD
+═══════════════════════════════ */
+async function doForgot(){
+  const em=v('li-em').toLowerCase().trim();
+  if(!isEmail(em)){showErr('li-err','Enter your email address first.');return;}
+
+  const sb=getSB();
+  if(sb){
+    try{
+      await sb.auth.resetPasswordForEmail(em,{redirectTo:window.location.origin+'?reset=true'});
+      toast('Password reset email sent to '+em+'!','ok');
+    }catch(err){toast(err.message||'Error sending reset email.','');}
+  } else {
+    const user=DB.getU(em);
+    if(!user){showErr('li-err','No account found with this email.');return;}
+    pendReset=em;OTP=rstr(6,'0123456789');
+    console.log('[Reset OTP]',OTP);
+    router('otp');
+    document.getElementById('otp-em').textContent=em;
+    startOtpTimer();
+    toast('OTP sent to your email.','ok');
+  }
+}
+
+/* ═══════════════════════════════
+   RESET PASSWORD
+═══════════════════════════════ */
+async function doReset(){
+  const pw=v('rp-pw'),cpw=v('rp-cpw');
+  clearErr('rp-err');
+  if(!pw||pw.length<8){showErr('rp-err','Password must be at least 8 characters.');return;}
+  if(pw!==cpw){showErr('rp-err','Passwords do not match.');return;}
+
+  const sb=getSB();
+  if(sb){
+    try{
+      const {error}=await sb.auth.updateUser({password:pw});
+      if(error)throw new Error(error.message);
+      toast('Password updated! Please sign in.','ok');
+      router('login');
+    }catch(err){showErr('rp-err',err.message||'Failed to update password.');}
+  } else {
+    if(pendReset){
+      const users=DB.g('users')||{};
+      if(users[pendReset]){users[pendReset].pw=hp(pw);DB.s('users',users);}
+      pendReset=null;
+    }
+    toast('Password updated! Please sign in.','ok');
+    router('login');
+  }
+}
+
+/* ═══════════════════════════════
+   DASHBOARD
+═══════════════════════════════ */
+function enterDash(){
+  router('dash');
+  if(!CU)return;
+  const init=((CU.fn||'U')[0].toUpperCase()+((CU.ln||'')[0]||'').toUpperCase());
+  const av=document.getElementById('d-av-txt');if(av)av.textContent=init;
+  const un=document.getElementById('d-un');if(un)un.textContent=(CU.fn+' '+(CU.ln||'')).trim();
+  const dem=document.getElementById('d-em');if(dem)dem.textContent=CU.em;
+  const pb=document.getElementById('d-plan');
+  if(pb){pb.textContent=cap(CU.plan||'free')+' Plan';pb.className='planbdg '+(CU.plan==='free'?'pf':CU.plan==='silver'?'ps':'pg2');}
+  const days=Math.max(1,Math.round((Date.now()-new Date(CU.joinedAt||Date.now()).getTime())/86400000));
+  const dy=document.getElementById('dm-dy');if(dy)dy.textContent=days;
+  const rds=DB.getRds(CU.em);
+  const rd=document.getElementById('dm-rd');if(rd)rd.textContent=rds.length;
+  showPanel('home');
+  loadActivity();
+}
+
+function showPanel(p){
+  document.querySelectorAll('.dpnl').forEach(x=>x.style.display='none');
+  const el=document.getElementById('dp-'+p);
+  if(el)el.style.display='block';
+  document.querySelectorAll('.dmi').forEach(x=>x.classList.remove('on'));
+  const mi=document.querySelector('.dmi[onclick*="\''+p+'\'"]');
+  if(mi)mi.classList.add('on');
+
+  // Load panel-specific data
+  if(p==='readings')loadReadings();
+  if(p==='profile')loadProfile();
+}
+
+function loadActivity(){
+  const el=document.getElementById('act-l');
+  if(!el||!CU)return;
+  const rds=DB.getRds(CU.em).slice(0,5);
+  if(!rds.length){el.innerHTML='<p style="color:var(--muted);font-size:.8rem;text-align:center;padding:20px;">No activity yet. Start by generating your Kundli!</p>';return;}
+  el.innerHTML=rds.map(r=>`<div class="act-item"><span class="act-ic">${r.icon||'🔮'}</span><div><div style="font-size:.8rem;color:var(--text)">${r.title||'Reading'}</div><div style="font-size:.7rem;color:var(--muted)">${new Date(r.at).toLocaleDateString('en-IN')}</div></div></div>`).join('');
+}
+
+function loadReadings(){
+  const el=document.getElementById('my-readings');
+  if(!el||!CU)return;
+  const rds=DB.getRds(CU.em);
+  if(!rds.length){el.innerHTML='<p style="color:var(--muted);font-size:.8rem;text-align:center;padding:20px;">No readings saved yet.</p>';return;}
+  el.innerHTML=rds.map(r=>`<div style="background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:14px;margin-bottom:10px;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:1.3rem">${r.icon||'🔮'}</span><div><div style="font-size:.82rem;font-weight:600;color:var(--g2c)">${r.title||'Reading'}</div><div style="font-size:.7rem;color:var(--muted)">${new Date(r.at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div></div></div><p style="font-size:.78rem;color:var(--sub);line-height:1.5;margin:0">${(r.preview||'').substring(0,120)}…</p></div>`).join('');
+}
+
+function loadProfile(){
+  if(!CU)return;
+  const fields={
+    'ep-fn':CU.fn,'ep-ln':CU.ln||'',
+    'ep-em':CU.em,'ep-ph':CU.ph||'','ep-dob':CU.dob||''
+  };
+  Object.entries(fields).forEach(([id,val])=>{
+    const el=document.getElementById(id);
+    if(el)el.value=val;
+  });
+}
+
+function addRd(rd){
+  if(!CU)return;
+  DB.addRd(CU.em,rd);
+
+  // Also save to Supabase
+  const sb=getSB();
+  if(sb&&CU.id){
+    sb.from('readings').insert({
+      user_id:CU.id,
+      type:rd.type||'general',
+      title:rd.title||'Reading',
+      content:rd.text||rd.preview||'',
+      created_at:new Date().toISOString()
+    }).then(()=>{}).catch(()=>{});
+  }
+}
+
+/* ═══════════════════════════════
+   SAVE PROFILE
+═══════════════════════════════ */
+async function saveProfile(){
+  if(!CU)return;
+  const fn=v('ep-fn'),ln=v('ep-ln'),ph=v('ep-ph');
+  if(!fn){toast('Name cannot be empty.','');return;}
+
+  CU.fn=fn;CU.ln=ln;CU.ph=ph;
+
+  // Update local
+  const users=DB.g('users')||{};
+  if(users[CU.em])Object.assign(users[CU.em],{fn,ln,ph});
+  DB.s('users',users);
+
+  // Update Supabase
+  const sb=getSB();
+  if(sb&&CU.id){
+    try{
+      await sb.from('profiles').update({first_name:fn,last_name:ln,phone:ph}).eq('id',CU.id);
+    }catch(e){}
+  }
+
+  // Update dashboard display
+  const un=document.getElementById('d-un');if(un)un.textContent=(fn+' '+ln).trim();
+  const av=document.getElementById('d-av-txt');if(av)av.textContent=(fn[0]+(ln[0]||'')).toUpperCase();
+  toast('Profile saved successfully!','ok');
+}
+
+/* ═══════════════════════════════
+   CHANGE PASSWORD
+═══════════════════════════════ */
+async function doChangePw(){
+  const op=v('cp-op'),np=v('cp-np'),cp=v('cp-cp');
+  if(!op||!np){toast('Please fill all fields.','');return;}
+  if(np.length<8){toast('New password must be at least 8 characters.','');return;}
+  if(np!==cp){toast('Passwords do not match.','');return;}
+
+  const sb=getSB();
+  if(sb){
+    try{
+      const {error}=await sb.auth.updateUser({password:np});
+      if(error)throw new Error(error.message);
+      toast('Password changed successfully!','ok');
+      document.getElementById('cpw-section').style.display='none';
+    }catch(err){toast(err.message||'Failed to change password.','');}
+  } else {
+    if(CU&&hp(op)!==CU.pw){toast('Current password is incorrect.','');return;}
+    CU.pw=hp(np);
+    const users=DB.g('users')||{};
+    if(users[CU.em])users[CU.em].pw=hp(np);
+    DB.s('users',users);
+    toast('Password changed!','ok');
+    document.getElementById('cpw-section').style.display='none';
+  }
+}
+
+function showCPW(){
+  const s=document.getElementById('cpw-section');
+  if(s)s.style.display=s.style.display==='none'?'block':'none';
+}
+
+/* ═══════════════════════════════
+   LOGOUT
+═══════════════════════════════ */
+async function doSignOut(){
+  if(!confirm('Are you sure you want to sign out?'))return;
+
+  const sb=getSB();
+  if(sb){
+    try{await sb.auth.signOut();}catch(e){}
+  }
+
+  // Clear all session data
+  CU=null;
+  DB.delSess();
+  sessionStorage.removeItem('ah_sess');
+
+  toast('Signed out successfully.','ok');
+  router('home');
+
+  // Reset UI
+  setTimeout(()=>{
+    document.querySelectorAll('.dpnl').forEach(x=>x.style.display='none');
+  },100);
+}
+
+/* ═══════════════════════════════
+   DELETE ACCOUNT
+═══════════════════════════════ */
+async function deleteAcct(){
+  if(!confirm('⚠️ Delete your account permanently? All your data will be lost. This cannot be undone.'))return;
+
+  const sb=getSB();
+  if(sb&&CU?.id){
+    try{
+      await sb.from('readings').delete().eq('user_id',CU.id);
+      await sb.from('profiles').delete().eq('id',CU.id);
+    }catch(e){}
+  }
+
+  // Clear local data
+  if(CU)DB.d('users');
+  CU=null;DB.delSess();sessionStorage.removeItem('ah_sess');
+  toast('Account deleted.','ok');
+  router('home');
+}
+
+function dlData(){
+  if(!CU)return;
+  const data={profile:CU,readings:DB.getRds(CU.em),exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='astrohand_my_data.json';
+  a.click();
+  toast('Data downloaded!','ok');
+}
+
+/* ═══════════════════════════════
+   SOCIAL LOGIN
+═══════════════════════════════ */
+async function socialLogin(prov){
+  const sb=getSB();
+  if(!sb){toast('Please use Email & Password login.','');return;}
+  try{
+    const {error}=await sb.auth.signInWithOAuth({
+      provider:prov,
+      options:{redirectTo:window.location.origin}
+    });
+    if(error)throw new Error(error.message);
+  }catch(err){
+    toast(err.message||'Social login failed. Please use email & password.','');
+  }
+}
+
+/* ═══════════════════════════════
+   RESTORE SESSION ON LOAD
+═══════════════════════════════ */
+async function restoreSession(){
+  const sb=getSB();
+
+  if(sb){
+    try{
+      const {data}=await sb.auth.getSession();
+      if(data?.session){
+        const user=data.session.user;
+        const {data:profile}=await sb.from('profiles').select('*').eq('id',user.id).single();
+        CU={
+          id:user.id,em:user.email,
+          fn:profile?.first_name||user.user_metadata?.full_name?.split(' ')[0]||user.email.split('@')[0],
+          ln:profile?.last_name||'',
+          plan:profile?.plan||'free',
+          joinedAt:profile?.joined_at||user.created_at,
+          gen:profile?.gender||'',dob:profile?.dob||''
+        };
+        enterDash();
+        return;
+      }
+    }catch(e){}
+  }
+
+  // Try localStorage session
+  const sess=DB.getSess();
+  if(sess?.em&&sess?.tok){
+    const age=Date.now()-sess.at;
+    const maxAge=sess.rem?30*24*60*60*1000:24*60*60*1000; // 30 days if remember me, else 1 day
+    if(age<maxAge){
+      const user=DB.getU(sess.em);
+      if(user){CU=user;enterDash();return;}
+    } else {
+      DB.delSess();
+    }
+  }
+
+  // Try session storage (tab session)
+  try{
+    const s=JSON.parse(sessionStorage.getItem('ah_sess')||'null');
+    if(s?.em){
+      const user=DB.getU(s.em);
+      if(user){CU=user;enterDash();return;}
+    }
+  }catch(e){}
+}
+
+/* ═══════════════════════════════
+   MISC UI
+═══════════════════════════════ */
+function showSO(){
+  if(CU)doSignOut();
+  else router('login');
+}
+function toggle2FA(){}
+function procPay(plan){toast('Payment gateway coming soon! Contact: nitish@astrohand.in','');}
+function polPage(p){
+  document.querySelectorAll('.pol-page').forEach(x=>x.classList.remove('on'));
+  const el=document.getElementById('pol-'+p);
+  if(el){el.classList.add('on');window.scrollTo(0,0);}
+}
+function toggleFAQ(el){
+  const ans=el.nextElementSibling;
+  if(ans){ans.style.display=ans.style.display==='none'?'block':'none';}
+  el.classList.toggle('open');
+}
+function toggleEye(id){
+  const el=document.getElementById(id);
+  if(el)el.type=el.type==='password'?'text':'password';
+}
+function selHand(hand,btn){
+  document.querySelectorAll('.hand-btn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+}
+
+
+
+/* AstroHand - Production Script */
+/* ═══════════════════════════════════════════════════
+   ASTROHAND — COMPLETE AUTH SYSTEM WITH SUPABASE
+   Real login/logout, cloud storage, works worldwide
+═══════════════════════════════════════════════════ */
+
+/* ── Supabase Config ── */
+
+function getSB(){
+  if(_sb)return _sb;
+  try{if(window.supabase){_sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);}}catch(e){}
+  return _sb;
+}
+
+/* ── DB: localStorage fallback (works offline too) ── */
 const DB={
   g:k=>{try{return JSON.parse(localStorage.getItem('ah_'+k));}catch{return null;}},
   s:(k,v)=>localStorage.setItem('ah_'+k,JSON.stringify(v)),
   d:k=>localStorage.removeItem('ah_'+k),
-  getU:em=>{const u=DB.g('users')||{};return u[em.toLowerCase()]||null;},
-  setU:(em,d)=>{const u=DB.g('users')||{};u[em.toLowerCase()]=d;DB.s('users',u);},
-  delU:em=>{const u=DB.g('users')||{};delete u[em.toLowerCase()];DB.s('users',u);},
-  getSess:()=>DB.g('sess'),
-  setSess:d=>DB.s('sess',d),
-  clrSess:()=>DB.d('sess'),
-  getRds:em=>DB.g('rds_'+em)||[],
-  addRd:(em,r)=>{const rs=DB.getRds(em);rs.unshift(r);if(rs.length>50)rs.pop();DB.s('rds_'+em,rs);},
   delRd:(em,id)=>{DB.s('rds_'+em,DB.getRds(em).filter(r=>r.id!==id));},
 };
 
 /* ══ STATE ══ */
-let CU=null,OTP='',pendSU=null,pendReset=null,otpTmr=null,is2FA=false,payPlan={};
+
 
 /* ══ BOOT ══ */
 window.addEventListener('DOMContentLoaded',()=>{
@@ -1614,23 +2205,8 @@ window.addEventListener('DOMContentLoaded',()=>{
 });
 
 /* ══ ROUTER ══ */
-function router(p){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
-  document.querySelectorAll('.pol-page').forEach(x=>x.classList.remove('on'));
-  const el=document.getElementById('pg-'+p);
-  if(el)el.classList.add('on');
-  else document.getElementById('pg-home').classList.add('on');
-  window.scrollTo({top:0,behavior:'smooth'});
-  updNav();
-}
-function polPage(n){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
-  document.querySelectorAll('.pol-page').forEach(x=>x.classList.remove('on'));
-  const el=document.getElementById('pol-'+n);
-  if(el)el.classList.add('on');
-  window.scrollTo({top:0,behavior:'smooth'});
-  updNav();
-}
+
+
 function updNav(){
   const li=document.getElementById('nav-in'),lo=document.getElementById('nav-out');
   if(CU){li.style.display='flex';lo.style.display='none';
@@ -1640,123 +2216,24 @@ function updNav(){
     document.getElementById('nav-uplan').textContent=cap(CU.plan)+' Plan';
   }else{li.style.display='none';lo.style.display='flex';}
 }
-function toggleMnav(){document.getElementById('mnav').classList.toggle('open');}
-function closeMnav(){document.getElementById('mnav').classList.remove('open');}
+
+
 
 /* ══ SIGN UP ══ */
-function doSignup(){
-  const fn=v('su-fn'),ln=v('su-ln'),em=v('su-em').toLowerCase().trim();
-  const db=v('su-db'),pw=v('su-pw'),cp=v('su-cp');
-  const tc=document.getElementById('su-tc').checked;
-  const err=[];
-  if(!fn||!ln)err.push('Please enter your first and last name.');
-  if(!isEmail(em))err.push('Please enter a valid email address.');
-  if(!db)err.push('Please enter your date of birth.');
-  if(pw.length<8)err.push('Password must be at least 8 characters.');
-  if(pw!==cp)err.push('Passwords do not match.');
-  if(!tc)err.push('Please accept the Terms & Conditions.');
-  if(err.length){showErr('su-err',err[0]);return;}
-  if(DB.getU(em)){showErr('su-err','An account already exists with this email. Please sign in.');return;}
-  pendSU={fn,ln,em,ph:v('su-ph'),db,gn:v('su-gn'),pw:hp(pw),plan:'free',joinedAt:new Date().toISOString(),avatar:''};
-  OTP=genOTP();
-  console.log('%c🔑 AstroHand OTP (demo): '+OTP,'color:#e8c46a;font-size:16px;font-weight:bold;');
-  clearErr('su-err');
-  document.getElementById('otp-em').textContent=em;
-  router('otp');startOTPTimer(60);
-  toast('📧 OTP sent! Check browser console (F12) for demo code.','g');
-}
 
-/* ══ OTP ══ */
-function obIn(i){const v=document.getElementById('ob'+i).value.replace(/\D/g,'');document.getElementById('ob'+i).value=v;if(v&&i<5)document.getElementById('ob'+(i+1)).focus();}
-function obKey(e,i){if(e.key==='Backspace'&&!document.getElementById('ob'+i).value&&i>0)document.getElementById('ob'+(i-1)).focus();}
-function rpIn(i){const v=document.getElementById('rp'+i).value.replace(/\D/g,'');document.getElementById('rp'+i).value=v;if(v&&i<5)document.getElementById('rp'+(i+1)).focus();}
-function getOTP(){return[0,1,2,3,4,5].map(i=>document.getElementById('ob'+i).value).join('');}
-function getRP(){return[0,1,2,3,4,5].map(i=>document.getElementById('rp'+i).value).join('');}
-function verifyOTP(){
-  const entered=getOTP();
-  if(entered.length!==6){showErr('otp-err','Please enter all 6 digits.');return;}
-  if(entered!==OTP){
-    showErr('otp-err','Incorrect code. Please check and try again.');
-    [0,1,2,3,4,5].forEach(i=>{document.getElementById('ob'+i).value='';document.getElementById('ob'+i).classList.add('e');});
-    document.getElementById('ob0').focus();return;
-  }
-  DB.setU(pendSU.em,pendSU);CU={...pendSU};
-  DB.setSess({em:CU.em,tok:rstr(28),at:Date.now(),rem:true});
-  clearOTPTimer();toast('✨ Account created! Welcome to AstroHand.','ok');enterDash();
-}
-function resendOTP(){OTP=genOTP();console.log('%c🔑 New OTP: '+OTP,'color:#e8c46a;font-size:16px;font-weight:bold;');toast('📧 New code sent! Check browser console.','g');startOTPTimer(60);}
+
+
 function startOTPTimer(sec){clearOTPTimer();let r=sec;document.getElementById('otp-cd').textContent=r;document.getElementById('resend-b').disabled=true;otpTmr=setInterval(()=>{r--;document.getElementById('otp-cd').textContent=r;if(r<=0){clearInterval(otpTmr);document.getElementById('resend-b').disabled=false;}},1000);}
 function clearOTPTimer(){if(otpTmr){clearInterval(otpTmr);otpTmr=null;}}
 
 /* ══ LOGIN ══ */
-function doLogin(){
-  const em=v('li-em').toLowerCase().trim(),pw=v('li-pw'),rem=document.getElementById('li-rem').checked;
-  if(!isEmail(em)){showErr('li-err','Please enter a valid email address.');return;}
-  if(!pw){showErr('li-err','Please enter your password.');return;}
-  const user=DB.getU(em);
-  if(!user){showErr('li-err','No account found with this email. Please sign up first.');return;}
-  if(user.pw!==hp(pw)){showErr('li-err','Incorrect password. Please try again or reset your password.');document.getElementById('li-pw').classList.add('e');return;}
-  clearErr('li-err');document.getElementById('li-pw').classList.remove('e');
-  CU=user;DB.setSess({em:user.em,tok:rstr(28),at:Date.now(),rem});
-  toast('✨ Welcome back, '+CU.fn+'!','ok');enterDash();
-}
 
 /* ══ SOCIAL LOGIN ══ */
-function socialLogin(prov){
-  const em=`demo.${prov.toLowerCase()}@astrohand.ai`;
-  let u=DB.getU(em);
-  if(!u){u={fn:prov,ln:'User',em,ph:'',db:'1990-06-01',gn:'Other',pw:'social_'+prov,plan:'free',joinedAt:new Date().toISOString(),avatar:''};DB.setU(em,u);}
-  CU=u;DB.setSess({em,tok:rstr(28),at:Date.now(),rem:true,social:prov});
-  toast('✨ Signed in with '+prov+'!','ok');enterDash();
-}
 
-/* ══ FORGOT / RESET ══ */
-function doForgot(){
-  const em=v('fp-em').toLowerCase().trim();
-  if(!isEmail(em)){showErr('fp-err','Please enter a valid email address.');return;}
-  if(!DB.getU(em)){showErr('fp-err','No account found with this email.');return;}
-  clearErr('fp-err');pendReset=em;OTP=genOTP();
-  console.log('%c🔑 Reset OTP: '+OTP,'color:#e8c46a;font-size:16px;font-weight:bold;');
-  toast('📧 Reset code sent! Check browser console for demo code.','g');router('reset');
-}
-function doReset(){
-  const code=getRP(),np=v('rp-pw'),cp=v('rp-cp');
-  if(code.length!==6){showErr('rp-err','Please enter all 6 digits.');return;}
-  if(code!==OTP){showErr('rp-err','Incorrect reset code. Please try again.');return;}
-  if(np.length<8){showErr('rp-err','New password must be at least 8 characters.');return;}
-  if(np!==cp){showErr('rp-err','Passwords do not match.');return;}
-  clearErr('rp-err');
-  const u=DB.getU(pendReset);u.pw=hp(np);DB.setU(pendReset,u);
-  toast('✅ Password reset! Please sign in.','ok');router('login');
-}
 
 /* ══ DASHBOARD ══ */
-function enterDash(){
-  router('dash');
-  const init=((CU.fn||'U')[0]+(CU.ln||'')[0]).toUpperCase();
-  document.getElementById('d-av-txt').textContent=init;
-  document.getElementById('d-un').textContent=CU.fn+' '+(CU.ln||'');
-  document.getElementById('d-em').textContent=CU.em;
-  const pb=document.getElementById('d-plan');pb.textContent=cap(CU.plan)+' Plan';
-  pb.className='planbdg '+(CU.plan==='free'?'pf':CU.plan==='silver'?'ps':CU.plan==='gold'?'pg2':'pv');
-  const days=Math.max(1,Math.round((Date.now()-new Date(CU.joinedAt).getTime())/86400000));
-  document.getElementById('dm-dy').textContent=days;
-  const rds=DB.getRds(CU.em);document.getElementById('dm-rd').textContent=rds.length;
-  showPanel('home');
-}
-function showPanel(p){
-  document.querySelectorAll('.dpnl').forEach(x=>x.classList.remove('on'));
-  document.querySelectorAll('.d-nav-i').forEach(x=>x.classList.remove('on'));
-  document.getElementById('dp-'+p).classList.add('on');
-  const map={home:0,readings:1,profile:2,plans:3,security:4};
-  if(map[p]!==undefined)document.querySelectorAll('.d-nav-i')[map[p]].classList.add('on');
-  if(p==='home')renderHome();
-  if(p==='readings')renderReadings();
-  if(p==='profile')fillProfile();
-  if(p==='plans')renderPlans();
-}
 
-/* ══ DASH HOME ══ */
+
 function renderHome(){
   const hr=new Date().getHours();
   const greet=hr<12?'Good Morning':'Good Evening';
@@ -1788,25 +2265,9 @@ function fillProfile(){
   sv('pf-gn',u.gn||'');sv('pf-oc',u.occ||'');sv('pf-co',u.country||'India');sv('pf-ci',u.city||'');
   sv('pf-db',u.db||'');sv('pf-tb',u.tob||'');sv('pf-bp',u.bplace||'');sv('pf-lg',u.lang||'English');sv('pf-as',u.asys||'Vedic (Indian)');
 }
-function saveProfile(){
-  Object.assign(CU,{fn:v('pf-fn'),ln:v('pf-ln'),ph:v('pf-ph'),gn:v('pf-gn'),occ:v('pf-oc'),
-    country:v('pf-co'),city:v('pf-ci'),db:v('pf-db'),tob:v('pf-tb'),bplace:v('pf-bp'),lang:v('pf-lg'),asys:v('pf-as')});
-  DB.setU(CU.em,CU);
-  document.getElementById('d-un').textContent=CU.fn+' '+(CU.ln||'');
-  document.getElementById('nav-uname').textContent=CU.fn+' '+(CU.ln||'');
-  document.getElementById('d-av-txt').textContent=((CU.fn||'U')[0]+(CU.ln||'')[0]).toUpperCase();
-  toast('✅ Profile saved!','ok');
-}
-function uploadAv(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{CU.avatar=ev.target.result;DB.setU(CU.em,CU);const avEl=document.getElementById('d-av-txt');avEl.style.display='none';const img=document.createElement('img');img.src=ev.target.result;document.getElementById('d-av-txt').parentElement.appendChild(img);toast('✅ Photo updated!','ok');};r.readAsDataURL(f);}
-function deleteAcct(){if(!confirm('Permanently delete your account and ALL data? This cannot be undone.'))return;if(!confirm('Final confirmation: Delete '+CU.em+'?'))return;DB.d('rds_'+CU.em);DB.delU(CU.em);DB.clrSess();CU=null;toast('Account deleted.','');setTimeout(()=>router('home'),1200);}
 
-/* ══ PLANS ══ */
-const PLANS_D=[
-  {id:'free',n:'Free',pr:'₹0',per:' forever',f:['1 Kundli/month','Daily Horoscope','AI Chat (10/day)'],x:['Premium Reports','PDF Download']},
-  {id:'silver',n:'Silver',pr:'₹199',per:'/mo',f:['5 Kundlis/month','All Horoscopes','AI Chat (50/day)','Match Making'],x:['PDF Downloads']},
-  {id:'gold',n:'Gold',pr:'₹499',per:'/mo',f:['Unlimited Kundli','All 8 AI Astrologers','All Premium Reports','PDF Downloads','Yearly Prediction'],x:[]},
-  {id:'vip',n:'VIP Oracle',pr:'₹999',per:'/mo',f:['Everything in Gold','Annual Forecast','Muhurat Planning','Dedicated Advisor','Video Consultation (2/mo)'],x:[]},
-];
+function uploadAv(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{CU.avatar=ev.target.result;DB.setU(CU.em,CU);const avEl=document.getElementById('d-av-txt');avEl.style.display='none';const img=document.createElement('img');img.src=ev.target.result;document.getElementById('d-av-txt').parentElement.appendChild(img);toast('✅ Photo updated!','ok');};r.readAsDataURL(f);}
+
 function renderPlans(){
   document.getElementById('cp-lbl').textContent=cap(CU.plan);
   document.getElementById('pl-g').innerHTML=PLANS_D.map(p=>`
@@ -1820,46 +2281,17 @@ function renderPlans(){
 }
 function openPay(id,n,pr,per){payPlan={id,n,pr,per};document.getElementById('pay-plan').textContent=n;document.getElementById('pay-pr').textContent=pr;document.getElementById('pay-per').textContent=per==='forever'?'Forever':per;document.getElementById('pay-ov').classList.add('open');}
 function downgFree(){CU.plan='free';DB.setU(CU.em,CU);document.getElementById('d-plan').textContent='Free Plan';document.getElementById('d-plan').className='planbdg pf';document.getElementById('nav-uplan').textContent='Free Plan';toast('Downgraded to Free plan.','g');renderPlans();}
-function procPay(){
-  const n=v('crd-n').replace(/\s/g,''),e=v('crd-e'),c=v('crd-c'),nm=v('crd-nm');
-  if(n.length<15||!e.match(/\d{2}\/\d{2}/)||c.length<3||!nm){showErr('pay-err','Please fill in all card details.');return;}
-  const btn=document.getElementById('pay-btn');btn.disabled=true;btn.textContent='Processing payment…';
-  setTimeout(()=>{
-    CU.plan=payPlan.id;CU.planExp=new Date(Date.now()+30*86400000).toISOString();
-    DB.setU(CU.em,CU);document.getElementById('pay-ov').classList.remove('open');
-    const pb=document.getElementById('d-plan');pb.textContent=payPlan.n+' Plan';
-    pb.className='planbdg '+(payPlan.id==='gold'?'pg2':payPlan.id==='silver'?'ps':'pv');
-    document.getElementById('nav-uplan').textContent=payPlan.n+' Plan';
-    btn.disabled=false;btn.textContent='Pay & Upgrade ✦';
-    toast('✨ Upgraded to '+payPlan.n+'! Welcome to the full cosmos.','ok');
-    if(CU)addRd({type:'plan',icon:'💎',title:'Upgraded to '+payPlan.n+' Plan',sub:'Subscription',preview:'Plan: '+payPlan.n+' ('+payPlan.pr+payPlan.per+')'});
-    renderPlans();
-  },2200);
-}
 
 /* ══ SECURITY ══ */
-function toggle2FA(){is2FA=!is2FA;document.getElementById('tfa-s').className=is2FA?'s-on':'s-off';document.getElementById('tfa-s').textContent=is2FA?'● Enabled':'○ Disabled';document.getElementById('tfa-b').textContent=is2FA?'Disable 2FA':'Enable 2FA';toast(is2FA?'2FA enabled! Your account is more secure.':'2FA disabled.','ok');}
-function showCPW(){document.getElementById('cpw-ov').classList.add('open');}
-function doChangePw(){
-  const old=v('cp-old'),nw=v('cp-new'),cf=v('cp-cnf');
-  if(!old||!nw||!cf){showErr('cp-err','Please fill in all fields.');return;}
-  if(CU.pw!==hp(old)){showErr('cp-err','Current password is incorrect.');return;}
-  if(nw.length<8){showErr('cp-err','New password must be at least 8 characters.');return;}
-  if(nw!==cf){showErr('cp-err','Passwords do not match.');return;}
-  clearErr('cp-err');CU.pw=hp(nw);DB.setU(CU.em,CU);
-  document.getElementById('cpw-ov').classList.remove('open');
-  toast('✅ Password changed successfully!','ok');
-}
-function dlData(){const data={user:{...CU,pw:'[redacted]'},readings:DB.getRds(CU.em)};const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='astrohand_data.json';a.click();toast('✅ Data download started!','ok');}
 
-/* ══ SIGN OUT ══ */
-function showSO(){document.getElementById('so-ov').classList.add('open');}
-function doSignOut(){DB.clrSess();CU=null;document.getElementById('so-ov').classList.remove('open');toast('Signed out. Come back soon! 🌙','g');setTimeout(()=>router('home'),600);}
+function showCPW(){document.getElementById('cpw-ov').classList.add('open');}
+
+
 
 /* ══ TOOL MODALS ══ */
-function openTool(id){document.getElementById(id).classList.add('open');}
-function closeOv(id){document.getElementById(id).classList.remove('open');}
-function cov(e,id){if(e.target===document.getElementById(id))closeOv(id);}
+
+
+
 
 /* ══ KUNDLI ══ */
 const RASHIS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -2066,21 +2498,7 @@ const FAQS=[
   {q:'Can I cancel my subscription anytime?',a:'Yes. Cancel from your dashboard with one click. You retain full access until the end of your billing period. We offer a 7-day money-back guarantee for new subscriptions. No cancellation fees, no questions asked.'},
 ];
 function initFAQ(){document.getElementById('faqEl').innerHTML=FAQS.map(f=>`<div class="fi2"><div class="fq" onclick="toggleFAQ(this)">${f.q}<span class="ftg">+</span></div><div class="fa">${f.a}</div></div>`).join('');}
-function toggleFAQ(el){const i=el.parentElement;const was=i.classList.contains('op');document.querySelectorAll('.fi2').forEach(x=>x.classList.remove('op'));if(!was)i.classList.add('op');}
 
-/* ══ UTILITIES ══ */
-function v(id){const e=document.getElementById(id);return e?e.value.trim():'';}
-function sv(id,val){const e=document.getElementById(id);if(e)e.value=val;}
-function showErr(id,msg){const e=document.getElementById(id);if(e){e.textContent=msg;e.classList.add('show');e.style.display='block';}}
-function clearErr(id){const e=document.getElementById(id);if(e){e.classList.remove('show');e.style.display='none';}}
-function isEmail(e){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
-function cap(s){return s?(s[0].toUpperCase()+s.slice(1)):'';}
-function rstr(n){return (Math.random().toString(36)+Math.random().toString(36)).replace(/\./g,'').substring(0,n);}
-function genOTP(){return String(Math.floor(100000+Math.random()*900000));}
-function hp(p){let h=0;for(let i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0;}return 'ah'+Math.abs(h)+p.length;}
-function timeAgo(iso){const d=Date.now()-new Date(iso).getTime();if(d<60000)return 'just now';if(d<3600000)return Math.round(d/60000)+'m ago';if(d<86400000)return Math.round(d/3600000)+'h ago';return Math.round(d/86400000)+'d ago';}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function toggleEye(id,btn){const e=document.getElementById(id);if(!e)return;e.type=e.type==='password'?'text':'password';btn.textContent=e.type==='password'?'👁':'🙈';}
 function pwStrength(inp,bar,lbl){
   const p=inp.value;let sc=0;
   if(p.length>=8)sc++;if(p.length>=12)sc++;if(/[A-Z]/.test(p))sc++;if(/[0-9]/.test(p))sc++;if(/[^a-zA-Z0-9]/.test(p))sc++;
@@ -2090,14 +2508,10 @@ function pwStrength(inp,bar,lbl){
 }
 function fmtCard(inp){let v=inp.value.replace(/\D/g,'').substring(0,16);inp.value=v.replace(/(.{4})/g,'$1 ').trim();}
 function fmtExp(inp){let v=inp.value.replace(/\D/g,'').substring(0,4);if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);inp.value=v;}
-function addRd(d){if(!CU)return;const r={id:rstr(12),at:new Date().toISOString(),...d};DB.addRd(CU.em,r);document.getElementById('dm-rd').textContent=DB.getRds(CU.em).length;}
+
 function subNL(e){e.preventDefault();toast('✨ You\'re aligned! Weekly cosmic update arrives every Monday.','g');document.getElementById('nlE').value='';}
-function toast(msg,type){const t=document.getElementById('toast-el');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3800);}
 
-
-/* ══ GROQ API ══ */
-const GROQ_KEY='';/* Key hidden - using secure backend proxy */
-const API_URL='https://astrohand-backend.vercel.app/api/chat';
+/* ═══ NEW FEATURES ═══ */
 
 async function callAI(systemPrompt,messages,maxTokens){
   maxTokens=maxTokens||1000;
@@ -2111,12 +2525,43 @@ async function callAI(systemPrompt,messages,maxTokens){
 }
 
 /* ══ SUPABASE ══ */
-const SUPA_URL='https://joavchffhngutkiabgjx.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvYXZjaGZmaG5ndXRraWFiZ2p4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NTgyMDYsImV4cCI6MjA5ODMzNDIwNn0.jIaXFNE4W7tsTShd6ITPWM2mJRCtt-Kj3mapL8EcXS0';
-let _sb=null;
-try{if(window.supabase)_sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
 
 /* ══ GEMSTONE DATA ══ */
+const DP_G=['Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus'];
+
+function calcBirthChartG(dob,time){
+  const dt=new Date(dob);
+  const yr=dt.getFullYear(),mo=dt.getMonth(),dy=dt.getDate();
+  let th=6,tm=0;
+  if(time){const tp=time.split(':');th=parseInt(tp[0])||6;tm=parseInt(tp[1])||0;}
+  const seed=(yr+mo*31+dy*7+th*13+tm*3)%10000;
+  const mIdx=seed%12;
+  const lIdx=(mIdx+Math.floor((th*60+tm)/120))%12;
+  const nIdx=(seed*7)%27;
+  const RASHI=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  const NAK=['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','Purva Phalguni','Uttara Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','Purva Ashadha','Uttara Ashadha','Shravana','Dhanishtha','Shatabhisha','Purva Bhadrapada','Uttara Bhadrapada','Revati'];
+  const NL=['Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury'];
+  const RL=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+  const RSYM=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  let dStart=DP_G.indexOf(NL[nIdx]);if(dStart<0)dStart=0;
+  return{
+    yr,mo,dy,th,tm,seed,
+    lagnaIdx:lIdx,lagnaSign:RASHI[lIdx],lagnaSym:RSYM[lIdx],
+    moonIdx:mIdx,moonSign:RASHI[mIdx],moonSym:RSYM[mIdx],
+    sunSign:RASHI[(mIdx+6)%12],
+    nakshatra:NAK[nIdx],nakPada:(seed%4)+1,nakLord:NL[nIdx],
+    rulingPlanet:RL[lIdx],dashaStart:dStart,seed,
+    luckyDays:[['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][(dy+mo)%7]],
+    luckyGems:[['Ruby','Pearl','Red Coral','Hessonite','Yellow Sapphire','Blue Sapphire','Emerald',"Cat's Eye",'Diamond'][seed%9]],
+    luckyColors:[['Ruby Red','Pearl White','Crimson','Silver','Golden Yellow','Deep Blue','Sea Green','Orange','Purple'][seed%9]],
+    luckyNums:[(seed%9)||9],
+    luckyDir:['East','West','North','South','NE','NW','SE','SW'][seed%8],
+    luckyMetal:['Gold','Silver','Copper','Iron'][seed%4],
+    rudraksha:['5 Mukhi','7 Mukhi','1 Mukhi','14 Mukhi','3 Mukhi'][seed%5],
+    manglik:seed%3===0,kaalSarp:seed%5===0,sade:seed%7===0
+  };
+}
+
 const GEM_DATA=[
   {e:'&#128142;',n:'Ruby',pl:'Sun',bg:'linear-gradient(135deg,#7f1d1d,#dc2626)',conf:88,finger:'Ring finger, right hand',day:'Sunday',metal:'Gold',mantra:'Om Suryaya Namah'},
   {e:'&#9898;',n:'Pearl',pl:'Moon',bg:'linear-gradient(135deg,#1e3a5f,#60a5fa)',conf:82,finger:'Little finger, right hand',day:'Monday',metal:'Silver',mantra:'Om Chandraya Namah'},
@@ -2181,27 +2626,123 @@ function runRemedies(){
 
 /* ══ PDF EXPORT ══ */
 function exportKundliPDF(){
-  const name=(document.getElementById('k-rname')||{}).textContent||'User';
-  if(!name||name==='—'){toast('Generate your Kundli first!','');return;}
-  const rdob=(document.getElementById('k-rdob')||{}).textContent||'';
-  const basics=(document.getElementById('k-basics')||{}).innerText||'';
-  const lucky=(document.getElementById('k-lucky')||{}).innerText||'';
-  const doshas=(document.getElementById('k-doshas')||{}).innerText||'';
-  const dasha=(document.getElementById('k-dasha')||{}).innerText||'';
-  const pred=(document.getElementById('k-pred')||{}).textContent||'';
+  const name=(document.getElementById('k-rname')||{}).textContent||'';
+  if(!name||name==='—'||!name.trim()){toast('Please generate your Kundli first!','');return;}
   const dob=(document.getElementById('kd')||{}).value||'';
   const place=(document.getElementById('kp')||{}).value||'';
-  const sep='='.repeat(55);
-  const txt='ASTROHAND VEDIC KUNDLI REPORT\nGenerated: '+new Date().toLocaleString()+'\n'+sep+'\n\nNAME: '+name+'\n'+rdob+'\n\n'+sep+'\nBIRTH CHART\n'+sep+'\n'+basics+'\n\n'+sep+'\nLUCKY FACTORS\n'+sep+'\n'+lucky+'\n\n'+sep+'\nDOSHA ANALYSIS\n'+sep+'\n'+doshas+'\n\n'+sep+'\nMAHADASHA TIMELINE\n'+sep+'\n'+dasha+'\n\n'+sep+'\nAI PREDICTIONS\n'+sep+'\n'+pred+'\n\n'+sep+'\n(c) 2026 AstroHand Technologies Pvt. Ltd.\nastrohand.in';
+  const gender=(document.getElementById('kg')||{}).value||'';
+
+  // Read basics cleanly row by row
+  function readRows(id){
+    const el=document.getElementById(id);
+    if(!el)return '';
+    let out='';
+    el.querySelectorAll('.bi-row').forEach(row=>{
+      const spans=row.querySelectorAll('span');
+      if(spans.length>=2){
+        const k=spans[0].textContent.trim();
+        const v=spans[1].textContent.trim();
+        out+='  '+k.padEnd(28)+': '+v+'\n';
+      }
+    });
+    return out||el.innerText||'';
+  }
+
+  function readList(id){
+    const el=document.getElementById(id);
+    if(!el)return '';
+    let out='';
+    el.querySelectorAll('li').forEach(li=>{out+='  - '+li.textContent.trim()+'\n';});
+    return out||el.innerText||'';
+  }
+
+  const basics=readRows('k-basics');
+  const lucky=readRows('k-lucky');
+  const doshas=readRows('k-doshas');
+
+  // Dasha - read cleanly
+  const dashaEl=document.getElementById('k-dasha');
+  let dasha='';
+  if(dashaEl){dashaEl.querySelectorAll('.bi-row').forEach(r=>{const s=r.querySelectorAll('span');if(s.length>=2)dasha+='  '+s[0].textContent.trim().padEnd(20)+': '+s[1].textContent.trim()+'\n';});}
+
+  const pred=(document.getElementById('k-pred')||{}).textContent||'';
+  const rem=readList('k-rem');
+
+  const S='='.repeat(55);
+  const D='-'.repeat(55);
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+' at '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+
+  const lines=[
+    'ASTROHAND - PREMIUM VEDIC KUNDLI REPORT',
+    'Generated: '+dateStr,
+    'Website: astrohand.in',
+    S,'',
+    'PERSONAL DETAILS',
+    D,
+    '  Name         : '+name,
+    '  Gender       : '+(gender||'Not specified'),
+    '  Date of Birth: '+dob,
+    '  Birth Place  : '+(place||'Not specified'),
+    '',S,'',
+    'BIRTH CHART - VEDIC BASICS',
+    D,
+    basics,
+    S,'',
+    'LUCKY FACTORS',
+    D,
+    lucky,
+    S,'',
+    'DOSHA ANALYSIS',
+    D,
+    doshas,
+    S,'',
+    'VIMSHOTTARI MAHADASHA TIMELINE',
+    D,
+    dasha,
+    S,'',
+    'AI PREDICTIONS',
+    D,
+    '  '+pred.replace(/(.{80})/g,'$1\n  '),
+    '',S,'',
+    'PERSONALIZED REMEDIES',
+    D,
+    rem,
+    S,'',
+    'DISCLAIMER',
+    D,
+    '  This report is for guidance only. No outcome is guaranteed.',
+    '  Not a substitute for professional advice.',
+    '',
+    '  Copyright 2026 AstroHand Technologies Pvt. Ltd.',
+    '  Sector 18, Noida, UP 201301 | astrohand.in',
+    S
+  ];
+
+  const txt=lines.join('\n');
   const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='AstroHand_Kundli_'+name.replace(/\s+/g,'_')+'.txt';a.click();
-  toast('Kundli downloaded!','ok');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='AstroHand_Kundli_'+name.trim().replace(/\s+/g,'_')+'_'+now.toISOString().split('T')[0]+'.txt';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast('Kundli report downloaded!','ok');
 }
 function shareKundliWA(){
   const name=(document.getElementById('k-rname')||{}).textContent||'';
   const basics=(document.getElementById('k-basics')||{}).innerText||'';
   window.open('https://wa.me/?text='+encodeURIComponent('My Vedic Kundli from AstroHand AI:\n\n'+basics.split('\n').slice(0,5).join('\n')+'\n\nGet yours free: astrohand.in'),'_blank');
 }
+
+
+
+/* ═══ BOOT ═══ */
+document.addEventListener('DOMContentLoaded',async function(){
+  try{await restoreSession();}catch(e){console.log('Session:',e);}
+  try{if(typeof initAList==='function')initAList();}catch(e){}
+  try{if(typeof loadPanch==='function')loadPanch();}catch(e){}
+});
+
 
 </script>
 </body>
