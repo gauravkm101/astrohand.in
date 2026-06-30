@@ -44,6 +44,27 @@ nav{position:fixed;top:0;left:0;right:0;z-index:900;height:64px;
 .nav-user{display:none;align-items:center;gap:9px;cursor:pointer;padding:5px 12px;
   border-radius:100px;border:1px solid var(--bdr);transition:all .2s;}
 .nav-user:hover{background:rgba(200,150,60,.07);}
+.acct-wrap{position:relative;}
+.acct-trigger{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:100px;border:1px solid var(--bdr);background:transparent;cursor:pointer;transition:all .2s;font-family:Inter,sans-serif;}
+.acct-trigger:hover{background:rgba(200,150,60,.07);border-color:rgba(200,150,60,.3);}
+.acct-trigger-txt{text-align:left;}
+.acct-chev{color:var(--muted);transition:transform .2s;flex-shrink:0;}
+.acct-wrap.open .acct-chev{transform:rotate(180deg);}
+.acct-menu{position:absolute;top:calc(100% + 10px);right:0;width:260px;background:var(--card,#0d0b27);border:1px solid var(--bdr);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.45);padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .18s ease;z-index:1000;}
+.acct-wrap.open .acct-menu{opacity:1;visibility:visible;transform:translateY(0);}
+.acct-menu-id{display:flex;align-items:center;gap:10px;padding:10px 8px;}
+.acct-menu-av{width:38px;height:38px;flex-shrink:0;}
+.acct-menu-av span{font-size:.9rem;}
+.acct-menu-name{font-size:.85rem;font-weight:600;color:var(--text);line-height:1.3;}
+.acct-menu-email{font-size:.72rem;color:var(--muted);line-height:1.3;word-break:break-all;}
+.acct-menu-plan{padding:0 8px 8px;}
+.acct-menu-plan span{display:inline-block;padding:3px 11px;border-radius:100px;font-size:.62rem;font-weight:700;letter-spacing:.05em;background:rgba(200,150,60,.12);color:var(--g2c);border:1px solid rgba(200,150,60,.25);}
+.acct-menu-div{height:1px;background:var(--bdr);margin:6px 4px;}
+.acct-menu-item{display:block;padding:9px 10px;border-radius:9px;font-size:.82rem;color:var(--text);cursor:pointer;text-decoration:none;transition:background .15s;}
+.acct-menu-item:hover{background:rgba(200,150,60,.08);}
+.acct-menu-out{color:#f87171;}
+.acct-menu-out:hover{background:rgba(220,38,38,.08);}
+
 .nav-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--violet));
   display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;
   color:var(--ink);flex-shrink:0;overflow:hidden;}
@@ -267,6 +288,10 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
   cursor:pointer;font-family:'Inter',sans-serif;transition:all .25s;margin-top:4px;letter-spacing:.02em;}
 .asbtn:hover{box-shadow:0 0 24px var(--glow);}
 .asbtn:disabled{opacity:.5;cursor:not-allowed;}
+.asbtn.is-loading{opacity:.85;cursor:wait;pointer-events:none;}
+.btn-spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(4,3,15,.25);border-top-color:var(--ink);border-radius:50%;animation:btnspin .65s linear infinite;vertical-align:-2px;margin-right:7px;}
+@keyframes btnspin{to{transform:rotate(360deg);}}
+
 .adiv{display:flex;align-items:center;gap:10px;margin:15px 0;color:var(--sub);font-size:.7rem;}
 .adiv::before,.adiv::after{content:'';flex:1;height:1px;background:var(--bdr);}
 .sbts{display:flex;gap:8px;}
@@ -589,13 +614,33 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
       <button class="btn-si" onclick="router('login')">Sign In</button>
       <button class="btn-ku" onclick="router('signup')">Join Free ✦</button>
     </div>
-    <!-- Logged in -->
-    <div id="nav-in" style="display:none;align-items:center;gap:8px;" class="nav-user">
-      <div class="nav-user" onclick="router('dash')" style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:100px;border:1px solid var(--bdr);cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(200,150,60,.07)'" onmouseout="this.style.background='transparent'">
+    <!-- Logged in: account dropdown trigger -->
+    <div id="nav-in" style="display:none;position:relative;" class="acct-wrap">
+      <button id="acct-trigger" class="acct-trigger" onclick="toggleAcctMenu(event)">
         <div class="nav-av" id="nav-av"><span id="nav-av-init">A</span></div>
-        <div><div class="nav-uname" id="nav-uname">User</div><div class="nav-uplan" id="nav-uplan">Free Plan</div></div>
+        <div class="acct-trigger-txt">
+          <div class="nav-uname" id="nav-uname">User</div>
+          <div class="nav-uplan" id="nav-uplan">Free Plan</div>
+        </div>
+        <svg class="acct-chev" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div id="acct-menu" class="acct-menu">
+        <div class="acct-menu-id">
+          <div class="nav-av acct-menu-av"><span id="acct-menu-init">A</span></div>
+          <div>
+            <div class="acct-menu-name" id="acct-menu-name">User Name</div>
+            <div class="acct-menu-email" id="acct-menu-email">user@email.com</div>
+          </div>
+        </div>
+        <div class="acct-menu-plan"><span id="acct-menu-plan">Free Plan</span></div>
+        <div class="acct-menu-div"></div>
+        <a class="acct-menu-item" onclick="closeAcctMenu();router('dash')">🏠 Dashboard</a>
+        <a class="acct-menu-item" onclick="closeAcctMenu();router('dash');showPanel('profile')">👤 Edit Profile</a>
+        <a class="acct-menu-item" onclick="closeAcctMenu();router('dash');showPanel('plans')">💎 Subscription</a>
+        <a class="acct-menu-item" onclick="closeAcctMenu();router('dash');showPanel('security')">🔒 Security</a>
+        <div class="acct-menu-div"></div>
+        <a class="acct-menu-item acct-menu-out" onclick="closeAcctMenu();showSO()">🚪 Sign Out</a>
       </div>
-      <button class="btn-so" onclick="showSO()">Sign Out</button>
     </div>
     <div class="ham" onclick="toggleMnav()" id="hamBtn"><span></span><span></span><span></span></div>
   </div>
@@ -824,7 +869,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
         <a onclick="router('forgot')" style="color:var(--gold);font-size:.73rem;cursor:pointer;text-decoration:none;">Forgot password?</a>
       </div>
       <div class="gen-err" id="li-err"></div>
-      <button class="asbtn" onclick="doLogin()">Sign In ✦</button>
+      <button class="asbtn" id="login-btn" onclick="doLogin()">Sign In ✦</button>
       <div class="adiv">or continue with</div>
       <div class="sbts">
         <button class="sbt" onclick="socialLogin('Google')">🇬 Google</button>
@@ -864,7 +909,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
       </div>
       <div class="chk-row"><input type="checkbox" id="su-tc"><label for="su-tc">I agree to the <a onclick="polPage('terms')">Terms & Conditions</a> and <a onclick="polPage('privacy')">Privacy Policy</a>. I understand astrology readings are for guidance only.</label></div>
       <div class="gen-err" id="su-err"></div>
-      <button class="asbtn" onclick="doSignup()">Create Free Account ✦</button>
+      <button class="asbtn" id="signup-btn" onclick="doSignup()">Create Free Account ✦</button>
       <div class="adiv">or sign up with</div>
       <div class="sbts">
         <button class="sbt" onclick="socialLogin('Google')">🇬 Google</button>
@@ -1066,6 +1111,61 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
     </div>
   </div>
 </div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="fg4">
+    <div class="fb">
+      <div class="brand" onclick="router('home')">
+        <div class="brand-icon">🤚</div>
+        <span class="brand-name">AstroHand</span>
+      </div>
+      <p>AI-powered Vedic astrology trusted across 60+ countries. 5000 years of cosmic wisdom, delivered with precision and care.</p>
+      <div class="fsoc">
+        <a class="sb" href="https://instagram.com" target="_blank" rel="noopener">📷</a>
+        <a class="sb" href="https://twitter.com" target="_blank" rel="noopener">🐦</a>
+        <a class="sb" href="https://facebook.com" target="_blank" rel="noopener">📘</a>
+        <a class="sb" href="https://youtube.com" target="_blank" rel="noopener">▶️</a>
+      </div>
+    </div>
+    <div class="fcol">
+      <h4>Tools</h4>
+      <ul>
+        <li><a onclick="openTool('mKundli')">Free Kundli</a></li>
+        <li><a onclick="openTool('mAI')">AI Astrologers</a></li>
+        <li><a onclick="openTool('mHoro')">Horoscope</a></li>
+        <li><a onclick="openTool('mMatch')">Match Making</a></li>
+        <li><a onclick="openTool('mGem')">Gemstones</a></li>
+        <li><a onclick="openTool('mPalm')">Palm Reading</a></li>
+        <li><a onclick="openTool('mNum')">Numerology</a></li>
+        <li><a onclick="openTool('mRem')">Remedies</a></li>
+        <li><a onclick="openTool('mPanch')">Panchang</a></li>
+      </ul>
+    </div>
+    <div class="fcol">
+      <h4>Company</h4>
+      <ul>
+        <li><a onclick="polPage('about')">About Us</a></li>
+        <li><a onclick="closeAcctMenu();router('home');setTimeout(()=>document.getElementById('pricing-section').scrollIntoView({behavior:'smooth'}),50)">Pricing</a></li>
+        <li><a onclick="polPage('contact')">Contact Us</a></li>
+        <li><a href="mailto:support@astrohand.ai">support@astrohand.ai</a></li>
+      </ul>
+    </div>
+    <div class="fcol">
+      <h4>Legal</h4>
+      <ul>
+        <li><a onclick="polPage('privacy')">Privacy Policy</a></li>
+        <li><a onclick="polPage('terms')">Terms & Conditions</a></li>
+        <li><a onclick="polPage('refund')">Refund Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="disbar">✦ AstroHand provides astrology for guidance and entertainment purposes only. Predictions are interpretative and probabilistic — no outcome is guaranteed. Not a substitute for professional medical, legal, or financial advice. ✦</div>
+  <div class="fbot">
+    <span>© 2026 AstroHand Technologies Pvt. Ltd. All rights reserved.</span>
+    <span>Sector 18, Noida, UP 201301, India</span>
+  </div>
+</footer>
 
 <!-- ═══ TOOL MODALS ═══ -->
 <!-- KUNDLI -->
@@ -1614,6 +1714,22 @@ function toast(msg,type){
   t._hideTimer=setTimeout(()=>{t.classList.remove('show');},3500);
 }
 
+/* ── Button loading-state helper (used by auth forms) ── */
+function setBtnLoading(id,isLoading,loadingText,normalText){
+  const btn=document.getElementById(id);
+  if(!btn)return;
+  if(isLoading){
+    btn.dataset.normalText=btn.dataset.normalText||normalText||btn.textContent;
+    btn.disabled=true;
+    btn.classList.add('is-loading');
+    btn.innerHTML='<span class="btn-spin"></span>'+(loadingText||'Please wait…');
+  }else{
+    btn.disabled=false;
+    btn.classList.remove('is-loading');
+    btn.textContent=btn.dataset.normalText||normalText||'Submit';
+  }
+}
+
 /* ── Supabase client getter ── */
 function getSB(){
   if(_sb)return _sb;
@@ -1666,15 +1782,42 @@ function updNav(){
   const li=document.getElementById('nav-in'),lo=document.getElementById('nav-out');
   if(!li||!lo)return;
   if(CU){
-    li.style.display='flex';lo.style.display='none';
+    li.style.display='block';lo.style.display='none';
     const init=((CU.fn||'U')[0]+((CU.ln||'')[0]||'')).toUpperCase();
+    const fullName=(CU.fn+' '+(CU.ln||'')).trim()||'User';
+    const planTxt=cap(CU.plan||'free')+' Plan';
+
     const ai=document.getElementById('nav-av-init');if(ai)ai.textContent=init;
-    const un=document.getElementById('nav-uname');if(un)un.textContent=(CU.fn+' '+(CU.ln||'')).trim();
-    const up=document.getElementById('nav-uplan');if(up)up.textContent=cap(CU.plan||'free')+' Plan';
+    const un=document.getElementById('nav-uname');if(un)un.textContent=fullName;
+    const up=document.getElementById('nav-uplan');if(up)up.textContent=planTxt;
+
+    const mi=document.getElementById('acct-menu-init');if(mi)mi.textContent=init;
+    const mn=document.getElementById('acct-menu-name');if(mn)mn.textContent=fullName;
+    const me=document.getElementById('acct-menu-email');if(me)me.textContent=CU.em||'';
+    const mp=document.getElementById('acct-menu-plan');if(mp)mp.textContent=planTxt;
   }else{
     li.style.display='none';lo.style.display='flex';
+    closeAcctMenu();
   }
 }
+
+/* ── Account dropdown menu open/close ── */
+function toggleAcctMenu(ev){
+  if(ev)ev.stopPropagation();
+  const wrap=document.getElementById('nav-in');
+  if(!wrap)return;
+  wrap.classList.toggle('open');
+}
+function closeAcctMenu(){
+  const wrap=document.getElementById('nav-in');
+  if(wrap)wrap.classList.remove('open');
+}
+document.addEventListener('click',function(ev){
+  const wrap=document.getElementById('nav-in');
+  if(wrap&&wrap.classList.contains('open')&&!wrap.contains(ev.target)){
+    wrap.classList.remove('open');
+  }
+});
 
 /* ── Dashboard panel switcher ── */
 function showPanel(p){
@@ -1696,6 +1839,34 @@ function enterDash(){
   router('dash');
   if(!CU)return;
   updNav();
+
+  // Populate dashboard sidebar identity
+  const init=((CU.fn||'U')[0]+((CU.ln||'')[0]||'')).toUpperCase();
+  const fullName=(CU.fn+' '+(CU.ln||'')).trim()||'User';
+  const dav=document.getElementById('d-av-txt');if(dav)dav.textContent=init;
+  const dun=document.getElementById('d-un');if(dun)dun.textContent=fullName;
+  const dem=document.getElementById('d-em');if(dem)dem.textContent=CU.em||'';
+  const dpl=document.getElementById('d-plan');
+  if(dpl){
+    dpl.textContent=cap(CU.plan||'free')+' Plan';
+    dpl.className='planbdg '+(CU.plan==='gold'?'pg2':CU.plan==='vip'?'pv':'pf');
+  }
+  if(CU.avatar){
+    const avWrap=dav?dav.parentElement:null;
+    if(avWrap&&!avWrap.querySelector('img')){
+      dav.style.display='none';
+      const img=document.createElement('img');
+      img.src=CU.avatar;
+      avWrap.appendChild(img);
+    }
+  }
+
+  // Activity stats
+  const rds=DB.getRds(CU.em);
+  const dmrd=document.getElementById('dm-rd');if(dmrd)dmrd.textContent=rds.length;
+  const days=Math.max(1,Math.ceil((Date.now()-new Date(CU.joinedAt||Date.now()).getTime())/86400000));
+  const dmdy=document.getElementById('dm-dy');if(dmdy)dmdy.textContent=days;
+
   showPanel('home');
 }
 
@@ -1780,6 +1951,7 @@ async function doSignup(){
   if(tc&&!tc.checked){showErr('su-err','Please agree to the Terms & Privacy Policy.');return;}
 
   const sb=getSB();
+  setBtnLoading('signup-btn',true,'Creating account…');
 
   if(sb){
     try{
@@ -1788,23 +1960,29 @@ async function doSignup(){
         options:{data:{first_name:fn,last_name:ln,gender:gn,dob:db,phone:ph}}
       });
       if(error)throw new Error(error.message);
-      await sb.from('profiles').upsert({
+
+      const {error:profErr}=await sb.from('profiles').upsert({
         id:data.user.id,email:em,first_name:fn,last_name:ln,
         gender:gn,dob:db,phone:ph,plan:'free',joined_at:new Date().toISOString()
       });
+      if(profErr)console.warn('Profile creation warning:',profErr.message);
+
       toast('Account created! Check your email to verify.','ok');
-      const localUser={fn,ln,em,ph,gn,dob:db,pw:hp(pw),plan:'free',joinedAt:new Date().toISOString()};
+      const localUser={id:data.user.id,fn,ln,em,ph,gn,dob:db,pw:hp(pw),plan:'free',joinedAt:new Date().toISOString()};
       DB.setU(em,localUser);
-      CU=localUser;DB.setSess({em,tok:'sb-pending',at:Date.now(),rem:true});
+      CU=localUser;DB.setSess({em,tok:data.session?.access_token||'sb-pending',at:Date.now(),rem:true});
+      setBtnLoading('signup-btn',false);
       enterDash();
       return;
     }catch(err){
+      setBtnLoading('signup-btn',false);
       showErr('su-err',err.message||'Signup failed. Please try again.');
       return;
     }
   }
 
   // Fallback: localStorage-only signup with OTP verification screen
+  setBtnLoading('signup-btn',false);
   if(DB.getU(em)){showErr('su-err','An account with this email already exists.');return;}
   pendSU={fn,ln,em,ph,gn,dob:db,pw:hp(pw),plan:'free',joinedAt:new Date().toISOString()};
   OTP=rstr(6,'0123456789');
@@ -1862,12 +2040,30 @@ async function doLogin(){
   if(!pw){showErr('li-err','Please enter your password.');return;}
 
   const sb=getSB();
+  setBtnLoading('login-btn',true,'Signing in…');
 
   if(sb){
     try{
       const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
       if(error)throw new Error(error.message==='Invalid login credentials'?'Incorrect email or password.':error.message);
-      const {data:profile}=await sb.from('profiles').select('*').eq('id',data.user.id).single();
+
+      // Fetch profile; self-heal if missing (e.g. signup upsert previously failed/was blocked by RLS)
+      let profile=null;
+      const {data:pData,error:pErr}=await sb.from('profiles').select('*').eq('id',data.user.id).maybeSingle();
+      if(pErr&&pErr.code!=='PGRST116'){console.warn('Profile fetch error:',pErr);}
+      profile=pData;
+
+      if(!profile){
+        const fallbackName=data.user.user_metadata?.first_name||em.split('@')[0];
+        const fallbackLast=data.user.user_metadata?.last_name||'';
+        const {data:created}=await sb.from('profiles').upsert({
+          id:data.user.id,email:em,
+          first_name:fallbackName,last_name:fallbackLast,
+          plan:'free',joined_at:data.user.created_at||new Date().toISOString()
+        }).select().maybeSingle().catch(()=>({data:null}));
+        profile=created;
+      }
+
       CU={
         id:data.user.id,em:data.user.email,
         fn:profile?.first_name||em.split('@')[0],
@@ -1879,15 +2075,18 @@ async function doLogin(){
       if(rem)DB.setSess({em:CU.em,tok:data.session?.access_token||'sb',at:Date.now(),rem:true});
       else sessionStorage.setItem('ah_sess',JSON.stringify({em:CU.em,at:Date.now()}));
       toast('Welcome back, '+CU.fn+'! ✨','ok');
+      setBtnLoading('login-btn',false);
       enterDash();
       return;
     }catch(err){
+      setBtnLoading('login-btn',false);
       showErr('li-err',err.message||'Login failed. Please try again.');
       return;
     }
   }
 
   // Fallback: localStorage-only login
+  setBtnLoading('login-btn',false);
   const user=DB.getU(em);
   if(!user){showErr('li-err','No account found with this email. Please sign up first.');return;}
   if(user.pw!==hp(pw)){showErr('li-err','Incorrect password. Please try again.');return;}
@@ -2118,7 +2317,9 @@ async function restoreSession(){
       const {data}=await sb.auth.getSession();
       if(data?.session){
         const user=data.session.user;
-        const {data:profile}=await sb.from('profiles').select('*').eq('id',user.id).single();
+        const {data:profile,error:pErr}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+        if(pErr)console.warn('Session profile fetch warning:',pErr.message);
+
         CU={
           id:user.id,em:user.email,
           fn:profile?.first_name||user.user_metadata?.full_name?.split(' ')[0]||user.email.split('@')[0],
@@ -2130,7 +2331,7 @@ async function restoreSession(){
         enterDash();
         return;
       }
-    }catch(e){}
+    }catch(e){console.warn('Session restore error:',e.message||e);}
   }
 
   // Try localStorage session
