@@ -560,8 +560,21 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
   #a-list>div{min-width:150px!important;flex-shrink:0;}
   #c-msgs{max-height:320px!important;}
 }
+
+/* ══ PRICING CARDS ══ */
+.price-card{background:var(--card);border:1px solid var(--bdr);border-radius:20px;padding:24px 20px;position:relative;display:flex;flex-direction:column;}
+.price-popular{border-color:var(--gold);box-shadow:0 0 30px rgba(200,150,60,.15);}
+.price-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),var(--g2c));color:var(--ink);font-size:.6rem;font-weight:700;padding:4px 14px;border-radius:100px;letter-spacing:.05em;white-space:nowrap;}
+.price-name{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g2c);margin-bottom:8px;}
+.price-amt{font-size:1.9rem;font-weight:800;color:var(--text);margin-bottom:18px;}
+.price-amt span{font-size:.8rem;color:var(--muted);font-weight:400;}
+.price-feat{list-style:none;padding:0;margin:0 0 20px;flex:1;}
+.price-feat li{font-size:.8rem;color:var(--sub);padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.price-btn{width:100%;padding:12px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--gold),var(--g2c));color:var(--ink);font-weight:700;font-size:.85rem;cursor:pointer;}
+.price-btn-out{background:transparent;border:1px solid var(--bdr);color:var(--muted);cursor:default;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 
@@ -575,7 +588,8 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
   </div>
   <ul style="display:flex;align-items:center;gap:4px;list-style:none;" class="nav-links-d">
     <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="openTool('mKundli')">Free Kundli</a></li>
-    <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="openTool('mAI')">AI Astrologers</a></li>
+    <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="openTool('mAI')">AI Astrologers</a>
+  <a onclick="openTool('mPricing')">Pricing</a></li>
     <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="openTool('mHoro')">Horoscope</a></li>
     <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="openTool('mMatch')">Match Making</a></li>
     <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="polPage('about')">About</a></li>
@@ -602,6 +616,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
 <div class="mnav z" id="mnav">
   <a onclick="closeMnav();openTool('mKundli')">📜 Free Kundli</a>
   <a onclick="closeMnav();openTool('mAI')">🤖 AI Astrologers</a>
+  <a onclick="closeMnav();openTool('mPricing')">💎 Pricing</a>
   <a onclick="closeMnav();openTool('mHoro')">♈ Horoscope</a>
   <a onclick="closeMnav();openTool('mMatch')">💍 Match Making</a>
   <a onclick="closeMnav();openTool('mGem')">💎 Gemstones</a>
@@ -1143,6 +1158,18 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
   #a-list>div{min-width:150px!important;flex-shrink:0;}
   #c-msgs{max-height:320px!important;}
 }
+
+/* ══ PRICING CARDS ══ */
+.price-card{background:var(--card);border:1px solid var(--bdr);border-radius:20px;padding:24px 20px;position:relative;display:flex;flex-direction:column;}
+.price-popular{border-color:var(--gold);box-shadow:0 0 30px rgba(200,150,60,.15);}
+.price-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),var(--g2c));color:var(--ink);font-size:.6rem;font-weight:700;padding:4px 14px;border-radius:100px;letter-spacing:.05em;white-space:nowrap;}
+.price-name{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g2c);margin-bottom:8px;}
+.price-amt{font-size:1.9rem;font-weight:800;color:var(--text);margin-bottom:18px;}
+.price-amt span{font-size:.8rem;color:var(--muted);font-weight:400;}
+.price-feat{list-style:none;padding:0;margin:0 0 20px;flex:1;}
+.price-feat li{font-size:.8rem;color:var(--sub);padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.price-btn{width:100%;padding:12px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--gold),var(--g2c));color:var(--ink);font-weight:700;font-size:.85rem;cursor:pointer;}
+.price-btn-out{background:transparent;border:1px solid var(--bdr);color:var(--muted);cursor:default;}
 </style>
         <div id="kp-ov">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
@@ -1201,6 +1228,18 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
   #a-list>div{min-width:150px!important;flex-shrink:0;}
   #c-msgs{max-height:320px!important;}
 }
+
+/* ══ PRICING CARDS ══ */
+.price-card{background:var(--card);border:1px solid var(--bdr);border-radius:20px;padding:24px 20px;position:relative;display:flex;flex-direction:column;}
+.price-popular{border-color:var(--gold);box-shadow:0 0 30px rgba(200,150,60,.15);}
+.price-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),var(--g2c));color:var(--ink);font-size:.6rem;font-weight:700;padding:4px 14px;border-radius:100px;letter-spacing:.05em;white-space:nowrap;}
+.price-name{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g2c);margin-bottom:8px;}
+.price-amt{font-size:1.9rem;font-weight:800;color:var(--text);margin-bottom:18px;}
+.price-amt span{font-size:.8rem;color:var(--muted);font-weight:400;}
+.price-feat{list-style:none;padding:0;margin:0 0 20px;flex:1;}
+.price-feat li{font-size:.8rem;color:var(--sub);padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.price-btn{width:100%;padding:12px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--gold),var(--g2c));color:var(--ink);font-weight:700;font-size:.85rem;cursor:pointer;}
+.price-btn-out{background:transparent;border:1px solid var(--bdr);color:var(--muted);cursor:default;}
 </style>
         </div>
         <div id="kp-pl" style="display:none;"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;" id="k-planets"></div></div>
@@ -1409,6 +1448,18 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
   #a-list>div{min-width:150px!important;flex-shrink:0;}
   #c-msgs{max-height:320px!important;}
 }
+
+/* ══ PRICING CARDS ══ */
+.price-card{background:var(--card);border:1px solid var(--bdr);border-radius:20px;padding:24px 20px;position:relative;display:flex;flex-direction:column;}
+.price-popular{border-color:var(--gold);box-shadow:0 0 30px rgba(200,150,60,.15);}
+.price-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),var(--g2c));color:var(--ink);font-size:.6rem;font-weight:700;padding:4px 14px;border-radius:100px;letter-spacing:.05em;white-space:nowrap;}
+.price-name{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g2c);margin-bottom:8px;}
+.price-amt{font-size:1.9rem;font-weight:800;color:var(--text);margin-bottom:18px;}
+.price-amt span{font-size:.8rem;color:var(--muted);font-weight:400;}
+.price-feat{list-style:none;padding:0;margin:0 0 20px;flex:1;}
+.price-feat li{font-size:.8rem;color:var(--sub);padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.price-btn{width:100%;padding:12px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--gold),var(--g2c));color:var(--ink);font-weight:700;font-size:.85rem;cursor:pointer;}
+.price-btn-out{background:transparent;border:1px solid var(--bdr);color:var(--muted);cursor:default;}
 </style>
     <button class="gbtn" id="p-btn" onclick="doPalm()" style="margin-top:14px;">✨ Reveal My Palm Reading</button>
     <div id="p-res" style="display:none;margin-top:18px;">
@@ -1545,6 +1596,72 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
     <div style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g3);" id="rd-title">Reading</div>
     <div style="font-size:.72rem;color:var(--muted);margin-top:3px;" id="rd-meta"></div>
     <div class="rd-body"><div class="rbox" style="margin-top:14px;"><p class="rtxt" id="rd-txt"></p></div></div>
+  </div>
+</div>
+<!-- PRICING MODAL -->
+<div class="ov" id="mPricing" onclick="cov(event,'mPricing')">
+  <div class="mbox" style="max-width:1000px;">
+    <button class="mc" onclick="closeOv('mPricing')">✕</button>
+    <div class="mt">💎 Choose Your Cosmic Journey</div>
+    <div class="ms">Unlock deeper insights with AstroHand premium plans. Cancel anytime.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:20px;">
+
+      <div class="price-card">
+        <div class="price-name">Free</div>
+        <div class="price-amt">₹0<span>/forever</span></div>
+        <ul class="price-feat">
+          <li>✓ 1 Free Kundli</li>
+          <li>✓ Daily Horoscope</li>
+          <li>✓ 3 AI chats/day</li>
+          <li>✓ Basic Numerology</li>
+        </ul>
+        <button class="price-btn price-btn-out" onclick="closeOv('mPricing')">Current Plan</button>
+      </div>
+
+      <div class="price-card price-popular">
+        <div class="price-badge">MOST POPULAR</div>
+        <div class="price-name">Silver</div>
+        <div class="price-amt">₹199<span>/month</span></div>
+        <ul class="price-feat">
+          <li>✓ Unlimited Kundlis</li>
+          <li>✓ All 8 AI Astrologers</li>
+          <li>✓ Match Making Reports</li>
+          <li>✓ Unlimited AI chats</li>
+          <li>✓ PDF Downloads</li>
+        </ul>
+        <button class="price-btn" onclick="procPay('silver',199)">Choose Silver</button>
+      </div>
+
+      <div class="price-card">
+        <div class="price-name">Gold</div>
+        <div class="price-amt">₹499<span>/month</span></div>
+        <ul class="price-feat">
+          <li>✓ Everything in Silver</li>
+          <li>✓ AI Palm Reading</li>
+          <li>✓ Gemstone Recommendations</li>
+          <li>✓ Personalized Remedies</li>
+          <li>✓ Priority AI Responses</li>
+        </ul>
+        <button class="price-btn" onclick="procPay('gold',499)">Choose Gold</button>
+      </div>
+
+      <div class="price-card">
+        <div class="price-name">Premium</div>
+        <div class="price-amt">₹999<span>/month</span></div>
+        <ul class="price-feat">
+          <li>✓ Everything in Gold</li>
+          <li>✓ Detailed Yearly Forecast</li>
+          <li>✓ Career & Finance Reports</li>
+          <li>✓ Priority Support</li>
+          <li>✓ Early access to new features</li>
+        </ul>
+        <button class="price-btn" onclick="procPay('premium',999)">Choose Premium</button>
+      </div>
+
+    </div>
+    <p style="text-align:center;margin-top:18px;font-size:.75rem;color:var(--muted);">
+      🔒 Secure payments via Razorpay · UPI, Cards, Netbanking accepted · Cancel anytime
+    </p>
   </div>
 </div>
 
@@ -2152,7 +2269,81 @@ function showSO(){
   else router('login');
 }
 function toggle2FA(){}
-function procPay(plan){toast('Payment gateway coming soon! Contact: nitish@astrohand.in','');}
+async function procPay(plan,amount){
+  if(!CU){toast('Please sign in first to upgrade your plan.','');router('login');closeOv('mPricing');return;}
+
+  const RAZORPAY_KEY='RAZORPAY_KEY_ID_HERE'; /* Get from razorpay.com dashboard after KYC approval */
+
+  if(RAZORPAY_KEY.includes('HERE')){
+    toast('Payment gateway is being activated. Please check back soon!','');
+    return;
+  }
+
+  try{
+    // Create order via backend (hides Razorpay secret key)
+    const orderRes=await fetch('https://astrohand-backend.vercel.app/api/create-order',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({amount:amount*100,plan,email:CU.em})
+    });
+    const order=await orderRes.json();
+    if(!order.id)throw new Error('Could not create order');
+
+    const options={
+      key:RAZORPAY_KEY,
+      amount:amount*100,
+      currency:'INR',
+      name:'AstroHand',
+      description:cap(plan)+' Plan Subscription',
+      image:'https://astrohand.in/logo.png',
+      order_id:order.id,
+      handler:async function(response){
+        // Verify payment via backend
+        const verifyRes=await fetch('https://astrohand-backend.vercel.app/api/verify-payment',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            razorpay_payment_id:response.razorpay_payment_id,
+            razorpay_order_id:response.razorpay_order_id,
+            razorpay_signature:response.razorpay_signature,
+            plan,email:CU.em
+          })
+        });
+        const verify=await verifyRes.json();
+        if(verify.success){
+          CU.plan=plan;
+          const sb=getSB();
+          if(sb&&CU.id){
+            await sb.from('profiles').update({plan}).eq('id',CU.id).catch(()=>{});
+          }
+          const users=DB.g('users')||{};
+          if(users[CU.em])users[CU.em].plan=plan;
+          DB.s('users',users);
+          toast('🎉 Welcome to '+cap(plan)+' plan!','ok');
+          closeOv('mPricing');
+          enterDash();
+        }else{
+          toast('Payment verification failed. Please contact support.','');
+        }
+      },
+      prefill:{
+        name:(CU.fn+' '+(CU.ln||'')).trim(),
+        email:CU.em,
+        contact:CU.ph||''
+      },
+      theme:{color:'#c8963c'},
+      modal:{ondismiss:function(){toast('Payment cancelled.','');}}
+    };
+
+    const rzp=new Razorpay(options);
+    rzp.on('payment.failed',function(resp){
+      toast('Payment failed: '+(resp.error?.description||'Please try again.'),'');
+    });
+    rzp.open();
+  }catch(err){
+    toast(err.message||'Could not process payment. Please try again.','');
+  }
+}
 function polPage(p){
   document.querySelectorAll('.pol-page').forEach(x=>x.classList.remove('on'));
   const el=document.getElementById('pol-'+p);
