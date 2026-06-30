@@ -1993,9 +1993,7 @@ let _adInterstitialTimer=null;
 
 function shouldShowAd(){
   if(isPaid())return false; // paid users never see ads
-  const n=parseInt(sessionStorage.getItem('ah_ad_count')||'0',10)+1;
-  sessionStorage.setItem('ah_ad_count',n);
-  return (n%3)===1; // show on 1st, 4th, 7th... tool open per session
+  return true; // free users: show ad every time a tool is opened
 }
 
 function openTool(id){
