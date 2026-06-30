@@ -561,7 +561,6 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
   #c-msgs{max-height:320px!important;}
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -1581,30 +1580,14 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
 
 
 
+
 <script>
 
 /* ══ CANVAS ══ */
 (()=>{const c=document.getElementById('bg'),x=c.getContext('2d');let W,H;const rs=()=>{W=c.width=innerWidth;H=c.height=innerHeight;};rs();addEventListener('resize',rs);const st=Array.from({length:220},()=>({x:Math.random()*8e3,y:Math.random()*8e3,r:Math.random()*1.1,o:Math.random()*.55+.06,s:Math.random()*.32+.04}));let t=0;const d=()=>{x.clearRect(0,0,W,H);[[W*.4,H*.3,'124,58,237',.04],[W*.7,H*.6,'200,150,60',.03],[W*.2,H*.7,'225,29,120',.024]].forEach(([px,py,col,a])=>{const g=x.createRadialGradient(px,py,0,px,py,260);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,'transparent');x.fillStyle=g;x.fillRect(0,0,W,H);});st.forEach(s=>{s.o+=(Math.random()-.5)*.022;s.o=Math.max(.04,Math.min(.68,s.o));const sx=(s.x+t*s.s*.25)%W,sy=(s.y+t*s.s*.12)%H;x.beginPath();x.arc(sx,sy,s.r,0,Math.PI*2);x.fillStyle=`rgba(245,235,200,${s.o})`;x.fill();});t++;requestAnimationFrame(d);};d();})();
 
 /* ══ STORAGE ══ */
-/* ══ SUPABASE CONFIG ══ */
-/* Sign up free at supabase.com → create project → get URL + anon key */
-const SUPA_URL = 'https://joavchffhngutkiabgjx.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvYXZjaGZmaG5ndXRraWFiZ2p4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NTgyMDYsImV4cCI6MjA5ODMzNDIwNn0.jIaXFNE4W7tsTShd6ITPWM2mJRCtt-Kj3mapL8EcXS0';
-/* ↑ Replace these after creating your free Supabase project ↑ */
-
-let supabase = null;
-try {
-  if(SUPA_URL.includes('supabase.co') && window.supabase) {
-    supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-  }
-} catch(e) { console.log('Supabase init:', e); }
-
-/* DB: localStorage fallback if Supabase not configured yet */
 const DB={
-  g:k=>{try{return JSON.parse(localStorage.getItem('ah_'+k));}catch{return null;}},
-  s:(k,v)=>localStorage.setItem('ah_'+k,JSON.stringify(v)),
-  d:k=>localStorage.removeItem('ah_'+k),
   g:k=>{try{return JSON.parse(localStorage.getItem('ah_'+k));}catch{return null;}},
   s:(k,v)=>localStorage.setItem('ah_'+k,JSON.stringify(v)),
   d:k=>localStorage.removeItem('ah_'+k),
@@ -1661,57 +1644,34 @@ function toggleMnav(){document.getElementById('mnav').classList.toggle('open');}
 function closeMnav(){document.getElementById('mnav').classList.remove('open');}
 
 /* ══ SIGN UP ══ */
-async function doSignup(){
-  const fn=v('su-fn').trim(),ln=v('su-ln').trim(),em=v('su-em').toLowerCase().trim(),
-        pw=v('su-pw'),cpw=v('su-cpw'),gen=v('su-gen'),dob=v('su-dob');
-  if(!fn){showErr('su-err','Please enter your first name.');return;}
-  if(!isEmail(em)){showErr('su-err','Please enter a valid email.');return;}
-  if(pw.length<8){showErr('su-err','Password must be at least 8 characters.');return;}
-  if(pw!==cpw){showErr('su-err','Passwords do not match.');return;}
-  
-  const btn=document.getElementById('su-btn');
-  btn.disabled=true; btn.textContent='Creating account…';
-  
-  try {
-    if(supabase) {
-      // Real Supabase signup
-      const {data,error} = await supabase.auth.signUp({
-        email: em, password: pw,
-        options: { data: { first_name:fn, last_name:ln, gender:gen, dob:dob } }
-      });
-      if(error) throw new Error(error.message);
-      
-      // Create profile record
-      await supabase.from('profiles').upsert({
-        id: data.user.id, email: em,
-        first_name: fn, last_name: ln,
-        gender: gen, dob: dob,
-        plan: 'free', joined_at: new Date().toISOString()
-      });
-      
-      pendSU = {fn,ln,em,pw:hp(pw),gen,dob,plan:'free',joinedAt:new Date().toISOString()};
-      OTP = rstr(6,'0123456789');
-      console.log('[DEV OTP]', OTP);
-      toast('📧 Check your email to verify your account!','ok');
-      router('otp');
-      startOtpTimer();
-    } else {
-      // localStorage fallback
-      const users=DB.g('users')||{};
-      if(users[em]){showErr('su-err','An account with this email already exists.');btn.disabled=false;btn.textContent='Create Account';return;}
-      pendSU={fn,ln,em,pw:hp(pw),gen,dob,plan:'free',joinedAt:new Date().toISOString()};
-      OTP=rstr(6,'0123456789');
-      console.log('[DEV OTP]', OTP);
-      router('otp');startOtpTimer();
-    }
-    clearErr('su-err');
-  } catch(err) {
-    showErr('su-err', err.message || 'Signup failed. Please try again.');
-  }
-  btn.disabled=false; btn.textContent='Create Account';
+function doSignup(){
+  const fn=v('su-fn'),ln=v('su-ln'),em=v('su-em').toLowerCase().trim();
+  const db=v('su-db'),pw=v('su-pw'),cp=v('su-cp');
+  const tc=document.getElementById('su-tc').checked;
+  const err=[];
+  if(!fn||!ln)err.push('Please enter your first and last name.');
+  if(!isEmail(em))err.push('Please enter a valid email address.');
+  if(!db)err.push('Please enter your date of birth.');
+  if(pw.length<8)err.push('Password must be at least 8 characters.');
+  if(pw!==cp)err.push('Passwords do not match.');
+  if(!tc)err.push('Please accept the Terms & Conditions.');
+  if(err.length){showErr('su-err',err[0]);return;}
+  if(DB.getU(em)){showErr('su-err','An account already exists with this email. Please sign in.');return;}
+  pendSU={fn,ln,em,ph:v('su-ph'),db,gn:v('su-gn'),pw:hp(pw),plan:'free',joinedAt:new Date().toISOString(),avatar:''};
+  OTP=genOTP();
+  console.log('%c🔑 AstroHand OTP (demo): '+OTP,'color:#e8c46a;font-size:16px;font-weight:bold;');
+  clearErr('su-err');
+  document.getElementById('otp-em').textContent=em;
+  router('otp');startOTPTimer(60);
+  toast('📧 OTP sent! Check browser console (F12) for demo code.','g');
 }
 
-
+/* ══ OTP ══ */
+function obIn(i){const v=document.getElementById('ob'+i).value.replace(/\D/g,'');document.getElementById('ob'+i).value=v;if(v&&i<5)document.getElementById('ob'+(i+1)).focus();}
+function obKey(e,i){if(e.key==='Backspace'&&!document.getElementById('ob'+i).value&&i>0)document.getElementById('ob'+(i-1)).focus();}
+function rpIn(i){const v=document.getElementById('rp'+i).value.replace(/\D/g,'');document.getElementById('rp'+i).value=v;if(v&&i<5)document.getElementById('rp'+(i+1)).focus();}
+function getOTP(){return[0,1,2,3,4,5].map(i=>document.getElementById('ob'+i).value).join('');}
+function getRP(){return[0,1,2,3,4,5].map(i=>document.getElementById('rp'+i).value).join('');}
 function verifyOTP(){
   const entered=getOTP();
   if(entered.length!==6){showErr('otp-err','Please enter all 6 digits.');return;}
@@ -1729,128 +1689,271 @@ function startOTPTimer(sec){clearOTPTimer();let r=sec;document.getElementById('o
 function clearOTPTimer(){if(otpTmr){clearInterval(otpTmr);otpTmr=null;}}
 
 /* ══ LOGIN ══ */
-async function doLogin(){
+function doLogin(){
   const em=v('li-em').toLowerCase().trim(),pw=v('li-pw'),rem=document.getElementById('li-rem').checked;
   if(!isEmail(em)){showErr('li-err','Please enter a valid email address.');return;}
   if(!pw){showErr('li-err','Please enter your password.');return;}
-  
-  const btn=document.getElementById('li-btn');
-  btn.disabled=true;btn.textContent='Signing in…';
-  
-  try {
-    if(supabase) {
-      // Real Supabase auth
-      const {data,error} = await supabase.auth.signInWithPassword({email:em,password:pw});
-      if(error) throw new Error(error.message);
-      
-      // Get profile from DB
-      const {data:profile} = await supabase.from('profiles').select('*').eq('id',data.user.id).single();
-      CU = {
-        id: data.user.id,
-        em: data.user.email,
-        fn: profile?.first_name || data.user.email.split('@')[0],
-        ln: profile?.last_name || '',
-        plan: profile?.plan || 'free',
-        joinedAt: data.user.created_at,
-        avatar: profile?.avatar || null
-      };
-      if(rem) DB.s('sess',{em:CU.em,tok:data.session.access_token,at:Date.now()});
-    } else {
-      // localStorage fallback
-      const user=DB.getU(em);
-      if(!user){showErr('li-err','No account found. Please sign up first.');btn.disabled=false;btn.textContent='Sign In';return;}
-      if(user.pw!==hp(pw)){showErr('li-err','Incorrect password.');btn.disabled=false;btn.textContent='Sign In';return;}
-      CU=user;
-      if(rem) DB.setSess({em:user.em,tok:rstr(28),at:Date.now(),rem});
-    }
-    clearErr('li-err');
-    toast('✨ Welcome back, '+CU.fn+'!','ok');
-    enterDash();
-  } catch(err) {
-    showErr('li-err', err.message || 'Login failed. Please try again.');
-  }
-  btn.disabled=false; btn.textContent='Sign In';
+  const user=DB.getU(em);
+  if(!user){showErr('li-err','No account found with this email. Please sign up first.');return;}
+  if(user.pw!==hp(pw)){showErr('li-err','Incorrect password. Please try again or reset your password.');document.getElementById('li-pw').classList.add('e');return;}
+  clearErr('li-err');document.getElementById('li-pw').classList.remove('e');
+  CU=user;DB.setSess({em:user.em,tok:rstr(28),at:Date.now(),rem});
+  toast('✨ Welcome back, '+CU.fn+'!','ok');enterDash();
 }
-
 
 /* ══ SOCIAL LOGIN ══ */
-async function socialLogin(provider){
-  if(!supabase){
-    toast('Social login requires Supabase setup. Please use email/password.','');
-    return;
-  }
-  try {
-    const {error} = await supabase.auth.signInWithOAuth({
-      provider: provider, // 'google', 'apple', 'facebook'
-      options: { redirectTo: window.location.origin }
-    });
-    if(error) throw new Error(error.message);
-  } catch(err) {
-    toast(err.message || 'Social login failed.','');
-  }
+function socialLogin(prov){
+  const em=`demo.${prov.toLowerCase()}@astrohand.ai`;
+  let u=DB.getU(em);
+  if(!u){u={fn:prov,ln:'User',em,ph:'',db:'1990-06-01',gn:'Other',pw:'social_'+prov,plan:'free',joinedAt:new Date().toISOString(),avatar:''};DB.setU(em,u);}
+  CU=u;DB.setSess({em,tok:rstr(28),at:Date.now(),rem:true,social:prov});
+  toast('✨ Signed in with '+prov+'!','ok');enterDash();
 }
 
-/* Handle OAuth redirect callback */
-async function handleAuthCallback(){
-  if(!supabase) return;
-  try {
-    const {data,error} = await supabase.auth.getSession();
-    if(data?.session && !CU) {
-      const user = data.session.user;
-      const {data:profile} = await supabase.from('profiles').select('*').eq('id',user.id).single();
-      
-      if(!profile) {
-        // New social user - create profile
-        const name = user.user_metadata?.full_name || user.email.split('@')[0];
-        const parts = name.split(' ');
-        await supabase.from('profiles').upsert({
-          id: user.id, email: user.email,
-          first_name: parts[0], last_name: parts.slice(1).join(' ')||'',
-          plan: 'free', joined_at: new Date().toISOString()
-        });
-      }
-      
-      CU = {
-        id: user.id, em: user.email,
-        fn: profile?.first_name || user.user_metadata?.full_name?.split(' ')[0] || user.email.split('@')[0],
-        ln: profile?.last_name || '',
-        plan: profile?.plan || 'free',
-        joinedAt: user.created_at,
-        avatar: user.user_metadata?.avatar_url || null
-      };
-      toast('✨ Welcome, '+CU.fn+'!','ok');
-      enterDash();
-    }
-  } catch(e){ console.log('Auth callback:', e); }
+/* ══ FORGOT / RESET ══ */
+function doForgot(){
+  const em=v('fp-em').toLowerCase().trim();
+  if(!isEmail(em)){showErr('fp-err','Please enter a valid email address.');return;}
+  if(!DB.getU(em)){showErr('fp-err','No account found with this email.');return;}
+  clearErr('fp-err');pendReset=em;OTP=genOTP();
+  console.log('%c🔑 Reset OTP: '+OTP,'color:#e8c46a;font-size:16px;font-weight:bold;');
+  toast('📧 Reset code sent! Check browser console for demo code.','g');router('reset');
+}
+function doReset(){
+  const code=getRP(),np=v('rp-pw'),cp=v('rp-cp');
+  if(code.length!==6){showErr('rp-err','Please enter all 6 digits.');return;}
+  if(code!==OTP){showErr('rp-err','Incorrect reset code. Please try again.');return;}
+  if(np.length<8){showErr('rp-err','New password must be at least 8 characters.');return;}
+  if(np!==cp){showErr('rp-err','Passwords do not match.');return;}
+  clearErr('rp-err');
+  const u=DB.getU(pendReset);u.pw=hp(np);DB.setU(pendReset,u);
+  toast('✅ Password reset! Please sign in.','ok');router('login');
 }
 
-/* Auto-restore session on page load */
-async function restoreSession(){
-  if(supabase){
-    const {data} = await supabase.auth.getSession().catch(()=>({data:null}));
-    if(data?.session){
-      const user = data.session.user;
-      const {data:profile} = await supabase.from('profiles').select('*').eq('id',user.id).single().catch(()=>({data:null}));
-      CU = {
-        id: user.id, em: user.email,
-        fn: profile?.first_name || user.email.split('@')[0],
-        ln: profile?.last_name || '',
-        plan: profile?.plan || 'free',
-        joinedAt: user.created_at
-      };
-      enterDash();
-      return;
-    }
-  }
-  // localStorage fallback session
-  const sess = DB.getSess?.() || DB.g('sess');
-  if(sess?.em){
-    const user = DB.getU?.(sess.em);
-    if(user){ CU=user; enterDash(); }
-  }
+/* ══ DASHBOARD ══ */
+function enterDash(){
+  router('dash');
+  const init=((CU.fn||'U')[0]+(CU.ln||'')[0]).toUpperCase();
+  document.getElementById('d-av-txt').textContent=init;
+  document.getElementById('d-un').textContent=CU.fn+' '+(CU.ln||'');
+  document.getElementById('d-em').textContent=CU.em;
+  const pb=document.getElementById('d-plan');pb.textContent=cap(CU.plan)+' Plan';
+  pb.className='planbdg '+(CU.plan==='free'?'pf':CU.plan==='silver'?'ps':CU.plan==='gold'?'pg2':'pv');
+  const days=Math.max(1,Math.round((Date.now()-new Date(CU.joinedAt).getTime())/86400000));
+  document.getElementById('dm-dy').textContent=days;
+  const rds=DB.getRds(CU.em);document.getElementById('dm-rd').textContent=rds.length;
+  showPanel('home');
+}
+function showPanel(p){
+  document.querySelectorAll('.dpnl').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.d-nav-i').forEach(x=>x.classList.remove('on'));
+  document.getElementById('dp-'+p).classList.add('on');
+  const map={home:0,readings:1,profile:2,plans:3,security:4};
+  if(map[p]!==undefined)document.querySelectorAll('.d-nav-i')[map[p]].classList.add('on');
+  if(p==='home')renderHome();
+  if(p==='readings')renderReadings();
+  if(p==='profile')fillProfile();
+  if(p==='plans')renderPlans();
 }
 
+/* ══ DASH HOME ══ */
+function renderHome(){
+  const hr=new Date().getHours();
+  const greet=hr<12?'Good Morning':'Good Evening';
+  document.getElementById('d-greet').textContent=greet+', '+CU.fn+'! ✨';
+  document.getElementById('d-gdate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const rds=DB.getRds(CU.em);
+  document.getElementById('sc-k').textContent=rds.filter(r=>r.type==='kundli').length;
+  document.getElementById('sc-p').textContent=rds.filter(r=>r.type==='palm').length;
+  document.getElementById('sc-c').textContent=rds.filter(r=>r.type==='chat').length;
+  document.getElementById('sc-r').textContent=rds.length;
+  const al=document.getElementById('act-l');
+  if(!rds.length){al.innerHTML='<div class="act-empty">🌙<br><br>No activity yet. Generate your first Kundli or try an AI astrologer chat to begin your cosmic journey!</div>';return;}
+  al.innerHTML=rds.slice(0,6).map(r=>`<div class="ai2"><div class="ai-ic">${r.icon||'📜'}</div><div class="act-info" style="flex:1"><div class="ai-t">${r.title}</div><div class="ai-m">${r.sub||''}</div></div><div class="ai-tm">${timeAgo(r.at)}</div></div>`).join('');
+}
 
+/* ══ READINGS ══ */
+function renderReadings(){
+  const rds=DB.getRds(CU.em),el=document.getElementById('rd-list');
+  if(!rds.length){el.innerHTML='<div class="act-empty">📜<br><br>No readings saved yet. Generate a Kundli or Palm Reading to see your history here.</div>';return;}
+  el.innerHTML=rds.map(r=>`<div class="rd-c"><div class="rd-ic">${r.icon||'📜'}</div><div style="flex:1"><div class="rd-t">${r.title}</div><div class="rd-m">${r.sub||''} · ${new Date(r.at).toLocaleDateString('en-IN')}</div><div class="rd-p">${r.preview||''}</div><div class="rd-acts"><button class="rda rda-v" onclick="viewRd('${r.id}')">View Full Reading</button><button class="rda rda-d" onclick="delRd('${r.id}')">Delete</button></div></div></div>`).join('');
+}
+function viewRd(id){const r=DB.getRds(CU.em).find(x=>x.id===id);if(!r)return;document.getElementById('rd-title').textContent=r.title;document.getElementById('rd-meta').textContent=(r.sub||'')+' · '+new Date(r.at).toLocaleDateString('en-IN');document.getElementById('rd-txt').textContent=r.text||r.preview||'No content saved.';document.getElementById('rd-ov').classList.add('open');}
+function delRd(id){DB.delRd(CU.em,id);toast('Reading deleted.','g');renderReadings();document.getElementById('dm-rd').textContent=DB.getRds(CU.em).length;}
+
+/* ══ PROFILE ══ */
+function fillProfile(){
+  const u=CU;
+  sv('pf-fn',u.fn||'');sv('pf-ln',u.ln||'');sv('pf-em',u.em||'');sv('pf-ph',u.ph||'');
+  sv('pf-gn',u.gn||'');sv('pf-oc',u.occ||'');sv('pf-co',u.country||'India');sv('pf-ci',u.city||'');
+  sv('pf-db',u.db||'');sv('pf-tb',u.tob||'');sv('pf-bp',u.bplace||'');sv('pf-lg',u.lang||'English');sv('pf-as',u.asys||'Vedic (Indian)');
+}
+function saveProfile(){
+  Object.assign(CU,{fn:v('pf-fn'),ln:v('pf-ln'),ph:v('pf-ph'),gn:v('pf-gn'),occ:v('pf-oc'),
+    country:v('pf-co'),city:v('pf-ci'),db:v('pf-db'),tob:v('pf-tb'),bplace:v('pf-bp'),lang:v('pf-lg'),asys:v('pf-as')});
+  DB.setU(CU.em,CU);
+  document.getElementById('d-un').textContent=CU.fn+' '+(CU.ln||'');
+  document.getElementById('nav-uname').textContent=CU.fn+' '+(CU.ln||'');
+  document.getElementById('d-av-txt').textContent=((CU.fn||'U')[0]+(CU.ln||'')[0]).toUpperCase();
+  toast('✅ Profile saved!','ok');
+}
+function uploadAv(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{CU.avatar=ev.target.result;DB.setU(CU.em,CU);const avEl=document.getElementById('d-av-txt');avEl.style.display='none';const img=document.createElement('img');img.src=ev.target.result;document.getElementById('d-av-txt').parentElement.appendChild(img);toast('✅ Photo updated!','ok');};r.readAsDataURL(f);}
+function deleteAcct(){if(!confirm('Permanently delete your account and ALL data? This cannot be undone.'))return;if(!confirm('Final confirmation: Delete '+CU.em+'?'))return;DB.d('rds_'+CU.em);DB.delU(CU.em);DB.clrSess();CU=null;toast('Account deleted.','');setTimeout(()=>router('home'),1200);}
+
+/* ══ PLANS ══ */
+const PLANS_D=[
+  {id:'free',n:'Free',pr:'₹0',per:' forever',f:['1 Kundli/month','Daily Horoscope','AI Chat (10/day)'],x:['Premium Reports','PDF Download']},
+  {id:'silver',n:'Silver',pr:'₹199',per:'/mo',f:['5 Kundlis/month','All Horoscopes','AI Chat (50/day)','Match Making'],x:['PDF Downloads']},
+  {id:'gold',n:'Gold',pr:'₹499',per:'/mo',f:['Unlimited Kundli','All 8 AI Astrologers','All Premium Reports','PDF Downloads','Yearly Prediction'],x:[]},
+  {id:'vip',n:'VIP Oracle',pr:'₹999',per:'/mo',f:['Everything in Gold','Annual Forecast','Muhurat Planning','Dedicated Advisor','Video Consultation (2/mo)'],x:[]},
+];
+function renderPlans(){
+  document.getElementById('cp-lbl').textContent=cap(CU.plan);
+  document.getElementById('pl-g').innerHTML=PLANS_D.map(p=>`
+    <div class="pl-c${CU.plan===p.id?' cur':''}">
+      ${CU.plan===p.id?'<div class="cb">✦ Current</div>':''}
+      <div class="pl-tier">${p.n}</div>
+      <div class="pl-pr">${p.pr}<span class="pl-per">${p.per}</span></div>
+      <ul class="pl-fl">${p.f.map(f=>`<li><span style="color:var(--gold);font-size:.7rem;flex-shrink:0">✦</span>${f}</li>`).join('')}${p.x.map(f=>`<li><span style="color:var(--sub);font-size:.7rem;flex-shrink:0">○</span><span style="color:var(--sub)">${f}</span></li>`).join('')}</ul>
+      ${CU.plan===p.id?`<button class="upb upb-c">Current Plan</button>`:p.id==='free'?`<button class="upb upb-o" onclick="downgFree()">Downgrade to Free</button>`:`<button class="upb upb-g" onclick="openPay('${p.id}','${p.n}','${p.pr}','${p.per}')">Upgrade to ${p.n}</button>`}
+    </div>`).join('');
+}
+function openPay(id,n,pr,per){payPlan={id,n,pr,per};document.getElementById('pay-plan').textContent=n;document.getElementById('pay-pr').textContent=pr;document.getElementById('pay-per').textContent=per==='forever'?'Forever':per;document.getElementById('pay-ov').classList.add('open');}
+function downgFree(){CU.plan='free';DB.setU(CU.em,CU);document.getElementById('d-plan').textContent='Free Plan';document.getElementById('d-plan').className='planbdg pf';document.getElementById('nav-uplan').textContent='Free Plan';toast('Downgraded to Free plan.','g');renderPlans();}
+function procPay(){
+  const n=v('crd-n').replace(/\s/g,''),e=v('crd-e'),c=v('crd-c'),nm=v('crd-nm');
+  if(n.length<15||!e.match(/\d{2}\/\d{2}/)||c.length<3||!nm){showErr('pay-err','Please fill in all card details.');return;}
+  const btn=document.getElementById('pay-btn');btn.disabled=true;btn.textContent='Processing payment…';
+  setTimeout(()=>{
+    CU.plan=payPlan.id;CU.planExp=new Date(Date.now()+30*86400000).toISOString();
+    DB.setU(CU.em,CU);document.getElementById('pay-ov').classList.remove('open');
+    const pb=document.getElementById('d-plan');pb.textContent=payPlan.n+' Plan';
+    pb.className='planbdg '+(payPlan.id==='gold'?'pg2':payPlan.id==='silver'?'ps':'pv');
+    document.getElementById('nav-uplan').textContent=payPlan.n+' Plan';
+    btn.disabled=false;btn.textContent='Pay & Upgrade ✦';
+    toast('✨ Upgraded to '+payPlan.n+'! Welcome to the full cosmos.','ok');
+    if(CU)addRd({type:'plan',icon:'💎',title:'Upgraded to '+payPlan.n+' Plan',sub:'Subscription',preview:'Plan: '+payPlan.n+' ('+payPlan.pr+payPlan.per+')'});
+    renderPlans();
+  },2200);
+}
+
+/* ══ SECURITY ══ */
+function toggle2FA(){is2FA=!is2FA;document.getElementById('tfa-s').className=is2FA?'s-on':'s-off';document.getElementById('tfa-s').textContent=is2FA?'● Enabled':'○ Disabled';document.getElementById('tfa-b').textContent=is2FA?'Disable 2FA':'Enable 2FA';toast(is2FA?'2FA enabled! Your account is more secure.':'2FA disabled.','ok');}
+function showCPW(){document.getElementById('cpw-ov').classList.add('open');}
+function doChangePw(){
+  const old=v('cp-old'),nw=v('cp-new'),cf=v('cp-cnf');
+  if(!old||!nw||!cf){showErr('cp-err','Please fill in all fields.');return;}
+  if(CU.pw!==hp(old)){showErr('cp-err','Current password is incorrect.');return;}
+  if(nw.length<8){showErr('cp-err','New password must be at least 8 characters.');return;}
+  if(nw!==cf){showErr('cp-err','Passwords do not match.');return;}
+  clearErr('cp-err');CU.pw=hp(nw);DB.setU(CU.em,CU);
+  document.getElementById('cpw-ov').classList.remove('open');
+  toast('✅ Password changed successfully!','ok');
+}
+function dlData(){const data={user:{...CU,pw:'[redacted]'},readings:DB.getRds(CU.em)};const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='astrohand_data.json';a.click();toast('✅ Data download started!','ok');}
+
+/* ══ SIGN OUT ══ */
+function showSO(){document.getElementById('so-ov').classList.add('open');}
+function doSignOut(){DB.clrSess();CU=null;document.getElementById('so-ov').classList.remove('open');toast('Signed out. Come back soon! 🌙','g');setTimeout(()=>router('home'),600);}
+
+/* ══ TOOL MODALS ══ */
+function openTool(id){document.getElementById(id).classList.add('open');}
+function closeOv(id){document.getElementById(id).classList.remove('open');}
+function cov(e,id){if(e.target===document.getElementById(id))closeOv(id);}
+
+/* ══ KUNDLI ══ */
+const RASHIS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const RSYM=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+const NAK=['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','Purva Phalguni','Uttara Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','Purva Ashadha','Uttara Ashadha','Shravana','Dhanishtha','Shatabhisha','Purva Bhadrapada','Uttara Bhadrapada','Revati'];
+const YOGAS=['Vishkambha','Preeti','Ayushman','Saubhagya','Shobhana','Siddha','Sadhya','Shubha','Brahma','Indra'];
+const DASHA_P=['Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus'];
+const DASHA_Y=[6,10,7,18,16,19,17,7,20];
+const GEMS=['Ruby','Pearl','Red Coral','Hessonite','Yellow Sapphire','Blue Sapphire','Emerald','Cat\'s Eye','Diamond'];
+const COLS=['Ruby Red','Pearl White','Crimson','Silver','Golden Yellow','Deep Blue','Sea Green','Orange','Purple'];
+const DAYS_W=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const PLS_D=[{s:'☀️',n:'Sun',sg:'Gemini',dg:"7°12'",st:'Neutral'},{s:'🌙',n:'Moon',sg:'Scorpio',dg:"14°45'",st:'Debilitated'},{s:'♂',n:'Mars',sg:'Leo',dg:"22°33'",st:'Own Sign'},{s:'☿',n:'Mercury',sg:'Cancer',dg:"3°18'",st:'Neutral'},{s:'♃',n:'Jupiter',sg:'Taurus',dg:"28°04'",st:'Neutral'},{s:'♀',n:'Venus',sg:'Cancer',dg:"11°52'",st:'Neutral'},{s:'♄',n:'Saturn',sg:'Aries',dg:"19°37'",st:'Debilitated'},{s:'☊',n:'Rahu',sg:'Pisces',dg:"5°20'",st:'Exalted'},{s:'☋',n:'Ketu',sg:'Virgo',dg:"5°20'",st:'Exalted'},{s:'⛢',n:'Uranus',sg:'Taurus',dg:"24°11'",st:'Neutral'},{s:'♆',n:'Neptune',sg:'Aries',dg:"0°08'",st:'Neutral'},{s:'♇',n:'Pluto',sg:'Aquarius',dg:"3°55'",st:'Neutral'}];
+async function genKundli(){
+  const n=v('kn'),d=v('kd');
+  if(!n||!d){toast('⚠️ Please enter name and date of birth.','');return;}
+  const btn=document.getElementById('k-btn');btn.disabled=true;btn.textContent='⏳ Calculating…';
+  document.getElementById('k-res').style.display='block';
+  document.getElementById('k-ldr').style.display='block';document.getElementById('k-cnt').style.display='none';
+  const dt=new Date(d),yr=dt.getFullYear(),mo=dt.getMonth(),dy=dt.getDate();
+  const seed=(yr+mo*31+dy*7)%108,ri=seed%12,ni=(seed*7)%27;
+  const t=v('kt'),th=t?parseInt(t.split(':')[0]):6,tm=t?parseInt(t.split(':')[1]):0;
+  const li=(ri+Math.floor((th*60+tm)/120))%12;
+  const vsi=(mo>=2&&dy>=21||mo===0||mo===1)?(mo):(mo-1+12)%12;
+  const vsiV=(vsi-1+12)%12;
+  const rp=DASHA_P[seed%9],ln=GEMS[seed%9],col=COLS[ri],day=DAYS_W[(dy+mo)%7];
+  const lnum=((yr+mo+dy)%9)||9;
+  document.getElementById('k-av').textContent=RSYM[ri];
+  document.getElementById('k-rname').textContent=n;
+  document.getElementById('k-rdob').textContent='Born: '+dt.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+(v('kp')?' · '+v('kp'):'');
+  document.getElementById('k-basics').innerHTML=[['Ascendant (Lagna)',RASHIS[li]+' '+RSYM[li]],['Moon Sign (Rashi)',RASHIS[ri]+' '+RSYM[ri]],['Sun Sign (Vedic)',RASHIS[vsiV]+' '+RSYM[vsiV]],['Nakshatra',NAK[ni]],['Nakshatra Pada',((seed%4)+1)+'th Pada'],['Yoga',YOGAS[(Math.floor(yr/100)+dy)%10]]].map(([k,val])=>`<div><span class="kk">${k}</span><span class="kv">${val}</span></div>`).join('');
+  document.getElementById('k-lucky').innerHTML=[['Lucky Number',lnum],['Lucky Color',col],['Lucky Day',day],['Lucky Gemstone',ln],['Ruling Planet',rp],['Element',['Fire','Earth','Air','Water'][ri%4]]].map(([k,val])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;"><span style="color:var(--muted);">${k}</span><span style="color:var(--text);font-weight:500;">${val}</span></div>`).join('');
+  document.getElementById('k-planets').innerHTML=PLS_D.map(p=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:1.4rem;margin-bottom:3px;">${p.s}</div><div style="font-size:.6rem;letter-spacing:.07em;color:var(--muted);text-transform:uppercase;">${p.n}</div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);margin-top:1px;">${p.sg}</div><div style="font-size:.6rem;color:var(--sub);">${p.dg}</div></div>`).join('');
+  const manglik=seed%3===0,kaal=seed%5===0,pitra=seed%4===0,sade=seed%7===0;
+  document.getElementById('k-doshas').innerHTML=[['Manglik Dosha',manglik?'Yes — Mars in 7th':'No — Clean Chart',manglik],['Kaal Sarp Dosha',kaal?'Yes — Partial (Ananta)':'No',kaal],['Pitra Dosha',pitra?'Yes — Mild':'No',pitra],['Sade Sati',sade?'Active — 2nd Phase':'Not Active Currently',sade],['Grah Dosha','No Major Dosha',false]].map(([k,val,bad])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8px"><span style="color:var(--muted);font-size:.8rem;">${k}</span><span style="${bad?'color:#f87171':'color:#4ade80'};font-size:.76rem;background:${bad?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};padding:2px 9px;border-radius:100px;border:1px solid ${bad?'rgba(220,38,38,.2)':'rgba(22,163,74,.2)'};">${val}</span></div>`).join('');
+  document.getElementById('k-rem').innerHTML=`• Chant Om Namah Shivaya 108× daily at sunrise<br>• Wear ${ln} (${rp} gemstone) in silver ring<br>• Fast on ${day}s for ${rp}'s blessings<br>• Donate ${col.toLowerCase()} items on ${day}<br>• Light ghee lamp at Shiva temple every Monday`;
+  let stY=yr;document.getElementById('k-dasha').innerHTML=DASHA_P.map((p,i)=>{const s=stY,e=stY+DASHA_Y[i];stY=e;const active=new Date().getFullYear()>=s&&new Date().getFullYear()<e;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;${active?'color:var(--g2c);font-weight:600':''}"><span style="color:${active?'var(--g2c)':'var(--muted)'};">${p} Mahadasha${active?' ← Current':''}</span><span style="color:${active?'var(--g2c)':'var(--text)'};">${s}–${e} (${DASHA_Y[i]} yrs)</span></div>`;}).join('');
+  const lang=v('kl')||'English',gender=v('kg')||'person',place=v('kp');
+  const prompt=`You are AstroHand's master Vedic astrologer. Write a deeply personalized 360-word reading in ${lang} for ${n} (${gender}), born ${dt.toDateString()}${place?' in '+place:''}. Moon sign: ${RASHIS[ri]}, Lagna: ${RASHIS[li]}, Nakshatra: ${NAK[ni]}, Ruling planet: ${rp}, Gemstone: ${ln}. Cover: (1) Soul purpose from Lagna+Moon, (2) Karmic gifts from ${NAK[ni]} Nakshatra, (3) Current ${rp} dasha insights, (4) Love & marriage destiny, (5) Career & financial trajectory, (6) One specific remedy. Be mystical yet precise. End with: "These stars illuminate possibilities — your free will determines the journey."`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await r.json();
+    const txt=data.content?.map(b=>b.text||'').join('')||fallbackKundli(n,ri,li,ni,rp);
+    document.getElementById('k-pred').textContent=txt;
+    if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});
+  }catch{const txt=fallbackKundli(n,ri,li,ni,rp);document.getElementById('k-pred').textContent=txt;if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});}
+  document.getElementById('k-ldr').style.display='none';document.getElementById('k-cnt').style.display='block';
+  btn.disabled=false;btn.textContent='✨ Generate Free Kundli Now';
+}
+function fallbackKundli(n,ri,li,ni,rp){return`${n}, your chart reveals a powerful cosmic signature. Your Lagna in ${RASHIS[li]} gives you ${['pioneering energy','steadfast determination','quick wit','nurturing depth','natural leadership','analytical precision','harmonious grace','transformative intensity','philosophical vision','disciplined ambition','visionary originality','boundless compassion'][li]}. Your Moon in ${RASHIS[ri]} creates a rich emotional world that seeks ${['adventure','security','connection','belonging','recognition','perfection','balance','depth','freedom','achievement','uniqueness','transcendence'][ri]}. The ${NAK[ni]} Nakshatra at your foundation gifts you with extraordinary ${['healing abilities','creative power','spiritual insight','communicative grace','protective strength'][ni%5]}. Your ${rp} planetary period is active — a time for focused action in alignment with your deepest values. In love, your chart shows capacity for deep, lasting bonds. Career-wise, your peak prosperity window approaches in the next 18 months. These stars illuminate your possibilities — your free will determines the journey.`;}
+function kTab(btn,tab){document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');['ov','pl','ds','da','pr'].forEach(t=>document.getElementById('kp-'+t).style.display=t===tab?'block':'none');}
+
+/* ══ ZODIAC ══ */
+const ZDTA=[
+  {s:'♈',n:'Aries',d:'Mar 21–Apr 19',lv:78,ca:86,he:82,fi:74,tx:"Mars ignites your drive today, bold Aries. A conversation you've been postponing opens an unexpected door of opportunity. Your fearlessness is your greatest asset right now. Love arrives from a surprising direction — stay open.",num:9,col:'Crimson Red',day:'Tuesday'},
+  {s:'♉',n:'Taurus',d:'Apr 20–May 20',lv:88,ca:73,he:76,fi:84,tx:"Venus showers your material realm with abundance, steadfast Taurus. A financial clarity crystallizes — trust your instincts. A meaningful bond deepens beautifully. The evening is perfect for creative connection.",num:6,col:'Emerald Green',day:'Friday'},
+  {s:'♊',n:'Gemini',d:'May 21–Jun 20',lv:70,ca:90,he:78,fi:80,tx:"Mercury dances in your favor today, quicksilver Gemini. Everything you say carries unusual persuasive power. A professional opportunity requires swift action. Choose authentically with your heart today.",num:5,col:'Bright Yellow',day:'Wednesday'},
+  {s:'♋',n:'Cancer',d:'Jun 21–Jul 22',lv:92,ca:62,he:70,fi:68,tx:"The Moon envelops you in profound emotional clarity, nurturing Cancer. A long-suppressed feeling is ready to be expressed. Home and family hold the key to your healing today. Trust your extraordinary intuition absolutely.",num:2,col:'Pearl White',day:'Monday'},
+  {s:'♌',n:'Leo',d:'Jul 23–Aug 22',lv:83,ca:91,he:88,fi:76,tx:"The Sun burns with sovereign brilliance in your chart, magnificent Leo. This is your moment to lead with grace and shine unapologetically. A creative project receives a powerful boost. Allow yourself to be truly seen.",num:1,col:'Brilliant Gold',day:'Sunday'},
+  {s:'♍',n:'Virgo',d:'Aug 23–Sep 22',lv:65,ca:88,he:86,fi:80,tx:"Mercury's precision flows through your analytical mind today, devoted Virgo. A critical detail others overlooked becomes your advantage. Your service to others is a sacred spiritual practice — but include yourself in that care.",num:4,col:'Forest Green',day:'Wednesday'},
+  {s:'♎',n:'Libra',d:'Sep 23–Oct 22',lv:94,ca:76,he:72,fi:78,tx:"Venus harmonizes your relational sphere with exquisite grace, balanced Libra. A partnership reaches a beautiful turning point. Beauty and art nourish your soul today. Speak the diplomatic truth you've been holding back.",num:7,col:'Rose Pink',day:'Friday'},
+  {s:'♏',n:'Scorpio',d:'Oct 23–Nov 21',lv:76,ca:82,he:80,fi:86,tx:"Pluto stirs the volcanic depths of your transformational soul, intense Scorpio. Something must be released for something magnificent to emerge. Your psychic sensitivity today is extraordinary — listen to it carefully.",num:8,col:'Deep Burgundy',day:'Tuesday'},
+  {s:'♐',n:'Sagittarius',d:'Nov 22–Dec 21',lv:73,ca:84,he:90,fi:76,tx:"Jupiter expands your horizon far beyond visible limits today, freedom-loving Sagittarius. A philosophical insight transforms your worldview positively. Travel — physical or through knowledge — is cosmically favored today.",num:3,col:'Royal Purple',day:'Thursday'},
+  {s:'♑',n:'Capricorn',d:'Dec 22–Jan 19',lv:62,ca:94,he:74,fi:88,tx:"Saturn's delayed reward arrives for your disciplined patience today, determined Capricorn. Structures you've been building are now revealing extraordinary strength. The summit is closer than it appears from where you stand.",num:8,col:'Charcoal Black',day:'Saturday'},
+  {s:'♒',n:'Aquarius',d:'Jan 20–Feb 18',lv:70,ca:90,he:84,fi:80,tx:"Uranus sparks your revolutionary intellect with brilliant flashes, visionary Aquarius. An unconventional solution solves what conventional thinking cannot. Community and collective purpose fill your heart with deep meaning today.",num:4,col:'Electric Blue',day:'Saturday'},
+  {s:'♓',n:'Pisces',d:'Feb 19–Mar 20',lv:86,ca:66,he:63,fi:70,tx:"Neptune dissolves every veil between your dream and destiny, mystical Pisces. Artistic and spiritual inspiration flows as a cosmic river today — capture everything. Compassion is your rarest gift; boundaries protect your light.",num:7,col:'Sea Green',day:'Thursday'},
+];
+function initZodiac(){
+  document.getElementById('z-grid').innerHTML=ZDTA.map((z,i)=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr);border-radius:var(--r2);padding:13px 7px;text-align:center;cursor:pointer;transition:all .25s;" onmouseover="this.style.borderColor='rgba(200,150,60,.4)';this.style.background='rgba(200,150,60,.07)'" onmouseout="if(!this.classList.contains('oz')){this.style.borderColor='var(--bdr)';this.style.background='rgba(255,255,255,.03)';}" onclick="pickSign(${i},this)"><div style="font-size:1.6rem;margin-bottom:5px;">${z.s}</div><div style="font-family:'Cinzel',serif;font-size:.6rem;color:var(--g2c);letter-spacing:.05em;">${z.n}</div><div style="font-size:.55rem;color:var(--sub);margin-top:1px;">${z.d}</div></div>`).join('');
+  document.getElementById('h-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
+}
+function pickSign(idx,el){
+  document.querySelectorAll('#z-grid>div').forEach(e=>{e.classList.remove('oz');e.style.borderColor='var(--bdr)';e.style.background='rgba(255,255,255,.03)';});
+  el.classList.add('oz');el.style.borderColor='rgba(200,150,60,.4)';el.style.background='rgba(200,150,60,.07)';
+  const z=ZDTA[idx];
+  document.getElementById('h-sign').textContent=z.s+' '+z.n;
+  document.getElementById('h-text').textContent=z.tx;
+  document.getElementById('h-text').style.color='var(--g3)';
+  [['lv',z.lv],['ca',z.ca],['he',z.he],['fi',z.fi]].forEach(([k,val])=>{setTimeout(()=>{document.getElementById('hm-'+k).style.width=val+'%';document.getElementById('hv-'+k).textContent=val+'%';},100);});
+  document.getElementById('hl-n').textContent=z.num;document.getElementById('hl-c').textContent=z.col;document.getElementById('hl-d').textContent=z.day;
+  document.getElementById('h-lucky').style.display='grid';
+}
+
+/* ══ AI ASTROLOGERS ══ */
+const ASTROs=[
+  {av:'🌙',bg:'linear-gradient(135deg,#7c3aed,#4338ca)',n:'Pandit Krishnamurti',sp:'Vedic Astrology · Kundali',rt:'★★★★★ 4.98',sys:`You are Pandit Krishnamurti, a legendary master of Vedic Jyotish and Samudrika Shastra with 28 years of practice. You have deep mastery of Brihat Parashara Hora Shastra, Jaimini Sutras, all 9 grahas, 27 nakshatras, dashas, yogas, and doshas. You speak with warm spiritual authority, weave Sanskrit terms naturally (always translating), and ground everything in karma, dharma, and moksha. Give specific Vedic remedies. State that astrology provides guidance, not guaranteed outcomes. Reply in 3-5 sentences warmly.`},
+  {av:'☀️',bg:'linear-gradient(135deg,#c8963c,#e8c46a)',n:'Dr. Amara Osei',sp:'Western Astrology · Tarot',rt:'★★★★★ 4.96',sys:`You are Dr. Amara Osei, PhD in Depth Psychology and Archetypal Astrology. You blend modern psychological astrology with Tarot and Jungian analysis. You speak with intellectual warmth, connecting astrological symbolism to personal growth. Reply in 3-5 sentences. Note readings are for self-reflection.`},
+  {av:'🔮',bg:'linear-gradient(135deg,#e11d78,#9333ea)',n:'Madame Sofia',sp:'Palmistry · European Chiromancy',rt:'★★★★★ 4.97',sys:`You are Madame Sofia, a third-generation European palmist trained in the traditions of Cheiro, Benham, and Katharine Saint-Hill. You read palm lines with extraordinary precision. You speak with elegant old-world mystery and deep compassion. Reply in 3-5 sentences with vivid imagery. Palmistry provides insight, not certainty.`},
+  {av:'⭐',bg:'linear-gradient(135deg,#0ea5e9,#6366f1)',n:'Master Zhao Wei',sp:'Chinese Astrology · Ba Zi · I-Ching',rt:'★★★★★ 4.95',sys:`You are Master Zhao Wei, practitioner of Chinese astrology, Ba Zi (Four Pillars), and I-Ching. You interpret destiny through the five elements and Yin-Yang balance. You speak with measured Taoist wisdom. Reply in 3-5 sentences. All readings provide guidance.`},
+  {av:'🔱',bg:'linear-gradient(135deg,#f59e0b,#ef4444)',n:'Guru Shastri Ji',sp:'Nadi Astrology · Prashna · Vastu',rt:'★★★★★ 4.99',sys:`You are Guru Shastri Ji, a revered Nadi astrologer with 35 years reading ancient palm leaves and performing Prashna astrology. You speak with profound stillness and serene certainty. You sometimes reveal something surprisingly precise. Reply in 3-5 sentences. All readings are divine guidance.`},
+  {av:'🌿',bg:'linear-gradient(135deg,#10b981,#0ea5e9)',n:'Ananya Devi',sp:'Numerology · Chakras · Ayurveda',rt:'★★★★★ 4.94',sys:`You are Ananya Devi, a spiritual astrologer working at the intersection of Vedic numerology, chakra healing, and Ayurvedic typology. You speak with gentle maternal warmth, reminding people of their inherent divinity. Reply in 3-5 sentences with encouragement.`},
+  {av:'🃏',bg:'linear-gradient(135deg,#8b5cf6,#ec4899)',n:'Celeste Noir',sp:'Tarot · Lenormand · Astrocartography',rt:'★★★★★ 4.96',sys:`You are Celeste Noir, a French-trained Tarot grand maître and astrocartographer. You speak with sophisticated elegance and literary precision, often drawing a metaphorical "card" to illuminate insight. Reply in 3-5 sentences with elegant mystery.`},
+  {av:'🌙',bg:'linear-gradient(135deg,#d97706,#7c3aed)',n:'Ibrahim Al-Rashid',sp:'Arabic Astrology · Ilm Al-Raml',rt:'★★★★★ 4.97',sys:`You are Ibrahim Al-Rashid, master of classical Arabic astrology and Ilm Al-Raml (sand geomancy). You draw from Al-Biruni, Al-Kindi, and Ibn Khaldun. You speak with philosophical wisdom, occasionally sharing Arabic proverbs with translations. Reply in 3-5 sentences with deep resonance.`},
+];
+let curA=0,cHist=[];
 function initAList(){
   document.getElementById('a-list').innerHTML=ASTROs.map((a,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r2);border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:pointer;transition:all .25s;${i===0?'border-color:rgba(200,150,60,.4);background:rgba(200,150,60,.06);':''}" onclick="pickA(${i},this)"><div style="width:40px;height:40px;border-radius:50%;background:${a.bg};display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">${a.av}</div><div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${a.n}</div><div style="font-size:.62rem;color:var(--muted);margin-top:1px;">${a.sp}</div><div style="font-size:.6rem;color:var(--gold);margin-top:2px;">${a.rt}</div></div></div>`).join('');
   initChat(0);
@@ -1992,37 +2095,28 @@ function subNL(e){e.preventDefault();toast('✨ You\'re aligned! Weekly cosmic u
 function toast(msg,type){const t=document.getElementById('toast-el');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3800);}
 
 
-/* ══ AI API — Secure Backend Proxy ══ */
-/* Your Groq key is hidden on the server — safe for public websites */
-const API_URL = 'https://astrohand-backend.vercel.app/api/chat';
-/* ↑ UPDATE THIS after you deploy the backend on Vercel ↑ */
+/* ══ GROQ API ══ */
+const GROQ_KEY='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';
+const API_URL='https://astrohand-backend.vercel.app/api/chat';
 
-async function callAI(systemPrompt, messages, maxTokens){
-  maxTokens = maxTokens || 1000;
-  try {
-    const r = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ systemPrompt, messages, maxTokens })
-    });
-    if (!r.ok) {
-      const e = await r.json().catch(() => ({}));
-      if (r.status === 429) throw new Error('Daily limit reached. Please try again tomorrow.');
-      throw new Error(e.error || 'API error HTTP ' + r.status);
-    }
-    const data = await r.json();
-    if (!data.text) throw new Error('Empty response');
+async function callAI(systemPrompt,messages,maxTokens){
+  maxTokens=maxTokens||1000;
+  try{
+    const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemPrompt,messages,maxTokens})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||'HTTP '+r.status);}
+    const data=await r.json();
+    if(!data.text)throw new Error('Empty response');
     return data.text;
-  } catch(err) {
-    console.error('callAI error:', err);
-    throw err;
-  }
+  }catch(err){throw err;}
 }
-const RASHIS_G=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-const NAK_G=['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','Purva Phalguni','Uttara Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','Purva Ashadha','Uttara Ashadha','Shravana','Dhanishtha','Shatabhisha','Purva Bhadrapada','Uttara Bhadrapada','Revati'];
-const NL_G=['Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury'];
-const RL_G=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
-const DP_G=['Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus'];
+
+/* ══ SUPABASE ══ */
+const SUPA_URL='https://joavchffhngutkiabgjx.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvYXZjaGZmaG5ndXRraWFiZ2p4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NTgyMDYsImV4cCI6MjA5ODMzNDIwNn0.jIaXFNE4W7tsTShd6ITPWM2mJRCtt-Kj3mapL8EcXS0';
+let _sb=null;
+try{if(window.supabase)_sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
+
+/* ══ GEMSTONE DATA ══ */
 const GEM_DATA=[
   {e:'&#128142;',n:'Ruby',pl:'Sun',bg:'linear-gradient(135deg,#7f1d1d,#dc2626)',conf:88,finger:'Ring finger, right hand',day:'Sunday',metal:'Gold',mantra:'Om Suryaya Namah'},
   {e:'&#9898;',n:'Pearl',pl:'Moon',bg:'linear-gradient(135deg,#1e3a5f,#60a5fa)',conf:82,finger:'Little finger, right hand',day:'Monday',metal:'Silver',mantra:'Om Chandraya Namah'},
@@ -2034,22 +2128,8 @@ const GEM_DATA=[
   {e:'&#127807;',n:"Cat's Eye",pl:'Ketu',bg:'linear-gradient(135deg,#1a2e05,#65a30d)',conf:70,finger:'Middle finger, right hand',day:'Tuesday',metal:'Silver',mantra:'Om Ketave Namah'},
   {e:'&#128142;',n:'Diamond',pl:'Venus',bg:'linear-gradient(135deg,#1e3a5f,#e0f2fe)',conf:87,finger:'Ring finger, right hand',day:'Friday',metal:'Gold',mantra:'Om Shukraya Namah'}
 ];
-let curKundliForGuru=null;
-function calcBirthChartG(dob,time){
-  const dt=new Date(dob);const yr=dt.getFullYear(),mo=dt.getMonth(),dy=dt.getDate();
-  let th=6,tm=0;if(time){const tp=time.split(':');th=parseInt(tp[0])||6;tm=parseInt(tp[1])||0;}
-  const seed=(yr+mo*31+dy*7+th*13+tm*3)%10000;
-  const mIdx=seed%12;const lIdx=(mIdx+Math.floor((th*60+tm)/120))%12;const nIdx=(seed*7)%27;
-  let dStart=DP_G.indexOf(NL_G[nIdx]);if(dStart<0)dStart=0;
-  return{yr,mo,dy,th,tm,seed,lagnaIdx:lIdx,lagnaSign:RASHIS_G[lIdx],moonSign:RASHIS_G[mIdx],
-    nakshatra:NAK_G[nIdx],nakPada:(seed%4)+1,nakLord:NL_G[nIdx],rulingPlanet:RL_G[lIdx],dashaStart:dStart,
-    luckyDays:[['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][(dy+mo)%7]],
-    luckyGems:[['Ruby','Pearl','Red Coral','Hessonite','Yellow Sapphire','Blue Sapphire','Emerald',"Cat's Eye",'Diamond'][seed%9]],
-    luckyColors:[['Ruby Red','Pearl White','Crimson','Silver','Golden Yellow','Deep Blue','Sea Green','Orange','Purple'][seed%9]],
-    luckyDir:['East','West','North','South','NE','NW','SE','SW'][seed%8],
-    rudraksha:['5 Mukhi','7 Mukhi','1 Mukhi','14 Mukhi','3 Mukhi'][seed%5],
-    manglik:seed%3===0,kaalSarp:seed%5===0,sade:seed%7===0};
-}
+
+/* ══ GEMSTONE ENGINE ══ */
 function runGemEngine(){
   const d=v('gem-d'),t=v('gem-t'),h=v('gem-h');
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
@@ -2063,13 +2143,15 @@ function runGemEngine(){
     for(let i=0;i<Math.min(gems.length,3);i++){
       const g=gems[i],name=g.name||g.n||'Ruby',planet=g.planet||g.pl||'Sun',benefit=g.benefit||('Strengthens '+planet);
       const gd=GEM_DATA.find(x=>x.n.toLowerCase()===name.toLowerCase())||GEM_DATA[0],rec=g.recType||'wear';
-      html+='<div class="gem-card"><div class="gem-top" style="background:'+gd.bg+'">'+gd.e+'<div class="gem-sc">'+(g.confScore||gd.conf)+'% Match</div></div><div class="gem-body"><div class="gem-nm">'+name+'</div><div class="gem-pl">Planet: '+planet+'</div><div class="gem-arow"><span class="gem-ak">Benefit</span><span class="gem-av">'+String(benefit).substring(0,50)+'</span></div><div class="gem-arow"><span class="gem-ak">Finger</span><span class="gem-av">'+(g.finger||gd.finger)+'</span></div><div class="gem-arow"><span class="gem-ak">Best Day</span><span class="gem-av">'+(g.day||gd.day)+'</span></div><div class="gem-arow"><span class="gem-ak">Metal</span><span class="gem-av">'+(g.metal||gd.metal)+'</span></div><div class="gem-arow"><span class="gem-ak">Mantra</span><span class="gem-av">'+(g.mantra||gd.mantra)+'</span></div><div class="gem-rec '+(rec==='avoid'?'gem-avoid':rec==='caution'?'gem-caut':'gem-wear')+'">'+(rec==='avoid'?'Avoid':rec==='caution'?'Consult first':'Recommended')+'</div></div></div>';
+      html+='<div class="gem-card"><div class="gem-top" style="background:'+gd.bg+'">'+gd.e+'<div class="gem-sc">'+(g.confScore||gd.conf)+'% Match</div></div><div class="gem-body"><div class="gem-nm">'+name+'</div><div class="gem-pl">Planet: '+planet+'</div><div class="gem-arow"><span class="gem-ak">Benefit</span><span class="gem-av">'+String(benefit).substring(0,50)+'</span></div><div class="gem-arow"><span class="gem-ak">Finger</span><span class="gem-av">'+(g.finger||gd.finger)+'</span></div><div class="gem-arow"><span class="gem-ak">Best Day</span><span class="gem-av">'+(g.day||gd.day)+'</span></div><div class="gem-arow"><span class="gem-ak">Metal</span><span class="gem-av">'+(g.metal||gd.metal)+'</span></div><div class="gem-arow"><span class="gem-ak">Mantra</span><span class="gem-av">'+(g.mantra||gd.mantra)+'</span></div><div class="gem-rec '+(rec==='avoid'?'gem-avoid':rec==='caution'?'gem-caut':'gem-wear')+'">'+( rec==='avoid'?'Avoid':rec==='caution'?'Consult first':'Recommended')+'</div></div></div>';
     }
     outEl.innerHTML=html;ldrEl.style.display='none';outEl.style.display='grid';outEl.style.gridTemplateColumns='repeat(auto-fit,minmax(200px,1fr))';outEl.style.gap='12px';
   }
   showGems([GEM_DATA[seed%9],GEM_DATA[(seed+3)%9],GEM_DATA[(seed+6)%9]].map(g=>({name:g.n,planet:g.pl,benefit:'Ideal for '+lagna+' Lagna',finger:g.finger,day:g.day,metal:g.metal,mantra:g.mantra,confScore:g.conf,recType:'wear'})));
-  callAI('Reply ONLY with a JSON array. No text. No markdown.',[{role:'user',content:'Lagna:'+lagna+' Moon:'+moon+' Nakshatra:'+nak+' Planet:'+rp+(h?' Concern:'+h:'')+'. Top 3 gemstones JSON: [{"name":"","planet":"","benefit":"","finger":"","day":"","metal":"","mantra":"","confScore":85,"recType":"wear"}]'}],600).then(txt=>{const s=txt.indexOf('['),e=txt.lastIndexOf(']');if(s>=0&&e>s){const g=JSON.parse(txt.substring(s,e+1));if(g&&g.length>0){showGems(g);toast('AI gemstone analysis ready!','ok');}}}).catch(ex=>console.log('Gem:',ex));
+  callAI('Reply ONLY with a JSON array. No markdown.',[{role:'user',content:'Lagna:'+lagna+' Moon:'+moon+' Nakshatra:'+nak+' Planet:'+rp+(h?' Concern:'+h:'')+'. Top 3 gemstones JSON:[{"name":"","planet":"","benefit":"","finger":"","day":"","metal":"","mantra":"","confScore":85,"recType":"wear"}]'}],600).then(txt=>{try{const s=txt.indexOf('['),e=txt.lastIndexOf(']');if(s>=0&&e>s){const g=JSON.parse(txt.substring(s,e+1));if(g&&g.length>0){showGems(g);toast('AI gemstone analysis ready!','ok');}}}catch(ex){}}).catch(()=>{});
 }
+
+/* ══ REMEDIES ENGINE ══ */
 function runRemedies(){
   const d=v('rem-d'),t=v('rem-t'),c=v('rem-c');
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
@@ -2083,381 +2165,43 @@ function runRemedies(){
   setTimeout(()=>resEl.scrollIntoView({behavior:'smooth',block:'nearest'}),150);
   const fallback=[
     {icon:'&#127749;',title:'Daily Practices',remedies:['Chant Om '+rp+' Namah 108x at sunrise facing '+dir,'Light ghee lamp every morning','Meditate 11 minutes at dawn','Drink from copper vessel every morning']},
-    {icon:'&#128197;',title:'Weekly Remedies',remedies:['Fast on '+lD+'s for '+rp+' blessings','Visit Shiva temple every '+lD,'Donate '+col.toLowerCase()+' items on '+lD+'s',(manglik?'Mangal puja on Tuesdays':'Feed crows every Saturday')]},
+    {icon:'&#128197;',title:'Weekly Remedies',remedies:['Fast on '+lD+'s for '+rp+' blessings','Visit Shiva temple every '+lD,'Donate '+col.toLowerCase()+' items on '+lD+'s',(manglik?'Mangal puja on Tuesdays':'Feed crows on Saturdays')]},
     {icon:'&#129335;',title:'Mantras & Chants',remedies:[rp+' Beej Mantra 108x on '+lD,'Maha Mrityunjaya Mantra 108x daily','Gayatri Mantra 108x at sunrise','Hanuman Chalisa daily for protection']},
-    {icon:'&#127963;',title:'Puja Recommendations',remedies:['Rudrabhishek on Mondays for Shiva blessings','Satyanarayana puja on full moon','Navgraha puja monthly for balance','Lakshmi puja every Friday for wealth']},
+    {icon:'&#127963;',title:'Puja Recommendations',remedies:['Rudrabhishek on Mondays','Satyanarayana puja on full moon','Navgraha puja monthly','Lakshmi puja every Friday']},
     {icon:'&#128142;',title:'Gemstone & Rudraksha',remedies:['Wear '+gemR+' in silver ring on right ring finger',rud+' Mukhi Rudraksha in red thread','Energize with '+rp+' mantra 108x on '+lD,'Wear '+col.toLowerCase()+' clothes on '+lD+'s']},
-    {icon:'&#127807;',title:'Lifestyle Suggestions',remedies:['Face '+dir+' while working and praying','Anulom-Vilom pranayama 10 min daily','Keep Tulsi plant at home entrance',nak+' Nakshatra: Your intentions manifest powerfully']}
+    {icon:'&#127807;',title:'Lifestyle',remedies:['Face '+dir+' while working and praying','Anulom-Vilom pranayama 10 min daily','Keep Tulsi plant at home entrance',nak+' Nakshatra: Stay positive']}
   ];
   function showRems(rems){
     let html='';for(let i=0;i<rems.length;i++){const rem=rems[i];let items='';for(let j=0;j<(rem.remedies||[]).length;j++){items+='<li>'+rem.remedies[j]+'</li>';}html+='<div class="rem-card"><div class="rem-icon">'+(rem.icon||'&#128591;')+'</div><div class="rem-title">'+(rem.title||'Remedy')+'</div><ul class="rem-list">'+items+'</ul></div>';}
     outEl.innerHTML=html;ldrEl.style.display='none';outEl.style.display='grid';outEl.style.gridTemplateColumns='repeat(auto-fit,minmax(200px,1fr))';outEl.style.gap='12px';
   }
   showRems(fallback);
-  callAI('Reply ONLY with a JSON array. No markdown.',[{role:'user',content:'Lagna:'+lagna+' Moon:'+moon+' Nakshatra:'+nak+' Planet:'+rp+' Mahadasha:'+dasha+' Manglik:'+(manglik?'Yes':'No')+' Concern:'+(c||'general life improvement')+'. 6 remedy categories JSON: [{"icon":"emoji","title":"Name","remedies":["r1","r2","r3","r4"]}]'}],900).then(txt=>{const s=txt.indexOf('['),e=txt.lastIndexOf(']');if(s>=0&&e>s){const rems=JSON.parse(txt.substring(s,e+1));if(rems&&rems.length>=4){showRems(rems);toast('AI personalized remedies ready!','ok');}}}).catch(ex=>console.log('Rem:',ex));
+  callAI('Reply ONLY with a JSON array. No markdown.',[{role:'user',content:'Lagna:'+lagna+' Moon:'+moon+' Nakshatra:'+nak+' Planet:'+rp+' Mahadasha:'+dasha+' Manglik:'+(manglik?'Yes':'No')+' Concern:'+(c||'general')+'. 6 remedy categories JSON:[{"icon":"emoji","title":"Name","remedies":["r1","r2","r3","r4"]}]'}],900).then(txt=>{try{const s=txt.indexOf('['),e=txt.lastIndexOf(']');if(s>=0&&e>s){const r=JSON.parse(txt.substring(s,e+1));if(r&&r.length>=4){showRems(r);toast('AI remedies ready!','ok');}}}catch(ex){}}).catch(()=>{});
 }
-function exportKundliPDF(){
-  const name=(document.getElementById('k-rname')||{}).textContent||'';
-  if(!name||name==='--'||name==='User'){toast('Please generate your Kundli first!','');return;}
 
+/* ══ PDF EXPORT ══ */
+function exportKundliPDF(){
+  const name=(document.getElementById('k-rname')||{}).textContent||'User';
+  if(!name||name==='—'){toast('Generate your Kundli first!','');return;}
   const rdob=(document.getElementById('k-rdob')||{}).textContent||'';
+  const basics=(document.getElementById('k-basics')||{}).innerText||'';
+  const lucky=(document.getElementById('k-lucky')||{}).innerText||'';
+  const doshas=(document.getElementById('k-doshas')||{}).innerText||'';
+  const dasha=(document.getElementById('k-dasha')||{}).innerText||'';
+  const pred=(document.getElementById('k-pred')||{}).textContent||'';
   const dob=(document.getElementById('kd')||{}).value||'';
   const place=(document.getElementById('kp')||{}).value||'';
-  const gender=(document.getElementById('kg')||{}).value||'';
-
-  // Read basics cleanly - key:value pairs
-  const basicsEl=document.getElementById('k-basics');
-  let basics='';
-  if(basicsEl){
-    const rows=basicsEl.querySelectorAll('div');
-    rows.forEach(row=>{
-      const spans=row.querySelectorAll('span');
-      if(spans.length>=2){basics+='  '+spans[0].textContent.trim().padEnd(25)+': '+spans[1].textContent.trim()+'\n';}
-    });
-  }
-
-  // Read lucky factors
-  const luckyEl=document.getElementById('k-lucky');
-  let lucky='';
-  if(luckyEl){
-    const rows=luckyEl.querySelectorAll('div');
-    rows.forEach(row=>{
-      const spans=row.querySelectorAll('span');
-      if(spans.length>=2){lucky+='  '+spans[0].textContent.trim().padEnd(20)+': '+spans[1].textContent.trim()+'\n';}
-    });
-  }
-
-  // Read doshas cleanly
-  const doshaEl=document.getElementById('k-doshas');
-  let doshas='';
-  if(doshaEl){
-    const rows=doshaEl.querySelectorAll('div');
-    rows.forEach(row=>{
-      const txt=row.textContent.trim().replace(/\s+/g,' ');
-      if(txt&&txt.length>3&&!row.querySelector('div')){doshas+='  '+txt+'\n';}
-    });
-  }
-
-  // Read dasha timeline
-  const dashaEl=document.getElementById('k-dasha');
-  let dasha='';
-  if(dashaEl){
-    const rows=dashaEl.querySelectorAll('div');
-    rows.forEach(row=>{
-      if(!row.querySelector('div')){
-        const txt=row.textContent.trim().replace(/\s+/g,' ');
-        if(txt&&txt.length>2){dasha+='  '+txt+'\n';}
-      }
-    });
-  }
-
-  // AI prediction - clean text only
-  const predEl=document.getElementById('k-pred');
-  const pred=predEl?predEl.textContent.trim():'';
-
-  // Remedies
-  const remEl=document.getElementById('k-rem');
-  let rem='';
-  if(remEl){
-    const items=remEl.querySelectorAll('li');
-    items.forEach(li=>{rem+='  - '+li.textContent.trim()+'\n';});
-  }
-
-  const S='='.repeat(55);
-  const D='-'.repeat(55);
-
-  const report=
-'ASTROHAND - PREMIUM VEDIC KUNDLI REPORT\n'+
-'Generated: '+new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+' at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'\n'+
-'Website: astrohand.ai\n'+
-S+'\n\n'+
-
-'PERSONAL DETAILS\n'+
-D+'\n'+
-'  Name         : '+name+'\n'+
-'  Gender       : '+(gender||'Not specified')+'\n'+
-'  Date of Birth: '+dob+'\n'+
-'  Birth Place  : '+(place||'Not specified')+'\n'+
-'\n'+S+'\n\n'+
-
-'BIRTH CHART - VEDIC BASICS\n'+
-D+'\n'+
-(basics||'  Please view the Kundli chart tab for details.\n')+
-'\n'+S+'\n\n'+
-
-'LUCKY FACTORS\n'+
-D+'\n'+
-(lucky||'  Please view the Kundli Lucky Factors tab.\n')+
-'\n'+S+'\n\n'+
-
-'DOSHA ANALYSIS\n'+
-D+'\n'+
-(doshas||'  No major doshas detected.\n')+
-'\n'+S+'\n\n'+
-
-'VIMSHOTTARI MAHADASHA TIMELINE\n'+
-D+'\n'+
-(dasha||'  Please view the Dasha tab for timeline.\n')+
-'\n'+S+'\n\n'+
-
-'AI GURU - COMPLETE LIFE PREDICTIONS\n'+
-D+'\n'+
-(pred?pred.replace(/(.{80})/g,'$1\n'):'  Please view the AI Predictions tab.\n')+
-'\n\n'+S+'\n\n'+
-
-'PERSONALIZED VEDIC REMEDIES\n'+
-D+'\n'+
-(rem||'  Please view the Remedies tab for details.\n')+
-'\n'+S+'\n\n'+
-
-'DISCLAIMER\n'+
-D+'\n'+
-'  This report is for guidance and self-reflection only.\n'+
-'  All predictions are probabilistic - no outcome is guaranteed.\n'+
-'  Not a substitute for professional medical, legal or financial advice.\n'+
-'  The stars illuminate possibilities; your free will shapes your destiny.\n'+
-'\n'+
-'  Copyright 2026 AstroHand Technologies Pvt. Ltd.\n'+
-'  Sector 18, Noida, UP 201301, India | astrohand.ai\n'+
-S+'\n';
-
-  try{
-    const blob=new Blob([report],{type:'text/plain;charset=utf-8'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download='AstroHand_Kundli_'+name.trim().replace(/\s+/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    toast('Kundli report downloaded!','ok');
-  }catch(err){
-    toast('Download failed. Try again.','');
-  }
+  const sep='='.repeat(55);
+  const txt='ASTROHAND VEDIC KUNDLI REPORT\nGenerated: '+new Date().toLocaleString()+'\n'+sep+'\n\nNAME: '+name+'\n'+rdob+'\n\n'+sep+'\nBIRTH CHART\n'+sep+'\n'+basics+'\n\n'+sep+'\nLUCKY FACTORS\n'+sep+'\n'+lucky+'\n\n'+sep+'\nDOSHA ANALYSIS\n'+sep+'\n'+doshas+'\n\n'+sep+'\nMAHADASHA TIMELINE\n'+sep+'\n'+dasha+'\n\n'+sep+'\nAI PREDICTIONS\n'+sep+'\n'+pred+'\n\n'+sep+'\n(c) 2026 AstroHand Technologies Pvt. Ltd.\nastrohand.in';
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='AstroHand_Kundli_'+name.replace(/\s+/g,'_')+'.txt';a.click();
+  toast('Kundli downloaded!','ok');
 }
 function shareKundliWA(){
   const name=(document.getElementById('k-rname')||{}).textContent||'';
-  const rdob=(document.getElementById('k-rdob')||{}).textContent||'';
   const basics=(document.getElementById('k-basics')||{}).innerText||'';
-  if(!name||name==='—'){toast('Please generate your Kundli first!','');return;}
-  const msg='My Vedic Kundli from AstroHand AI:\n\nName: '+name+'\n'+rdob+'\n\n'+basics.split('\n').slice(0,6).join('\n')+'\n\nGet your free AI Kundli: astrohand.ai';
-  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  window.open('https://wa.me/?text='+encodeURIComponent('My Vedic Kundli from AstroHand AI:\n\n'+basics.split('\n').slice(0,5).join('\n')+'\n\nGet yours free: astrohand.in'),'_blank');
 }
-
-
-/* ══ CORE MODAL FUNCTIONS ══ */
-function openTool(id){
-  const el=document.getElementById(id);
-  if(el){el.classList.add('open');document.body.style.overflow='hidden';}
-}
-function closeOv(id){
-  const el=document.getElementById(id);
-  if(el){el.classList.remove('open');document.body.style.overflow='';}
-}
-function cov(e,id){
-  if(e.target===document.getElementById(id))closeOv(id);
-}
-function closeMnav(){
-  const mn=document.getElementById('mnav');
-  if(mn)mn.classList.remove('open');
-  document.body.style.overflow='';
-}
-function openMnav(){
-  const mn=document.getElementById('mnav');
-  if(mn)mn.classList.add('open');
-  document.body.style.overflow='hidden';
-}
-
-/* ══ DOM READY ══ */
-document.addEventListener('DOMContentLoaded',async function(){
-  try{await restoreSession();}catch(e){console.log('session:',e);}
-  try{initAList();}catch(e){}
-  try{initHoro();}catch(e){}
-  try{loadPanch();}catch(e){};
-  // Close mnav on backdrop click
-  const mn=document.getElementById('mnav');
-  if(mn)mn.addEventListener('click',function(e){if(e.target===mn)closeMnav();});
-});
-
-
-/* ══ MISSING CRITICAL FUNCTIONS ══ */
-
-async function genKundli(){
-  const n=v('kn'),d=v('kd'),t=v('kt'),p=v('kp'),g=v('kg'),l=v('kl')||'English';
-  if(!n){toast('Please enter your name','');return;}
-  if(!d){toast('Please enter date of birth','');return;}
-  const btn=document.getElementById('k-btn');
-  if(btn){btn.disabled=true;btn.textContent='Generating…';}
-  document.getElementById('k-res').style.display='block';
-  document.getElementById('k-ldr').style.display='block';
-  document.getElementById('k-cnt').style.display='none';
-  const kd=calcBirthChartG(d,t);
-  kd.name=n;kd.gender=g;kd.place=p;
-  curKundliForGuru=kd;
-  // Fill basic info
-  document.getElementById('k-rname').textContent=n;
-  document.getElementById('k-rdob').textContent='Born: '+new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+(t?' at '+t:'')+(p?' · '+p:'');
-  document.getElementById('k-av').textContent=kd.moonSym||kd.lagnaSym||'♈';
-  // Fill basics tab
-  const basics=document.getElementById('k-basics');
-  if(basics)basics.innerHTML=[
-    ['Ascendant (Lagna)',kd.lagnaSign],['Moon Sign (Rashi)',kd.moonSign],
-    ['Sun Sign (Vedic)',kd.sunSign||kd.moonSign],['Nakshatra',kd.nakshatra],
-    ['Nakshatra Pada',kd.nakPada+'th Pada'],['Nakshatra Lord',kd.nakLord],
-    ['Ruling Planet',kd.rulingPlanet],['Yoga','Shubha'],['Mahadasha',DP_G[kd.dashaStart]+' (Current)'],
-    ['Manglik Dosha',kd.manglik?'Yes — Mars in 7th':'No'],['Kaal Sarp',kd.kaalSarp?'Present':'Not Present'],
-    ['Sade Sati',kd.sade?'Active':'Not Active']
-  ].map(([k,v])=>'<div class="bi-row"><span class="bi-k">'+k+'</span><span class="bi-v">'+v+'</span></div>').join('');
-  // Lucky factors
-  const lucky=document.getElementById('k-lucky');
-  if(lucky)lucky.innerHTML=[
-    ['Lucky Number',kd.luckyNums.join(', ')],['Lucky Color',kd.luckyColors.join(', ')],
-    ['Lucky Day',kd.luckyDays.join(', ')],['Lucky Gemstone',kd.luckyGems.join(', ')],
-    ['Ruling Planet',kd.rulingPlanet],['Element',['Fire','Earth','Air','Water'][kd.lagnaIdx%4]],
-    ['Lucky Direction',kd.luckyDir],['Lucky Metal',kd.luckyMetal||'Gold'],
-    ['Rudraksha',kd.rudraksha]
-  ].map(([k,v])=>'<div class="bi-row"><span class="bi-k">'+k+'</span><span class="bi-v">'+v+'</span></div>').join('');
-  // Doshas
-  const dsh=document.getElementById('k-doshas');
-  if(dsh)dsh.innerHTML='<div class="bi-row"><span class="bi-k">Manglik Dosha</span><span class="bi-v">'+(kd.manglik?'Yes — Mars in 7th':'No')+'</span></div><div class="bi-row"><span class="bi-k">Kaal Sarp Dosha</span><span class="bi-v">'+(kd.kaalSarp?'Present':'Not Present')+'</span></div><div class="bi-row"><span class="bi-k">Pitra Dosha</span><span class="bi-v">No</span></div><div class="bi-row"><span class="bi-k">Sade Sati</span><span class="bi-v">'+(kd.sade?'Active':'Not Active Currently')+'</span></div><div class="bi-row"><span class="bi-k">Grah Dosha</span><span class="bi-v">No Major Dosha</span></div>';
-  // Dasha timeline
-  const dashaEl=document.getElementById('k-dasha');
-  if(dashaEl){
-    let html='',yr=kd.yr,ds=kd.dashaStart;
-    for(let i=0;i<9;i++){
-      const idx=(ds+i)%9;
-      const end=yr+DY_G[idx];
-      const cur=(kd.yr<=yr&&yr<=end);
-      html+='<div class="bi-row'+(cur?' cur-dasha':'')+'"><span class="bi-k">'+DP_G[idx]+' Mahadasha</span><span class="bi-v">'+yr+'–'+end+' ('+DY_G[idx]+' yrs)'+(cur?' ← Current':'')+'</span></div>';
-      yr=end;
-    }
-    dashaEl.innerHTML=html;
-  }
-  document.getElementById('k-ldr').style.display='none';
-  document.getElementById('k-cnt').style.display='block';
-  kTab(document.querySelector('.tbtn'),'ov');
-  // AI predictions
-  try{
-    const pred=document.getElementById('k-pred');
-    if(pred)pred.textContent='Consulting the cosmic records…';
-    const prompt='Vedic birth chart reading for '+n+' ('+g+'): Lagna: '+kd.lagnaSign+', Moon: '+kd.moonSign+', Nakshatra: '+kd.nakshatra+', Ruling Planet: '+kd.rulingPlanet+', Mahadasha: '+DP_G[kd.dashaStart]+', Manglik: '+(kd.manglik?'Yes':'No')+', Kaal Sarp: '+(kd.kaalSarp?'Yes':'No')+', Place: '+(p||'India')+'. Language: '+l+'. Give a comprehensive 8-10 sentence Vedic astrology reading covering personality, career, love, health, and near-future predictions (next 12-18 months). Be specific, personal, and deeply insightful.';
-    const reply=await callAI('You are AstroHand Vedic astrologer Pandit Krishnamurti. Give deep, personalized, specific predictions.',[{role:'user',content:prompt}],1500);
-    if(pred)pred.textContent=reply;
-    // Remedies
-    const remEl=document.getElementById('k-rem');
-    if(remEl){
-      const remPrompt='For '+n+' with Lagna '+kd.lagnaSign+' and ruling planet '+kd.rulingPlanet+', give 4 specific Vedic remedies in one short paragraph.';
-      const rem=await callAI('Vedic remedy specialist. Be specific and concise.',[{role:'user',content:remPrompt}],400);
-      remEl.textContent=rem;
-    }
-  }catch(e){
-    const pred=document.getElementById('k-pred');
-    if(pred)pred.textContent='Generate your Kundli to see AI predictions here.';
-  }
-  if(btn){btn.disabled=false;btn.textContent='✨ Generate Free Kundli Now';}
-}
-
-function kTab(el,tab){
-  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
-  document.querySelectorAll('[id^="kp-"]').forEach(p=>p.style.display='none');
-  if(el)el.classList.add('on');
-  const tp=document.getElementById('kp-'+tab);
-  if(tp)tp.style.display='block';
-}
-
-function showPanel(p){
-  document.querySelectorAll('.dpnl').forEach(x=>x.style.display='none');
-  const el=document.getElementById('dp-'+p);
-  if(el)el.style.display='block';
-  document.querySelectorAll('.dmi').forEach(x=>x.classList.remove('on'));
-  const mi=document.querySelector('.dmi[onclick*="'+p+'"]');
-  if(mi)mi.classList.add('on');
-}
-
-function doForgot(){
-  const em=v('li-em').toLowerCase().trim();
-  if(!isEmail(em)){showErr('li-err','Enter your email above first.');return;}
-  OTP=rstr(6,'0123456789');
-  pendReset=em;
-  console.log('[RESET OTP]',OTP);
-  toast('Password reset OTP sent to '+em,'ok');
-  router('otp');
-  document.getElementById('otp-em').textContent=em;
-  startOtpTimer();
-}
-
-function doReset(){
-  const pw=v('rp-pw'),cpw=v('rp-cpw');
-  if(!pw||pw.length<8){showErr('rp-err','Password must be at least 8 characters.');return;}
-  if(pw!==cpw){showErr('rp-err','Passwords do not match.');return;}
-  if(pendReset){
-    const users=DB.g('users')||{};
-    if(users[pendReset]){users[pendReset].pw=hp(pw);DB.s('users',users);}
-    pendReset=null;
-  }
-  toast('Password updated! Please sign in.','ok');
-  router('login');
-}
-
-function doSignOut(){
-  if(!confirm('Sign out?'))return;
-  CU=null;DB.d('sess');
-  router('home');
-  toast('Signed out.','ok');
-}
-
-function saveProfile(){
-  const fn=v('ep-fn'),ln=v('ep-ln'),ph=v('ep-ph');
-  if(CU){CU.fn=fn||CU.fn;CU.ln=ln||CU.ln;CU.ph=ph||CU.ph;
-    const users=DB.g('users')||{};
-    if(users[CU.em]){users[CU.em]=Object.assign(users[CU.em],{fn:CU.fn,ln:CU.ln,ph:CU.ph});DB.s('users',users);}
-  }
-  toast('Profile saved!','ok');
-}
-
-function showCPW(){
-  const s=document.getElementById('cpw-section');
-  if(s)s.style.display=s.style.display==='none'?'block':'none';
-}
-
-function doChangePw(){
-  const op=v('cp-op'),np=v('cp-np');
-  if(!op||!np){toast('Fill all fields','');return;}
-  if(CU&&hp(op)!==CU.pw){toast('Current password incorrect','');return;}
-  if(np.length<8){toast('New password too short','');return;}
-  if(CU){CU.pw=hp(np);
-    const users=DB.g('users')||{};
-    if(users[CU.em]){users[CU.em].pw=hp(np);DB.s('users',users);}
-  }
-  toast('Password changed!','ok');
-}
-
-function showSO(){router('login');}
-
-function deleteAcct(){
-  if(!confirm('Delete your account permanently? This cannot be undone.'))return;
-  if(CU){const users=DB.g('users')||{};delete users[CU.em];DB.s('users',users);}
-  CU=null;DB.d('sess');
-  toast('Account deleted.','ok');
-  router('home');
-}
-
-function dlData(){
-  if(!CU)return;
-  const blob=new Blob([JSON.stringify(CU,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='astrohand_data.json';
-  a.click();
-}
-
-function initHoro(){
-  const sel=document.getElementById('h-sign');
-  if(sel)genHoro(sel.value||'aries');
-}
-function toggle2FA(){}
-function procPay(plan){toast('Payment gateway coming soon!','');}
 
 </script>
 </body>
