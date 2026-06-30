@@ -2270,11 +2270,11 @@ function openMnav(){
 }
 
 /* ══ DOM READY ══ */
-document.addEventListener('DOMContentLoaded',function(){
-  restoreSession();
-  initAList();
-  initHoro();
-  loadPanch();
+document.addEventListener('DOMContentLoaded',async function(){
+  try{await restoreSession();}catch(e){console.log('session:',e);}
+  try{initAList();}catch(e){}
+  try{initHoro();}catch(e){}
+  try{loadPanch();}catch(e){};
   // Close mnav on backdrop click
   const mn=document.getElementById('mnav');
   if(mn)mn.addEventListener('click',function(e){if(e.target===mn)closeMnav();});
@@ -2452,6 +2452,10 @@ function dlData(){
   a.click();
 }
 
+function initHoro(){
+  const sel=document.getElementById('h-sign');
+  if(sel)genHoro(sel.value||'aries');
+}
 function toggle2FA(){}
 function procPay(plan){toast('Payment gateway coming soon!','');}
 
