@@ -2072,18 +2072,30 @@ function getSB(){
 /* ── AI backend proxy call ── */
 async function callAI(systemPrompt,messages,maxTokens){
   maxTokens=maxTokens||1000;
-  const r=await fetch(API_URL,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({systemPrompt,messages,maxTokens})
-  });
-  if(!r.ok){
-    const e=await r.json().catch(()=>({}));
-    throw new Error(e.error||'HTTP '+r.status);
+  // Abort the request if it hangs (slow network / server cold-start) so the
+  // caller's catch block can show fallback content instead of spinning forever.
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),45000);
+  try{
+    const r=await fetch(API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({systemPrompt,messages,maxTokens}),
+      signal:controller.signal
+    });
+    if(!r.ok){
+      const e=await r.json().catch(()=>({}));
+      throw new Error(e.error||'HTTP '+r.status);
+    }
+    const data=await r.json();
+    if(!data.text)throw new Error('Empty response');
+    return data.text;
+  }catch(err){
+    if(err.name==='AbortError')throw new Error('Request timed out. Please try again.');
+    throw err;
+  }finally{
+    clearTimeout(timeout);
   }
-  const data=await r.json();
-  if(!data.text)throw new Error('Empty response');
-  return data.text;
 }
 
 /* ── Page Router ── */
@@ -2277,6 +2289,38 @@ function showPanel(p){
 }
 
 /* ── Enter dashboard after login/signup/session-restore ── */
+async function syncReadingsFromCloud(){
+  if(!CU||!CU.id)return;
+  const sb=getSB();
+  if(!sb)return;
+  try{
+    const {data,error}=await sb.from('readings').select('*').eq('user_id',CU.id).order('created_at',{ascending:false}).limit(50);
+    if(error||!data)return;
+    // Map cloud rows to the local reading shape
+    const cloudRds=data.map(r=>({
+      id:r.id?String(r.id):(Date.now().toString(36)+Math.random().toString(36).slice(2,7)),
+      type:r.type||'general',
+      title:r.title||'Reading',
+      text:r.content||'',
+      preview:(r.content||'').substring(0,200),
+      at:r.created_at||new Date().toISOString(),
+      icon:r.type==='kundli'?'📜':r.type==='match'?'💍':r.type==='remedy'?'🙏':'✨'
+    }));
+    // Merge with any local-only readings, dedupe by title+at (cloud wins on conflict)
+    const local=DB.getRds(CU.em);
+    const seen=new Set(cloudRds.map(r=>r.title+'|'+(r.at||'').slice(0,16)));
+    const localOnly=local.filter(r=>!seen.has(r.title+'|'+(r.at||'').slice(0,16)));
+    const merged=[...cloudRds,...localOnly].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,50);
+    DB.s('rds_'+CU.em,merged);
+    // Refresh any visible UI that depends on readings
+    const dmrd=document.getElementById('dm-rd');if(dmrd)dmrd.textContent=merged.length;
+    const rdList=document.getElementById('rd-list');
+    if(rdList&&document.getElementById('dp-readings')&&document.getElementById('dp-readings').style.display!=='none'){
+      renderReadings();
+    }
+  }catch(e){/* offline or table absent — local cache still works */}
+}
+
 function enterDash(){
   router('dash');
   if(!CU)return;
@@ -2310,6 +2354,9 @@ function enterDash(){
   const dmdy=document.getElementById('dm-dy');if(dmdy)dmdy.textContent=days;
 
   showPanel('home');
+
+  // Pull latest readings from the cloud so history is consistent across devices
+  syncReadingsFromCloud();
 }
 
 /* ── Subscription plan data (matches home page Seeker/Gold/VIP Oracle pricing) ── */
