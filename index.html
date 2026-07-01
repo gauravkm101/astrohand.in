@@ -6,6 +6,7 @@
 <meta name="description" content="AstroHand - AI-Powered Vedic Astrology. Free Kundli, AI Guru, Horoscope, Match Making, Gemstones & More.">
 <title>AstroHand – Advanced AI Vedic Astrology Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&family=Noto+Sans+Telugu:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 
 :root{
@@ -35,7 +36,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-body{font-family:'Inter',sans-serif;background:var(--ink);color:var(--text);overflow-x:hidden;min-height:100vh;}
+body{font-family:'Inter','Noto Sans Devanagari','Noto Sans Bengali','Noto Sans Tamil','Noto Sans Telugu',sans-serif;background:var(--ink);color:var(--text);overflow-x:hidden;min-height:100vh;}
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-thumb{background:rgba(200,150,60,.25);border-radius:2px;}
 
@@ -360,6 +361,20 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
 .curr-item-name{color:var(--muted);font-size:.68rem;}
 .curr-note{font-size:.6rem;color:var(--sub);padding:8px 10px 4px;border-top:1px solid var(--bdr2);margin-top:4px;line-height:1.4;}
 .price-fx{font-size:.62rem;color:var(--muted);display:block;margin-top:2px;}
+
+/* ── Coupon Code ── */
+.coupon-box{margin-bottom:16px;}
+.coupon-row{display:flex;gap:8px;}
+.coupon-input{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:var(--r2);
+  padding:11px 14px;color:var(--text);font-size:.82rem;font-family:'Inter',sans-serif;letter-spacing:.03em;text-transform:uppercase;outline:none;transition:border-color .2s;}
+.coupon-input::placeholder{text-transform:none;letter-spacing:normal;color:var(--sub);}
+.coupon-input:focus{border-color:rgba(200,150,60,.4);}
+.coupon-apply{background:rgba(200,150,60,.12);border:1px solid rgba(200,150,60,.3);border-radius:var(--r2);
+  color:var(--g2c);font-size:.82rem;font-weight:600;padding:11px 20px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;white-space:nowrap;}
+.coupon-apply:hover{background:rgba(200,150,60,.2);border-color:rgba(200,150,60,.5);}
+.coupon-msg{font-size:.72rem;margin-top:8px;min-height:1em;}
+.coupon-msg.ok{color:#4ade80;}
+.coupon-msg.err{color:#f87171;}
 
 
 
@@ -1933,9 +1948,18 @@ This single script enables ALL ad units on the page, including every
     <button class="mc" onclick="document.getElementById('pay-ov').classList.remove('open')">✕</button>
     <div style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g3);margin-bottom:5px;">Upgrade to <span id="pay-plan" style="color:var(--gold)">Gold</span></div>
     <div style="background:rgba(200,150,60,.06);border:1px solid var(--bdr);border-radius:var(--r2);padding:14px;margin-bottom:16px;text-align:center;">
-      <div style="font-family:'Cinzel Decorative',serif;font-size:1.9rem;color:var(--g2c);" id="pay-pr">₹499</div>
+      <div style="font-family:'Cinzel Decorative',serif;font-size:1.9rem;color:var(--g2c);">
+        <span id="pay-orig-pr" style="display:none;text-decoration:line-through;color:var(--sub);font-size:1.15rem;margin-right:8px;"></span><span id="pay-pr">₹499</span>
+      </div>
       <div style="color:var(--muted);font-size:.74rem;" id="pay-per">/month</div>
       <div class="price-fx" id="pay-pr-fx" style="margin-top:4px;"></div>
+    </div>
+    <div class="coupon-box">
+      <div class="coupon-row">
+        <input class="coupon-input" id="coupon-input" placeholder="Have a coupon code?" maxlength="24" autocomplete="off">
+        <button class="coupon-apply" type="button" onclick="applyCoupon()">Apply</button>
+      </div>
+      <div class="coupon-msg" id="coupon-msg"></div>
     </div>
     <div class="fg"><label class="fl">Card Number</label><input class="fi" type="tel" id="crd-n" placeholder="1234 5678 9012 3456" maxlength="19" oninput="fmtCard(this)"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">
@@ -2914,6 +2938,17 @@ function toggle2FA(){}
 async function procPay(plan,amount){
   if(!CU){toast('Please sign in first to upgrade your plan.','');router('login');return;}
 
+  // Called bare from the pay modal → fall back to the selected plan (payPlan)
+  // and apply any active coupon discount to the charged amount.
+  if(plan===undefined&&payPlan){
+    plan=payPlan.id;
+    amount=finalChargeAmount();
+  }else if(amount!==undefined&&activeCoupon&&payPlan&&payPlan.id===plan){
+    // Direct call for the same plan that has a coupon applied → discount it too
+    amount=finalChargeAmount();
+  }
+  if(!plan||!amount){toast('Please select a plan first.','');return;}
+
   const RAZORPAY_KEY='RAZORPAY_KEY_ID_HERE'; /* Get from razorpay.com dashboard after KYC approval */
 
   if(RAZORPAY_KEY.includes('HERE')){
@@ -3160,14 +3195,99 @@ function renderPlans(){
   }).join('');
   applyCurrencyDisplay();
 }
+/* ═══════════════════════════════════════════════════
+   COUPON CODES
+   Edit the COUPONS object below to add/remove codes.
+   - pct: percentage discount (e.g. 20 = 20% off)
+   - expires: last valid date, 'YYYY-MM-DD' (code stops working AFTER this date)
+   - plans: array of plan ids the code works on: ['gold'], ['vip'], or ['gold','vip']
+   NOTE: Frontend codes are visible in browser dev tools. For fraud-proof
+   coupons, create them in the Razorpay dashboard once your account is live.
+═══════════════════════════════════════════════════ */
+const COUPONS={
+  'WELCOME20':{pct:20,expires:'2026-12-31',plans:['gold','vip']},
+  'GOLD10':{pct:10,expires:'2026-12-31',plans:['gold']},
+  'VIP15':{pct:15,expires:'2026-12-31',plans:['vip']}
+};
+let activeCoupon=null; // {code, pct} once successfully applied
+
+function validateCoupon(code,planId){
+  if(!code)return {ok:false,msg:'Enter a coupon code.'};
+  const c=COUPONS[code.trim().toUpperCase()];
+  if(!c)return {ok:false,msg:'Invalid coupon code.'};
+  // Expiry check (valid through end of the expires day)
+  if(c.expires){
+    const exp=new Date(c.expires+'T23:59:59');
+    if(new Date()>exp)return {ok:false,msg:'This coupon has expired.'};
+  }
+  // Plan restriction check
+  if(c.plans&&c.plans.length&&!c.plans.includes(planId)){
+    const names=c.plans.map(p=>p==='gold'?'Gold':p==='vip'?'VIP':p).join(' & ');
+    return {ok:false,msg:'This code is only valid for the '+names+' plan.'};
+  }
+  return {ok:true,pct:c.pct,code:code.trim().toUpperCase()};
+}
+
+function applyCoupon(){
+  if(!payPlan){return;}
+  const input=document.getElementById('coupon-input');
+  const msgEl=document.getElementById('coupon-msg');
+  const res=validateCoupon(input?input.value:'',payPlan.id);
+  if(!res.ok){
+    activeCoupon=null;
+    if(msgEl){msgEl.textContent=res.msg;msgEl.className='coupon-msg err';}
+    updatePayDisplay();
+    return;
+  }
+  activeCoupon={code:res.code,pct:res.pct};
+  if(msgEl){msgEl.textContent='✓ '+res.pct+'% off applied with code '+res.code;msgEl.className='coupon-msg ok';}
+  updatePayDisplay();
+}
+
+function clearCoupon(){
+  activeCoupon=null;
+  const input=document.getElementById('coupon-input');
+  const msgEl=document.getElementById('coupon-msg');
+  if(input)input.value='';
+  if(msgEl){msgEl.textContent='';msgEl.className='coupon-msg';}
+  updatePayDisplay();
+}
+
+// Recompute the price shown in the pay modal, factoring in any active coupon
+function updatePayDisplay(){
+  if(!payPlan)return;
+  const baseInr=parseFloat(String(payPlan.pr).replace(/[^\d.]/g,''))||0;
+  const prEl=document.getElementById('pay-pr');
+  const fxEl=document.getElementById('pay-pr-fx');
+  const origEl=document.getElementById('pay-orig-pr');
+  if(activeCoupon&&baseInr>0){
+    const discounted=Math.round(baseInr*(1-activeCoupon.pct/100));
+    if(prEl)prEl.textContent='₹'+discounted;
+    if(origEl){origEl.textContent='₹'+baseInr;origEl.style.display='inline';}
+    if(fxEl)fxEl.textContent=fxFormat(discounted);
+  }else{
+    if(prEl)prEl.textContent=payPlan.pr;
+    if(origEl){origEl.style.display='none';}
+    if(fxEl)fxEl.textContent=fxFormat(baseInr);
+  }
+}
+
+// The final amount (in rupees) to actually charge, after any coupon
+function finalChargeAmount(){
+  if(!payPlan)return 0;
+  const baseInr=parseFloat(String(payPlan.pr).replace(/[^\d.]/g,''))||0;
+  if(activeCoupon)return Math.round(baseInr*(1-activeCoupon.pct/100));
+  return baseInr;
+}
+
 function openPay(id,n,pr,per){
   payPlan={id,n,pr,per};
+  activeCoupon=null;
+  const ci=document.getElementById('coupon-input');if(ci)ci.value='';
+  const cm=document.getElementById('coupon-msg');if(cm){cm.textContent='';cm.className='coupon-msg';}
   document.getElementById('pay-plan').textContent=n;
-  document.getElementById('pay-pr').textContent=pr;
   document.getElementById('pay-per').textContent=per==='forever'?'Forever':per;
-  const inrNum=parseFloat(String(pr).replace(/[^\d.]/g,''))||0;
-  const fxEl=document.getElementById('pay-pr-fx');
-  if(fxEl)fxEl.textContent=fxFormat(inrNum);
+  updatePayDisplay();
   document.getElementById('pay-ov').classList.add('open');
 }
 function downgFree(){CU.plan='free';DB.setU(CU.em,CU);document.getElementById('d-plan').textContent='Free Plan';document.getElementById('d-plan').className='planbdg pf';document.getElementById('nav-uplan').textContent='Free Plan';toast('Downgraded to Free plan.','g');renderPlans();}
@@ -3275,7 +3395,7 @@ async function genKundli(){
   document.getElementById('k-planets').innerHTML=PLS_D.map(p=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:1.4rem;margin-bottom:3px;">${p.s}</div><div style="font-size:.6rem;letter-spacing:.07em;color:var(--muted);text-transform:uppercase;">${p.n}</div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);margin-top:1px;">${p.sg}</div><div style="font-size:.6rem;color:var(--sub);">${p.dg}</div></div>`).join('');
   const manglik=seed%3===0,kaal=seed%5===0,pitra=seed%4===0,sade=seed%7===0;
   document.getElementById('k-doshas').innerHTML=[['Manglik Dosha',manglik?'Yes — Mars in 7th':'No — Clean Chart',manglik],['Kaal Sarp Dosha',kaal?'Yes — Partial (Ananta)':'No',kaal],['Pitra Dosha',pitra?'Yes — Mild':'No',pitra],['Sade Sati',sade?'Active — 2nd Phase':'Not Active Currently',sade],['Grah Dosha','No Major Dosha',false]].map(([k,val,bad])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8px"><span style="color:var(--muted);font-size:.8rem;">${k}</span><span style="${bad?'color:#f87171':'color:#4ade80'};font-size:.76rem;background:${bad?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};padding:2px 9px;border-radius:100px;border:1px solid ${bad?'rgba(220,38,38,.2)':'rgba(22,163,74,.2)'};">${val}</span></div>`).join('');
-  document.getElementById('k-rem').innerHTML=`• Chant Om Namah Shivaya 108× daily at sunrise<br>• Wear ${ln} (${rp} gemstone) in silver ring<br>• Fast on ${day}s for ${rp}'s blessings<br>• Donate ${col.toLowerCase()} items on ${day}<br>• Light ghee lamp at Shiva temple every Monday`;
+  document.getElementById('k-rem').innerHTML=localizedRemedies(v('kl')||'English',ln,rp,day,col);
   let stY=yr;document.getElementById('k-dasha').innerHTML=DASHA_P.map((p,i)=>{const s=stY,e=stY+DASHA_Y[i];stY=e;const active=new Date().getFullYear()>=s&&new Date().getFullYear()<e;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;${active?'color:var(--g2c);font-weight:600':''}"><span style="color:${active?'var(--g2c)':'var(--muted)'};">${p} Mahadasha${active?' ← Current':''}</span><span style="color:${active?'var(--g2c)':'var(--text)'};">${s}–${e} (${DASHA_Y[i]} yrs)</span></div>`;}).join('');
   const lang=v('kl')||'English',gender=v('kg')||'person',place=v('kp');
   const prompt=`You are AstroHand's master Vedic astrologer. Write a deeply personalized 360-word reading in ${lang} for ${n} (${gender}), born ${dt.toDateString()}${place?' in '+place:''}. Moon sign: ${RASHIS[ri]}, Lagna: ${RASHIS[li]}, Nakshatra: ${NAK[ni]}, Ruling planet: ${rp}, Gemstone: ${ln}. Cover: (1) Soul purpose from Lagna+Moon, (2) Karmic gifts from ${NAK[ni]} Nakshatra, (3) Current ${rp} dasha insights, (4) Love & marriage destiny, (5) Career & financial trajectory, (6) One specific remedy. Be mystical yet precise. End with: "These stars illuminate possibilities — your free will determines the journey."`;
@@ -3627,108 +3747,179 @@ function unlockPersonalizedRemedies(){
 }
 
 /* ══ PDF EXPORT ══ */
+/* ═══════════════════════════════════════════════════
+   PREMIUM KUNDLI PDF EXPORT
+   Builds a colorful, festive HTML report and prints it to PDF
+   via the browser's native engine — the only method that
+   correctly renders Devanagari/Bengali/Tamil/Telugu scripts.
+═══════════════════════════════════════════════════ */
+const RPT_LABELS={
+  English:{title:'Premium Vedic Kundli Report',personal:'Personal Details',name:'Name',gender:'Gender',dob:'Date of Birth',place:'Birth Place',chart:'Janam Kundli Chart',basics:'Birth Chart — Vedic Basics',lucky:'Lucky Factors',doshas:'Dosha Analysis',dasha:'Vimshottari Mahadasha Timeline',prediction:'Your Personalized Reading',remedies:'Recommended Remedies',disclaimer:'Disclaimer',discText:'This report is for guidance only. No outcome is guaranteed. It is not a substitute for professional advice.',generated:'Generated',blessing:'May the stars illuminate your path'},
+  Hindi:{title:'प्रीमियम वैदिक कुंडली रिपोर्ट',personal:'व्यक्तिगत विवरण',name:'नाम',gender:'लिंग',dob:'जन्म तिथि',place:'जन्म स्थान',chart:'जन्म कुंडली चार्ट',basics:'जन्म कुंडली — वैदिक मूल बातें',lucky:'भाग्यशाली कारक',doshas:'दोष विश्लेषण',dasha:'विंशोत्तरी महादशा समयरेखा',prediction:'आपका व्यक्तिगत पठन',remedies:'अनुशंसित उपाय',disclaimer:'अस्वीकरण',discText:'यह रिपोर्ट केवल मार्गदर्शन के लिए है। किसी परिणाम की गारंटी नहीं है। यह पेशेवर सलाह का विकल्प नहीं है।',generated:'निर्मित',blessing:'तारे आपका मार्ग प्रकाशित करें'},
+  Bengali:{title:'প্রিমিয়াম বৈদিক কুণ্ডলী রিপোর্ট',personal:'ব্যক্তিগত বিবরণ',name:'নাম',gender:'লিঙ্গ',dob:'জন্ম তারিখ',place:'জন্মস্থান',chart:'জন্ম কুণ্ডলী চার্ট',basics:'জন্ম কুণ্ডলী — বৈদিক মূল বিষয়',lucky:'ভাগ্যবান কারণ',doshas:'দোষ বিশ্লেষণ',dasha:'বিংশোত্তরী মহাদশা সময়রেখা',prediction:'আপনার ব্যক্তিগত পঠন',remedies:'প্রস্তাবিত প্রতিকার',disclaimer:'দাবিত্যাগ',discText:'এই রিপোর্টটি শুধুমাত্র নির্দেশনার জন্য। কোনো ফলাফলের নিশ্চয়তা নেই। এটি পেশাদার পরামর্শের বিকল্প নয়।',generated:'তৈরি',blessing:'তারারা আপনার পথ আলোকিত করুক'},
+  Tamil:{title:'பிரீமியம் வேத ஜாதக அறிக்கை',personal:'தனிப்பட்ட விவரங்கள்',name:'பெயர்',gender:'பாலினம்',dob:'பிறந்த தேதி',place:'பிறந்த இடம்',chart:'ஜென்ம ஜாதக விளக்கப்படம்',basics:'பிறப்பு ஜாதகம் — வேத அடிப்படைகள்',lucky:'அதிர்ஷ்ட காரணிகள்',doshas:'தோஷ பகுப்பாய்வு',dasha:'விம்சோத்தரி மகாதசை காலவரிசை',prediction:'உங்கள் தனிப்பயன் வாசிப்பு',remedies:'பரிந்துரைக்கப்பட்ட பரிகாரங்கள்',disclaimer:'மறுப்பு',discText:'இந்த அறிக்கை வழிகாட்டுதலுக்கு மட்டுமே. எந்த முடிவும் உத்தரவாதம் அளிக்கப்படவில்லை. இது தொழில்முறை ஆலோசனைக்கு மாற்றாகாது.',generated:'உருவாக்கப்பட்டது',blessing:'நட்சத்திரங்கள் உங்கள் பாதையை ஒளிரச் செய்யட்டும்'},
+  Telugu:{title:'ప్రీమియం వేద జాతక నివేదిక',personal:'వ్యక్తిగత వివరాలు',name:'పేరు',gender:'లింగం',dob:'పుట్టిన తేదీ',place:'పుట్టిన స్థలం',chart:'జన్మ జాతక చార్ట్',basics:'జన్మ జాతకం — వేద ప్రాథమికాంశాలు',lucky:'అదృష్ట కారకాలు',doshas:'దోష విశ్లేషణ',dasha:'వింశోత్తరి మహాదశ కాలక్రమం',prediction:'మీ వ్యక్తిగత పఠనం',remedies:'సిఫార్సు చేసిన పరిహారాలు',disclaimer:'నిరాకరణ',discText:'ఈ నివేదిక మార్గదర్శకత్వం కోసం మాత్రమే. ఏ ఫలితానికి హామీ లేదు. ఇది నిపుణుల సలహాకు ప్రత్యామ్నాయం కాదు.',generated:'రూపొందించబడింది',blessing:'నక్షత్రాలు మీ మార్గాన్ని ప్రకాశింపజేయుగాక'}
+};
+
 function exportKundliPDF(){
   const name=(document.getElementById('k-rname')||{}).textContent||'';
   if(!name||name==='—'||!name.trim()){toast('Please generate your Kundli first!','');return;}
   const dob=(document.getElementById('kd')||{}).value||'';
   const place=(document.getElementById('kp')||{}).value||'';
   const gender=(document.getElementById('kg')||{}).value||'';
+  const lang=(document.getElementById('kl')||{}).value||'English';
+  const L=RPT_LABELS[lang]||RPT_LABELS.English;
 
-  // Read basics cleanly row by row
+  // Read on-screen sections as structured rows (key/value pairs)
   function readRows(id){
     const el=document.getElementById(id);
-    if(!el)return '';
-    let out='';
+    if(!el)return [];
+    const rows=[];
     el.querySelectorAll('.bi-row').forEach(row=>{
       const spans=row.querySelectorAll('span');
-      if(spans.length>=2){
-        const k=spans[0].textContent.trim();
-        const v=spans[1].textContent.trim();
-        out+='  '+k.padEnd(28)+': '+v+'\n';
-      }
+      if(spans.length>=2)rows.push([spans[0].textContent.trim(),spans[1].textContent.trim()]);
     });
-    return out||el.innerText||'';
+    return rows;
   }
-
-  function readList(id){
+  function readListItems(id){
     const el=document.getElementById(id);
-    if(!el)return '';
-    let out='';
-    el.querySelectorAll('li').forEach(li=>{out+='  - '+li.textContent.trim()+'\n';});
-    return out||el.innerText||'';
+    if(!el)return [];
+    const items=[];
+    el.querySelectorAll('li').forEach(li=>items.push(li.textContent.trim()));
+    return items;
   }
 
   const basics=readRows('k-basics');
   const lucky=readRows('k-lucky');
   const doshas=readRows('k-doshas');
-
-  // Dasha - read cleanly
-  const dashaEl=document.getElementById('k-dasha');
-  let dasha='';
-  if(dashaEl){dashaEl.querySelectorAll('.bi-row').forEach(r=>{const s=r.querySelectorAll('span');if(s.length>=2)dasha+='  '+s[0].textContent.trim().padEnd(20)+': '+s[1].textContent.trim()+'\n';});}
-
+  const dashaRows=readRows('k-dasha');
   const pred=(document.getElementById('k-pred')||{}).textContent||'';
-  const rem=readList('k-rem');
+  const remItems=readListItems('k-rem');
+  const chartSVG=(document.getElementById('kundli-chart-wrap')||{}).innerHTML||'';
 
-  const S='='.repeat(55);
-  const D='-'.repeat(55);
   const now=new Date();
-  const dateStr=now.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+' at '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  const dateStr=now.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+' · '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
 
-  const lines=[
-    'ASTROHAND - PREMIUM VEDIC KUNDLI REPORT',
-    'Generated: '+dateStr,
-    'Website: astrohand.in',
-    S,'',
-    'PERSONAL DETAILS',
-    D,
-    '  Name         : '+name,
-    '  Gender       : '+(gender||'Not specified'),
-    '  Date of Birth: '+dob,
-    '  Birth Place  : '+(place||'Not specified'),
-    '',S,'',
-    'BIRTH CHART - VEDIC BASICS',
-    D,
-    basics,
-    S,'',
-    'LUCKY FACTORS',
-    D,
-    lucky,
-    S,'',
-    'DOSHA ANALYSIS',
-    D,
-    doshas,
-    S,'',
-    'VIMSHOTTARI MAHADASHA TIMELINE',
-    D,
-    dasha,
-    S,'',
-    'AI PREDICTIONS',
-    D,
-    '  '+pred.replace(/(.{80})/g,'$1\n  '),
-    '',S,'',
-    'PERSONALIZED REMEDIES',
-    D,
-    rem,
-    S,'',
-    'DISCLAIMER',
-    D,
-    '  This report is for guidance only. No outcome is guaranteed.',
-    '  Not a substitute for professional advice.',
-    '',
-    '  Copyright 2026 AstroHand Technologies Pvt. Ltd.',
-    '  Sector 18, Noida, UP 201301 | astrohand.in',
-    S
-  ];
+  // Build key/value rows HTML
+  function rowsHTML(rows){
+    if(!rows.length)return '<div class="rpt-empty">—</div>';
+    return rows.map(r=>`<div class="rpt-kv"><span class="rpt-k">${esc(r[0])}</span><span class="rpt-v">${esc(r[1])}</span></div>`).join('');
+  }
+  function listHTML(items){
+    if(!items.length)return '<div class="rpt-empty">—</div>';
+    return '<ul class="rpt-list">'+items.map(i=>`<li>${esc(i)}</li>`).join('')+'</ul>';
+  }
 
-  const txt=lines.join('\n');
-  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='AstroHand_Kundli_'+name.trim().replace(/\s+/g,'_')+'_'+now.toISOString().split('T')[0]+'.txt';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  toast('Kundli report downloaded!','ok');
+  const doc=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(name)} — ${esc(L.title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter','Noto Sans Devanagari','Noto Sans Bengali','Noto Sans Tamil','Noto Sans Telugu',sans-serif;color:#2a1a05;background:#fff;line-height:1.6;}
+.page{max-width:800px;margin:0 auto;padding:0;}
+.rpt-hero{background:linear-gradient(135deg,#e8762c 0%,#c8963c 50%,#9c2538 100%);color:#fff;padding:44px 40px 38px;text-align:center;position:relative;overflow:hidden;}
+.rpt-hero::before{content:'✦';position:absolute;top:16px;left:28px;font-size:2rem;opacity:.35;}
+.rpt-hero::after{content:'✦';position:absolute;bottom:16px;right:28px;font-size:2rem;opacity:.35;}
+.rpt-om{font-size:2.4rem;margin-bottom:6px;text-shadow:0 2px 12px rgba(0,0,0,.25);}
+.rpt-brand{font-family:'Cinzel',serif;font-size:.82rem;letter-spacing:.35em;text-transform:uppercase;opacity:.9;margin-bottom:14px;}
+.rpt-title{font-family:'Cinzel',serif;font-size:1.7rem;font-weight:700;margin-bottom:8px;text-shadow:0 2px 10px rgba(0,0,0,.2);}
+.rpt-name{font-size:1.15rem;font-weight:600;opacity:.95;}
+.rpt-date{font-size:.75rem;opacity:.85;margin-top:10px;}
+.rpt-body{padding:34px 40px 40px;}
+.rpt-sec{margin-bottom:26px;break-inside:avoid;}
+.rpt-sec-h{display:flex;align-items:center;gap:10px;font-family:'Cinzel',serif;font-size:1.15rem;font-weight:700;color:#9c2538;padding-bottom:8px;margin-bottom:14px;border-bottom:2px solid transparent;border-image:linear-gradient(90deg,#e8762c,#c8963c,transparent) 1;}
+.rpt-sec-icon{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#e8762c,#c8963c);display:flex;align-items:center;justify-content:center;font-size:.95rem;color:#fff;flex-shrink:0;}
+.rpt-card{background:linear-gradient(135deg,#fff8ee,#fff4e0);border:1px solid #f0d9a8;border-radius:14px;padding:18px 20px;}
+.rpt-kv{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px dashed #ecd9b0;font-size:.9rem;}
+.rpt-kv:last-child{border-bottom:none;}
+.rpt-k{color:#8a6a2a;font-weight:500;}
+.rpt-v{color:#2a1a05;font-weight:600;text-align:right;}
+.rpt-list{list-style:none;}
+.rpt-list li{padding:8px 0 8px 24px;position:relative;font-size:.9rem;border-bottom:1px dashed #ecd9b0;}
+.rpt-list li:last-child{border-bottom:none;}
+.rpt-list li::before{content:'✦';position:absolute;left:2px;color:#e8762c;}
+.rpt-pred{background:linear-gradient(135deg,#fff8ee,#fdeecf);border:1px solid #f0d9a8;border-radius:14px;padding:22px 24px;font-size:.95rem;line-height:1.85;color:#3a2810;white-space:pre-wrap;}
+.rpt-chart{display:flex;justify-content:center;padding:10px 0;}
+.rpt-chart svg{width:300px;height:300px;}
+.rpt-personal{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;}
+.rpt-empty{color:#b0a080;font-style:italic;font-size:.85rem;}
+.rpt-disc{background:#faf3e6;border-left:4px solid #c8963c;border-radius:8px;padding:14px 18px;font-size:.78rem;color:#7a5a2a;line-height:1.7;margin-top:8px;}
+.rpt-foot{text-align:center;padding:24px 40px 34px;background:linear-gradient(180deg,#fff,#fdf6ea);border-top:1px solid #f0d9a8;}
+.rpt-blessing{font-family:'Cinzel',serif;font-style:italic;color:#9c2538;font-size:.95rem;margin-bottom:10px;}
+.rpt-foot-brand{font-size:.72rem;color:#8a6a2a;line-height:1.6;}
+@media print{
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .rpt-sec{break-inside:avoid;}
+  @page{margin:0;size:A4;}
+}
+</style></head><body><div class="page">
+<div class="rpt-hero">
+  <div class="rpt-om">🕉</div>
+  <div class="rpt-brand">AstroHand</div>
+  <div class="rpt-title">${esc(L.title)}</div>
+  <div class="rpt-name">${esc(name)}</div>
+  <div class="rpt-date">${esc(L.generated)}: ${esc(dateStr)}</div>
+</div>
+<div class="rpt-body">
+  <div class="rpt-sec">
+    <div class="rpt-sec-h"><span class="rpt-sec-icon">👤</span>${esc(L.personal)}</div>
+    <div class="rpt-card"><div class="rpt-personal">
+      <div class="rpt-kv"><span class="rpt-k">${esc(L.name)}</span><span class="rpt-v">${esc(name)}</span></div>
+      <div class="rpt-kv"><span class="rpt-k">${esc(L.gender)}</span><span class="rpt-v">${esc(gender||'—')}</span></div>
+      <div class="rpt-kv"><span class="rpt-k">${esc(L.dob)}</span><span class="rpt-v">${esc(dob||'—')}</span></div>
+      <div class="rpt-kv"><span class="rpt-k">${esc(L.place)}</span><span class="rpt-v">${esc(place||'—')}</span></div>
+    </div></div>
+  </div>
+  ${chartSVG?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">🔯</span>${esc(L.chart)}</div><div class="rpt-card"><div class="rpt-chart">${chartSVG}</div></div></div>`:''}
+  <div class="rpt-sec">
+    <div class="rpt-sec-h"><span class="rpt-sec-icon">🌙</span>${esc(L.basics)}</div>
+    <div class="rpt-card">${rowsHTML(basics)}</div>
+  </div>
+  <div class="rpt-sec">
+    <div class="rpt-sec-h"><span class="rpt-sec-icon">🍀</span>${esc(L.lucky)}</div>
+    <div class="rpt-card">${rowsHTML(lucky)}</div>
+  </div>
+  <div class="rpt-sec">
+    <div class="rpt-sec-h"><span class="rpt-sec-icon">⚠️</span>${esc(L.doshas)}</div>
+    <div class="rpt-card">${rowsHTML(doshas)}</div>
+  </div>
+  <div class="rpt-sec">
+    <div class="rpt-sec-h"><span class="rpt-sec-icon">🪐</span>${esc(L.dasha)}</div>
+    <div class="rpt-card">${rowsHTML(dashaRows)}</div>
+  </div>
+  ${pred?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">✨</span>${esc(L.prediction)}</div><div class="rpt-pred">${esc(pred)}</div></div>`:''}
+  ${remItems.length?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">🙏</span>${esc(L.remedies)}</div><div class="rpt-card">${listHTML(remItems)}</div></div>`:''}
+  <div class="rpt-sec">
+    <div class="rpt-sec-h"><span class="rpt-sec-icon">📜</span>${esc(L.disclaimer)}</div>
+    <div class="rpt-disc">${esc(L.discText)}</div>
+  </div>
+</div>
+<div class="rpt-foot">
+  <div class="rpt-blessing">✦ ${esc(L.blessing)} ✦</div>
+  <div class="rpt-foot-brand">© 2026 AstroHand Technologies Pvt. Ltd. · astrohand.in<br>Sector 18, Noida, UP 201301, India</div>
+</div>
+</div>
+<script>window.onload=function(){setTimeout(function(){window.print();},600);};<\/script>
+</body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){toast('Please allow pop-ups to download your PDF.','');return;}
+  w.document.write(doc);
+  w.document.close();
+  toast('Opening your report — use "Save as PDF" in the print dialog.','ok');
+}
+
+function localizedRemedies(lang,ln,rp,day,col){
+  const c=(col||'').toLowerCase();
+  const T={
+    English:[`Chant Om Namah Shivaya 108× daily at sunrise`,`Wear ${ln} (${rp} gemstone) in a silver ring`,`Fast on ${day}s for ${rp}'s blessings`,`Donate ${c} items on ${day}`,`Light a ghee lamp at a Shiva temple every Monday`],
+    Hindi:[`सूर्योदय पर प्रतिदिन 108 बार ॐ नमः शिवाय का जाप करें`,`चांदी की अंगूठी में ${ln} (${rp} रत्न) धारण करें`,`${rp} के आशीर्वाद हेतु ${day} को व्रत रखें`,`${day} को ${c} वस्तुओं का दान करें`,`प्रत्येक सोमवार शिव मंदिर में घी का दीपक जलाएं`],
+    Bengali:[`সূর্যোদয়ে প্রতিদিন ১০৮ বার ওঁ নমঃ শিবায় জপ করুন`,`রূপার আংটিতে ${ln} (${rp} রত্ন) ধারণ করুন`,`${rp}-এর আশীর্বাদের জন্য ${day} উপবাস করুন`,`${day} ${c} জিনিস দান করুন`,`প্রতি সোমবার শিব মন্দিরে ঘিয়ের প্রদীপ জ্বালান`],
+    Tamil:[`சூரிய உதயத்தில் தினமும் 108 முறை ஓம் நமசிவாய ஜபம் செய்யவும்`,`வெள்ளி மோதிரத்தில் ${ln} (${rp} ரத்தினம்) அணியவும்`,`${rp}-இன் அருளுக்காக ${day} அன்று விரதம் இருக்கவும்`,`${day} அன்று ${c} பொருட்களை தானம் செய்யவும்`,`ஒவ்வொரு திங்கட்கிழமையும் சிவன் கோவிலில் நெய் விளக்கு ஏற்றவும்`],
+    Telugu:[`సూర్యోదయం వద్ద ప్రతిరోజు 108 సార్లు ఓం నమః శివాయ జపించండి`,`వెండి ఉంగరంలో ${ln} (${rp} రత్నం) ధరించండి`,`${rp} ఆశీర్వాదం కోసం ${day} రోజున ఉపవాసం ఉండండి`,`${day} రోజున ${c} వస్తువులను దానం చేయండి`,`ప్రతి సోమవారం శివాలయంలో నెయ్యి దీపం వెలిగించండి`]
+  };
+  return (T[lang]||T.English).map(r=>'• '+r).join('<br>');
 }
 function shareKundliWA(){
   const name=(document.getElementById('k-rname')||{}).textContent||'';
