@@ -305,6 +305,15 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
 .fgrid.two{grid-template-columns:1fr 1fr;}
 .full{grid-column:1/-1;}
+/* Tablet / mid-width: give multi-column forms room so fields don't crowd or overlap */
+@media(max-width:960px) and (min-width:681px){
+  .fgrid{grid-template-columns:1fr 1fr;}
+  .fgrid.two{grid-template-columns:1fr 1fr;}
+  .pfg{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:520px){
+  .fgrid,.fgrid.two,.frm2,.pfg{grid-template-columns:1fr;}
+}
 .gbtn{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--g2c));
   border:none;border-radius:var(--r2);color:var(--ink);font-size:.95rem;font-weight:700;
   cursor:pointer;font-family:'Inter',sans-serif;transition:all .25s;}
@@ -2218,9 +2227,13 @@ let currRates={...CURR_FALLBACK_RATES};
 let currRatesLoaded=false;
 
 async function loadCurrRates(){
+  // Current free, no-key, CORS-enabled endpoint (open.er-api.com v6).
+  // The older api.exchangerate-api.com/v4 URL is deprecated.
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),12000);
   try{
-    const r=await fetch('https://api.exchangerate-api.com/v4/latest/INR');
-    if(!r.ok)throw new Error('rate fetch failed');
+    const r=await fetch('https://open.er-api.com/v6/latest/INR',{signal:controller.signal});
+    if(!r.ok)throw new Error('rate fetch failed: HTTP '+r.status);
     const data=await r.json();
     if(data&&data.rates){
       CURR_LIST.forEach(c=>{
@@ -2229,7 +2242,11 @@ async function loadCurrRates(){
       currRatesLoaded=true;
     }
   }catch(e){
-    console.warn('Live exchange rates unavailable, using fallback rates.',e);
+    // Silent, expected fallback — the hardcoded rates keep the converter working.
+    // Not shown to users; only logged for debugging.
+    console.info('Using built-in exchange rates (live rates unavailable).');
+  }finally{
+    clearTimeout(timeout);
   }
   applyCurrencyDisplay();
 }
@@ -3368,53 +3385,75 @@ const PLS_D=[{s:'☀️',n:'Sun',sg:'Gemini',dg:"7°12'",st:'Neutral'},{s:'🌙'
 async function genKundli(){
   const n=v('kn'),d=v('kd');
   if(!n||!d){toast('⚠️ Please enter name and date of birth.','');return;}
-  const btn=document.getElementById('k-btn');btn.disabled=true;btn.textContent='⏳ Calculating…';
+  const btn=document.getElementById('k-btn');
+  // Guard against double-submission while a generation is already running
+  if(btn.dataset.busy==='1')return;
+  btn.dataset.busy='1';btn.disabled=true;btn.textContent='⏳ Calculating…';
   document.getElementById('k-res').style.display='block';
   document.getElementById('k-ldr').style.display='block';document.getElementById('k-cnt').style.display='none';
-  const dt=new Date(d),yr=dt.getFullYear(),mo=dt.getMonth(),dy=dt.getDate();
-  const seed=(yr+mo*31+dy*7)%108,ri=seed%12,ni=(seed*7)%27;
-  const t=v('kt'),th=t?parseInt(t.split(':')[0]):6,tm=t?parseInt(t.split(':')[1]):0;
-  const li=(ri+Math.floor((th*60+tm)/120))%12;
+  try{
+    const dt=new Date(d);
+    if(isNaN(dt.getTime())){throw new Error('Invalid date of birth. Please re-enter it.');}
+    const yr=dt.getFullYear(),mo=dt.getMonth(),dy=dt.getDate();
+    const seed=(yr+mo*31+dy*7)%108,ri=seed%12,ni=(seed*7)%27;
+    // NaN-safe birth-time parsing (defaults to 06:00 if missing or malformed)
+    const t=v('kt');
+    let th=6,tm=0;
+    if(t&&t.indexOf(':')>-1){
+      const parts=t.split(':');
+      const ph=parseInt(parts[0],10),pm=parseInt(parts[1],10);
+      th=isNaN(ph)?6:Math.min(23,Math.max(0,ph));
+      tm=isNaN(pm)?0:Math.min(59,Math.max(0,pm));
+    }
+    const li=(ri+Math.floor((th*60+tm)/120))%12;
 
-  // Render North Indian Kundli chart with computed Lagna + static-engine planetary glyphs
-  const kcWrap=document.getElementById('kundli-chart-wrap');
-  if(kcWrap){
-    const planetSigns=PLS_D.map(p=>({glyph:p.s,signIdx:RASHIS.indexOf(p.sg)})).filter(p=>p.signIdx>=0);
-    kcWrap.innerHTML=northIndianChartSVG(li,ri,planetSigns);
-  }
+    // Render North Indian Kundli chart with computed Lagna + static-engine planetary glyphs
+    const kcWrap=document.getElementById('kundli-chart-wrap');
+    if(kcWrap){
+      const planetSigns=PLS_D.map(p=>({glyph:p.s,signIdx:RASHIS.indexOf(p.sg)})).filter(p=>p.signIdx>=0);
+      kcWrap.innerHTML=northIndianChartSVG(li,ri,planetSigns);
+    }
 
-  const vsi=(mo>=2&&dy>=21||mo===0||mo===1)?(mo):(mo-1+12)%12;
-  const vsiV=(vsi-1+12)%12;
-  const rp=DASHA_P[seed%9],ln=GEMS[seed%9],col=COLS[ri],day=DAYS_W[(dy+mo)%7];
-  const lnum=((yr+mo+dy)%9)||9;
-  document.getElementById('k-av').textContent=RSYM[ri];
-  document.getElementById('k-rname').textContent=n;
-  document.getElementById('k-rdob').textContent='Born: '+dt.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+(v('kp')?' · '+v('kp'):'');
-  document.getElementById('k-basics').innerHTML=[['Ascendant (Lagna)',RASHIS[li]+' '+RSYM[li]],['Moon Sign (Rashi)',RASHIS[ri]+' '+RSYM[ri]],['Sun Sign (Vedic)',RASHIS[vsiV]+' '+RSYM[vsiV]],['Nakshatra',NAK[ni]],['Nakshatra Pada',((seed%4)+1)+'th Pada'],['Yoga',YOGAS[(Math.floor(yr/100)+dy)%10]]].map(([k,val])=>`<div><span class="kk">${k}</span><span class="kv">${val}</span></div>`).join('');
-  document.getElementById('k-lucky').innerHTML=[['Lucky Number',lnum],['Lucky Color',col],['Lucky Day',day],['Lucky Gemstone',ln],['Ruling Planet',rp],['Element',['Fire','Earth','Air','Water'][ri%4]]].map(([k,val])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;"><span style="color:var(--muted);">${k}</span><span style="color:var(--text);font-weight:500;">${val}</span></div>`).join('');
-  document.getElementById('k-planets').innerHTML=PLS_D.map(p=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:1.4rem;margin-bottom:3px;">${p.s}</div><div style="font-size:.6rem;letter-spacing:.07em;color:var(--muted);text-transform:uppercase;">${p.n}</div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);margin-top:1px;">${p.sg}</div><div style="font-size:.6rem;color:var(--sub);">${p.dg}</div></div>`).join('');
-  const manglik=seed%3===0,kaal=seed%5===0,pitra=seed%4===0,sade=seed%7===0;
-  document.getElementById('k-doshas').innerHTML=[['Manglik Dosha',manglik?'Yes — Mars in 7th':'No — Clean Chart',manglik],['Kaal Sarp Dosha',kaal?'Yes — Partial (Ananta)':'No',kaal],['Pitra Dosha',pitra?'Yes — Mild':'No',pitra],['Sade Sati',sade?'Active — 2nd Phase':'Not Active Currently',sade],['Grah Dosha','No Major Dosha',false]].map(([k,val,bad])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8px"><span style="color:var(--muted);font-size:.8rem;">${k}</span><span style="${bad?'color:#f87171':'color:#4ade80'};font-size:.76rem;background:${bad?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};padding:2px 9px;border-radius:100px;border:1px solid ${bad?'rgba(220,38,38,.2)':'rgba(22,163,74,.2)'};">${val}</span></div>`).join('');
-  document.getElementById('k-rem').innerHTML=localizedRemedies(v('kl')||'English',ln,rp,day,col);
-  let stY=yr;document.getElementById('k-dasha').innerHTML=DASHA_P.map((p,i)=>{const s=stY,e=stY+DASHA_Y[i];stY=e;const active=new Date().getFullYear()>=s&&new Date().getFullYear()<e;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;${active?'color:var(--g2c);font-weight:600':''}"><span style="color:${active?'var(--g2c)':'var(--muted)'};">${p} Mahadasha${active?' ← Current':''}</span><span style="color:${active?'var(--g2c)':'var(--text)'};">${s}–${e} (${DASHA_Y[i]} yrs)</span></div>`;}).join('');
-  const lang=v('kl')||'English',gender=v('kg')||'person',place=v('kp');
-  const prompt=`You are AstroHand's master Vedic astrologer. Write a deeply personalized 360-word reading in ${lang} for ${n} (${gender}), born ${dt.toDateString()}${place?' in '+place:''}. Moon sign: ${RASHIS[ri]}, Lagna: ${RASHIS[li]}, Nakshatra: ${NAK[ni]}, Ruling planet: ${rp}, Gemstone: ${ln}. Cover: (1) Soul purpose from Lagna+Moon, (2) Karmic gifts from ${NAK[ni]} Nakshatra, (3) Current ${rp} dasha insights, (4) Love & marriage destiny, (5) Career & financial trajectory, (6) One specific remedy. Be mystical yet precise. End with: "These stars illuminate possibilities — your free will determines the journey."`;
-  const predWrap=document.getElementById('k-pred-wrap'),predLock=document.getElementById('k-pred-lock');
-  if(isPaid()){
-    predWrap.classList.remove('lock-blurred');predLock.style.display='none';
-    try{
-      const txt=await callAI('You are AstroHand\'s master Vedic astrologer. Be mystical yet precise.',[{role:'user',content:prompt}],1000)||fallbackKundli(n,ri,li,ni,rp);
+    const vsi=(mo>=2&&dy>=21||mo===0||mo===1)?(mo):(mo-1+12)%12;
+    const vsiV=(vsi-1+12)%12;
+    const rp=DASHA_P[seed%9],ln=GEMS[seed%9],col=COLS[ri],day=DAYS_W[(dy+mo)%7];
+    const lnum=((yr+mo+dy)%9)||9;
+    document.getElementById('k-av').textContent=RSYM[ri];
+    document.getElementById('k-rname').textContent=n;
+    document.getElementById('k-rdob').textContent='Born: '+dt.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+(v('kp')?' · '+v('kp'):'');
+    document.getElementById('k-basics').innerHTML=[['Ascendant (Lagna)',RASHIS[li]+' '+RSYM[li]],['Moon Sign (Rashi)',RASHIS[ri]+' '+RSYM[ri]],['Sun Sign (Vedic)',RASHIS[vsiV]+' '+RSYM[vsiV]],['Nakshatra',NAK[ni]],['Nakshatra Pada',((seed%4)+1)+'th Pada'],['Yoga',YOGAS[(Math.floor(yr/100)+dy)%10]]].map(([k,val])=>`<div><span class="kk">${k}</span><span class="kv">${val}</span></div>`).join('');
+    document.getElementById('k-lucky').innerHTML=[['Lucky Number',lnum],['Lucky Color',col],['Lucky Day',day],['Lucky Gemstone',ln],['Ruling Planet',rp],['Element',['Fire','Earth','Air','Water'][ri%4]]].map(([k,val])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;"><span style="color:var(--muted);">${k}</span><span style="color:var(--text);font-weight:500;">${val}</span></div>`).join('');
+    document.getElementById('k-planets').innerHTML=PLS_D.map(p=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:1.4rem;margin-bottom:3px;">${p.s}</div><div style="font-size:.6rem;letter-spacing:.07em;color:var(--muted);text-transform:uppercase;">${p.n}</div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);margin-top:1px;">${p.sg}</div><div style="font-size:.6rem;color:var(--sub);">${p.dg}</div></div>`).join('');
+    const manglik=seed%3===0,kaal=seed%5===0,pitra=seed%4===0,sade=seed%7===0;
+    document.getElementById('k-doshas').innerHTML=[['Manglik Dosha',manglik?'Yes — Mars in 7th':'No — Clean Chart',manglik],['Kaal Sarp Dosha',kaal?'Yes — Partial (Ananta)':'No',kaal],['Pitra Dosha',pitra?'Yes — Mild':'No',pitra],['Sade Sati',sade?'Active — 2nd Phase':'Not Active Currently',sade],['Grah Dosha','No Major Dosha',false]].map(([k,val,bad])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8px"><span style="color:var(--muted);font-size:.8rem;">${k}</span><span style="${bad?'color:#f87171':'color:#4ade80'};font-size:.76rem;background:${bad?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};padding:2px 9px;border-radius:100px;border:1px solid ${bad?'rgba(220,38,38,.2)':'rgba(22,163,74,.2)'};">${val}</span></div>`).join('');
+    document.getElementById('k-rem').innerHTML=localizedRemedies(v('kl')||'English',ln,rp,day,col);
+    let stY=yr;document.getElementById('k-dasha').innerHTML=DASHA_P.map((p,i)=>{const s=stY,e=stY+DASHA_Y[i];stY=e;const active=new Date().getFullYear()>=s&&new Date().getFullYear()<e;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;${active?'color:var(--g2c);font-weight:600':''}"><span style="color:${active?'var(--g2c)':'var(--muted)'};">${p} Mahadasha${active?' ← Current':''}</span><span style="color:${active?'var(--g2c)':'var(--text)'};">${s}–${e} (${DASHA_Y[i]} yrs)</span></div>`;}).join('');
+    const lang=v('kl')||'English',gender=v('kg')||'person',place=v('kp');
+    const prompt=`You are AstroHand's master Vedic astrologer. Write a deeply personalized 360-word reading in ${lang} for ${n} (${gender}), born ${dt.toDateString()}${place?' in '+place:''}. Moon sign: ${RASHIS[ri]}, Lagna: ${RASHIS[li]}, Nakshatra: ${NAK[ni]}, Ruling planet: ${rp}, Gemstone: ${ln}. Cover: (1) Soul purpose from Lagna+Moon, (2) Karmic gifts from ${NAK[ni]} Nakshatra, (3) Current ${rp} dasha insights, (4) Love & marriage destiny, (5) Career & financial trajectory, (6) One specific remedy. Be mystical yet precise. End with: "These stars illuminate possibilities — your free will determines the journey."`;
+    const predWrap=document.getElementById('k-pred-wrap'),predLock=document.getElementById('k-pred-lock');
+    if(isPaid()){
+      predWrap.classList.remove('lock-blurred');predLock.style.display='none';
+      // AI call is allowed to fail — fall back to the deterministic reading, never block the report
+      let txt;
+      try{txt=await callAI("You are AstroHand's master Vedic astrologer. Be mystical yet precise.",[{role:'user',content:prompt}],1000);}catch(aiErr){txt=null;}
+      if(!txt)txt=fallbackKundli(n,ri,li,ni,rp);
       document.getElementById('k-pred').textContent=txt;
       if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});
-    }catch{const txt=fallbackKundli(n,ri,li,ni,rp);document.getElementById('k-pred').textContent=txt;if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});}
-  }else{
-    document.getElementById('k-pred').textContent=fallbackKundli(n,ri,li,ni,rp);
-    predWrap.classList.add('lock-blurred');
-    predLock.style.display='block';
-    predLock.innerHTML=lockCardHTML('Your Full Prediction is Ready','Unlock your complete 360-word personalized reading covering soul purpose, love & marriage destiny, career trajectory, and specific remedies — written just for your chart.');
+    }else{
+      document.getElementById('k-pred').textContent=fallbackKundli(n,ri,li,ni,rp);
+      predWrap.classList.add('lock-blurred');
+      predLock.style.display='block';
+      predLock.innerHTML=lockCardHTML('Your Full Prediction is Ready','Unlock your complete 360-word personalized reading covering soul purpose, love & marriage destiny, career trajectory, and specific remedies — written just for your chart.');
+    }
+    document.getElementById('k-cnt').style.display='block';
+  }catch(err){
+    // Any failure: stop the loader, show a clear retryable error, never leave the user stuck
+    document.getElementById('k-cnt').style.display='none';
+    toast('⚠️ '+(err&&err.message?err.message:'Could not generate the Kundli. Please try again.'),'');
+  }finally{
+    document.getElementById('k-ldr').style.display='none';
+    btn.disabled=false;btn.dataset.busy='';btn.textContent='✨ Generate Free Kundli Now';
   }
-  document.getElementById('k-ldr').style.display='none';document.getElementById('k-cnt').style.display='block';
-  btn.disabled=false;btn.textContent='✨ Generate Free Kundli Now';
 }
 function fallbackKundli(n,ri,li,ni,rp){return`${n}, your chart reveals a powerful cosmic signature. Your Lagna in ${RASHIS[li]} gives you ${['pioneering energy','steadfast determination','quick wit','nurturing depth','natural leadership','analytical precision','harmonious grace','transformative intensity','philosophical vision','disciplined ambition','visionary originality','boundless compassion'][li]}. Your Moon in ${RASHIS[ri]} creates a rich emotional world that seeks ${['adventure','security','connection','belonging','recognition','perfection','balance','depth','freedom','achievement','uniqueness','transcendence'][ri]}. The ${NAK[ni]} Nakshatra at your foundation gifts you with extraordinary ${['healing abilities','creative power','spiritual insight','communicative grace','protective strength'][ni%5]}. Your ${rp} planetary period is active — a time for focused action in alignment with your deepest values. In love, your chart shows capacity for deep, lasting bonds. Career-wise, your peak prosperity window approaches in the next 18 months. These stars illuminate your possibilities — your free will determines the journey.`;}
 function kTab(btn,tab){document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');['ov','pl','ds','da','pr'].forEach(t=>document.getElementById('kp-'+t).style.display=t===tab?'block':'none');}
@@ -3794,7 +3833,10 @@ function exportKundliPDF(){
   const doshas=readRows('k-doshas');
   const dashaRows=readRows('k-dasha');
   const pred=(document.getElementById('k-pred')||{}).textContent||'';
-  const remItems=readListItems('k-rem');
+  // Remedies render as "• text<br>• text" (already in the selected language),
+  // so parse by <br> and strip the bullet — reading <li> would miss them entirely.
+  const remEl=document.getElementById('k-rem');
+  const remItems=remEl?(remEl.innerHTML.split(/<br\s*\/?>/i).map(s=>s.replace(/<[^>]*>/g,'').replace(/^[•\-\s]+/,'').trim()).filter(Boolean)):[];
   const chartSVG=(document.getElementById('kundli-chart-wrap')||{}).innerHTML||'';
 
   const now=new Date();
