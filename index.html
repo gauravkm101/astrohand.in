@@ -3111,9 +3111,21 @@ function dlData(){
 async function restoreSession(){
   const sb=getSB();
 
+  // If the user arrived via a password-reset link, a temporary "recovery" session
+  // exists — but it is NOT a normal login. Session-restore must stand down completely
+  // here and let the reset screen own the page; otherwise enterDash() below fires a
+  // moment after the recovery listener routed to the reset screen and yanks the user
+  // to the dashboard/login just as they're about to type a new password. This race is
+  // exactly the "Reset page appeared, then bounced me to Login" bug.
+  if(window._recoveryActive){return;}
+
   if(sb){
     try{
       const {data}=await sb.auth.getSession();
+      // Re-check the recovery flag after the async getSession() resolves — the
+      // PASSWORD_RECOVERY event can arrive during this await, and we still must not
+      // treat it as a normal session.
+      if(window._recoveryActive){return;}
       if(data?.session){
         const user=data.session.user;
         const {data:profile,error:pErr}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
@@ -3349,9 +3361,23 @@ function initStarfield(){
 
 /* ══ BOOT ══ */
 window.addEventListener('DOMContentLoaded',async function(){
+  // Detect a password-recovery link DIRECTLY from the URL, synchronously, before
+  // anything else runs. Supabase's own PASSWORD_RECOVERY event is asynchronous and may
+  // not have fired yet by the time restoreSession() runs a few lines below — so relying
+  // on the event alone leaves a race. Reading type=recovery straight from the URL hash
+  // sets the flag deterministically up front, so restoreSession's guard always sees it
+  // and stands down, and we route to the reset screen immediately.
+  try{
+    const h=(window.location.hash||'')+'&'+(window.location.search||'');
+    if(/type=recovery/.test(h)){
+      window._recoveryActive=true;
+    }
+  }catch(e){}
   // Initialise Supabase FIRST so the PASSWORD_RECOVERY listener is live before we do
   // anything else — a user arriving via a reset link must be caught immediately.
   try{getSB();}catch(e){}
+  // If we already know this is a recovery link, go straight to the reset screen now.
+  if(window._recoveryActive&&typeof router==='function'){router('reset');}
   // Each init is isolated so one failing function can never prevent the others
   // (previously, an early error here could silently break the currency menu, etc.)
   const safe=(fn,label)=>{try{fn();}catch(e){console.warn('Init "'+label+'" failed:',e);}};
@@ -3363,7 +3389,8 @@ window.addEventListener('DOMContentLoaded',async function(){
   safe(initStarfield,'Starfield');
   try{loadCurrRates();}catch(e){console.warn('Rate load failed:',e);}
   try{await restoreSession();}catch(e){console.log('Session restore:',e);}
-  if(!CU)router('home');
+  // Don't fall back to home if we're mid password-reset — the reset screen must stay put.
+  if(!CU&&!window._recoveryActive)router('home');
 });
 
 
