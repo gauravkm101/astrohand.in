@@ -2241,6 +2241,19 @@ function getSB(){
   try{
     if(window.supabase&&SUPA_URL&&SUPA_KEY){
       _sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+      // Password-recovery handling: when a user clicks the reset link in their email,
+      // Supabase returns them here with a recovery token in the URL and fires this
+      // PASSWORD_RECOVERY event. Previously nothing listened for it, so the link just
+      // dumped users on the homepage with no way to actually set a new password. Now we
+      // route them straight to the reset screen, where updateUser() sets the password
+      // against the recovery session (no old password, no 6-digit code needed — the
+      // token in the link IS the authentication).
+      _sb.auth.onAuthStateChange((event,session)=>{
+        if(event==='PASSWORD_RECOVERY'){
+          window._recoveryActive=true;
+          if(typeof router==='function')router('reset');
+        }
+      });
     }
   }catch(e){console.log('Supabase init error:',e);}
   return _sb;
@@ -2283,6 +2296,25 @@ function router(page){
   else{const home=document.getElementById('pg-home');if(home)home.classList.add('on');}
   window.scrollTo(0,0);
   if(typeof closeMnav==='function')closeMnav();
+  // On the reset screen, adapt the UI to which flow is active. When the user arrived
+  // via a real Supabase email reset link (_recoveryActive), there is no 6-digit code to
+  // enter — the link itself authenticated them — so hide the code boxes and the resend
+  // link, and explain that they just choose a new password.
+  if(page==='reset'){
+    const otpWrap=document.querySelector('#pg-reset .otp-boxes');
+    const codeLabel=otpWrap?otpWrap.closest('.fg'):null;
+    const resendLink=document.querySelector('#pg-reset .asw');
+    const sub=document.querySelector('#pg-reset .asub');
+    if(window._recoveryActive){
+      if(codeLabel)codeLabel.style.display='none';
+      if(resendLink)resendLink.style.display='none';
+      if(sub)sub.textContent='Choose a new password for your account.';
+    }else{
+      if(codeLabel)codeLabel.style.display='';
+      if(resendLink)resendLink.style.display='';
+      if(sub)sub.textContent='Enter the 6-digit code sent to your email, then choose a new password.';
+    }
+  }
   updNav();
 }
 
@@ -2467,7 +2499,7 @@ function showPanel(p){
   document.querySelectorAll('.d-nav-i').forEach(x=>{
     if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('on');
   });
-  if(p==='readings'&&typeof renderReadings==='function')renderReadings();
+  if(p==='readings'&&typeof renderReadings==='function'){renderReadings();if(typeof syncReadingsFromCloud==='function')syncReadingsFromCloud();}
   if(p==='profile'&&typeof fillProfile==='function')fillProfile();
   if(p==='plans'&&typeof renderPlans==='function')renderPlans();
   if(p==='home'&&typeof renderHome==='function')renderHome();
@@ -2497,12 +2529,12 @@ async function syncReadingsFromCloud(){
     const localOnly=local.filter(r=>!seen.has(r.title+'|'+(r.at||'').slice(0,16)));
     const merged=[...cloudRds,...localOnly].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,50);
     DB.s('rds_'+CU.em,merged);
-    // Refresh any visible UI that depends on readings
+    // Always refresh the count and re-render the list once cloud data has merged in.
+    // Rendering a hidden panel is harmless, and doing it unconditionally removes the
+    // race where the panel was opened (and rendered from local-only data) before this
+    // async sync finished — the root cause of "My Readings doesn't show everything".
     const dmrd=document.getElementById('dm-rd');if(dmrd)dmrd.textContent=merged.length;
-    const rdList=document.getElementById('rd-list');
-    if(rdList&&document.getElementById('dp-readings')&&document.getElementById('dp-readings').style.display!=='none'){
-      renderReadings();
-    }
+    if(document.getElementById('rd-list')&&typeof renderReadings==='function')renderReadings();
   }catch(e){/* offline or table absent — local cache still works */}
 }
 
@@ -2780,7 +2812,18 @@ async function doLogin(){
   if(sb){
     try{
       const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
-      if(error)throw new Error(error.message==='Invalid login credentials'?'Incorrect email or password.':error.message);
+      if(error){
+        // Supabase rate-limits repeated login attempts server-side. When throttled it can
+        // return a 429 / "rate limit" style error — previously this got shown as
+        // "Incorrect email or password", which is why entering the CORRECT password right
+        // after a wrong one still looked like a credentials failure. Detect that case and
+        // tell the user the truth: wait a moment, the password may well be fine.
+        const em2=(error.message||'').toLowerCase();
+        if(error.status===429||em2.includes('rate limit')||em2.includes('too many')||em2.includes('request rate')){
+          throw new Error('Too many attempts just now. Please wait about 30 seconds and try again — your password may be correct.');
+        }
+        throw new Error(error.message==='Invalid login credentials'?'Incorrect email or password.':error.message);
+      }
 
       // Fetch profile; self-heal if missing (e.g. signup upsert previously failed/was blocked by RLS)
       let profile=null;
@@ -2863,16 +2906,37 @@ async function doForgot(){
 }
 
 /* ── RESET PASSWORD (after OTP, localStorage fallback path) ── */
-function doReset(){
-  const entered=readOTPBoxes('rp');
+async function doReset(){
   const pw=v('rp-pw'),cp=v('rp-cp');
   clearErr('rp-err');
 
+  // REAL Supabase recovery path: the user arrived via the email reset link, so a
+  // recovery session is already active and updateUser() sets the password directly.
+  // No 6-digit code is checked here because the token in the link is the authentication.
+  if(window._recoveryActive){
+    if(pw.length<8){showErr('rp-err','Password must be at least 8 characters.');return;}
+    if(pw!==cp){showErr('rp-err','Passwords do not match.');return;}
+    const sb=getSB();
+    if(!sb){showErr('rp-err','Unable to reach the authentication service. Please try again.');return;}
+    try{
+      const {error}=await sb.auth.updateUser({password:pw});
+      if(error)throw new Error(error.message);
+      window._recoveryActive=false;
+      // Sign out of the temporary recovery session so the user logs in cleanly with the new password.
+      try{await sb.auth.signOut();}catch(e){}
+      CU=null;DB.delSess();sessionStorage.removeItem('ah_sess');
+      toast('Password updated! Please sign in with your new password.','ok');
+      router('login');
+    }catch(err){showErr('rp-err',err.message||'Could not update password. The reset link may have expired — please request a new one.');}
+    return;
+  }
+
+  // Local-only fallback (no Supabase configured): the legacy 6-digit-code path.
+  const entered=readOTPBoxes('rp');
   if(entered.length<6){showErr('rp-err','Please enter the 6-digit code.');return;}
   if(entered!==OTP){showErr('rp-err','Incorrect code.');return;}
   if(pw.length<8){showErr('rp-err','Password must be at least 8 characters.');return;}
   if(pw!==cp){showErr('rp-err','Passwords do not match.');return;}
-
   if(pendReset){
     const user=DB.getU(pendReset);
     if(user){user.pw=hp(pw);DB.setU(pendReset,user);}
@@ -3285,6 +3349,9 @@ function initStarfield(){
 
 /* ══ BOOT ══ */
 window.addEventListener('DOMContentLoaded',async function(){
+  // Initialise Supabase FIRST so the PASSWORD_RECOVERY listener is live before we do
+  // anything else — a user arriving via a reset link must be caught immediately.
+  try{getSB();}catch(e){}
   // Each init is isolated so one failing function can never prevent the others
   // (previously, an early error here could silently break the currency menu, etc.)
   const safe=(fn,label)=>{try{fn();}catch(e){console.warn('Init "'+label+'" failed:',e);}};
