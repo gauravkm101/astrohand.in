@@ -2834,12 +2834,17 @@ async function doLogin(){
       if(!profile){
         const fallbackName=data.user.user_metadata?.first_name||em.split('@')[0];
         const fallbackLast=data.user.user_metadata?.last_name||'';
-        const {data:created}=await sb.from('profiles').upsert({
-          id:data.user.id,email:em,
-          first_name:fallbackName,last_name:fallbackLast,
-          plan:'free',joined_at:data.user.created_at||new Date().toISOString()
-        }).select().maybeSingle().catch(()=>({data:null}));
-        profile=created;
+        // Supabase's query builder is a "thenable", not a full Promise — chaining
+        // .catch() directly onto .maybeSingle() throws ".catch is not a function".
+        // Wrap it in try/catch instead so a failed profile self-heal can't crash login.
+        try{
+          const {data:created}=await sb.from('profiles').upsert({
+            id:data.user.id,email:em,
+            first_name:fallbackName,last_name:fallbackLast,
+            plan:'free',joined_at:data.user.created_at||new Date().toISOString()
+          }).select().maybeSingle();
+          profile=created;
+        }catch(e){console.warn('Profile self-heal skipped:',e&&e.message);profile=null;}
       }
 
       CU={
@@ -3247,7 +3252,9 @@ async function procPay(plan,amount){
           CU.plan=plan;
           const sb=getSB();
           if(sb&&CU.id){
-            await sb.from('profiles').update({plan}).eq('id',CU.id).catch(()=>{});
+            // Same thenable caveat as in login — use try/catch, not a chained .catch(),
+            // or upgrading a plan throws ".catch is not a function".
+            try{await sb.from('profiles').update({plan}).eq('id',CU.id);}catch(e){console.warn('Plan sync to cloud skipped:',e&&e.message);}
           }
           const users=DB.g('users')||{};
           if(users[CU.em])users[CU.em].plan=plan;
