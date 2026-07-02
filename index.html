@@ -899,6 +899,7 @@ This single script enables ALL ad units on the page, including every
   <div class="hbtns">
     <button class="bp" onclick="openTool('mKundli')">&#128221; Generate Free Kundli</button>
     <button class="bs" onclick="openTool('mAI')">&#129302; Talk to 8 AI Astrologers</button>
+    <button class="bs" onclick="openTool('mAILang');initALangList();">&#127760; 12 Language AI Astrologers</button>
   </div>
   <div class="hero-centerpiece">
   <svg class="zodiac-wheel-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1019,6 +1020,7 @@ This single script enables ALL ad units on the page, including every
   <div class="tgrid">
     <div class="tool" onclick="openTool('mKundli')"><span class="ticon">📜</span><span class="tlbl">Free Kundli</span><span class="tbdg">FREE</span></div>
     <div class="tool" onclick="openTool('mAI')"><span class="ticon">🤖</span><span class="tlbl">AI Astrologers</span><span class="tbdg">LIVE</span></div>
+    <div class="tool" onclick="openTool('mAILang');initALangList();"><span class="ticon">🌐</span><span class="tlbl">Language AI</span><span class="tbdg">12 LANG</span></div>
     <div class="tool" onclick="openTool('mHoro')"><span class="ticon">♈</span><span class="tlbl">Horoscope</span><span class="tbdg">FREE</span></div>
     <div class="tool" onclick="openTool('mMatch')"><span class="ticon">💍</span><span class="tlbl">Match Making</span><span class="tbdg">FREE</span></div>
     <div class="tool" onclick="openTool('mGem')"><span class="ticon">💎</span><span class="tlbl">Gemstones</span><span class="tbdg">AI</span></div>
@@ -1723,6 +1725,28 @@ This single script enables ALL ad units on the page, including every
         <div style="display:flex;gap:8px;padding:12px 13px;border-top:1px solid var(--bdr);">
           <textarea id="c-inp" rows="1" placeholder="Ask your astrologer anything…" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:9px 13px;color:var(--text);font-size:.84rem;font-family:Inter,sans-serif;outline:none;resize:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
           <button id="c-send" onclick="sendMsg()" style="padding:9px 16px;background:linear-gradient(135deg,var(--violet),var(--gold));border:none;border-radius:9px;color:#fff;cursor:pointer;font-family:Inter,sans-serif;font-size:.8rem;font-weight:600;transition:opacity .2s;white-space:nowrap;">Send ✦</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="mAILang" onclick="cov(event,'mAILang')">
+  <div class="mbox">
+    <button class="mc" onclick="closeOv('mAILang')">✕</button>
+    <div class="mt">🌐 Language AI Astrologers</div>
+    <div class="ms">12 astrologers, each speaking only their own language natively — choose yours and chat comfortably in your mother tongue.</div>
+    <div class="ai-modal-layout">
+      <div style="display:flex;flex-direction:column;gap:8px;max-height:460px;overflow-y:auto;" id="a-list2"></div>
+      <div style="background:var(--g2);border:1px solid var(--bdr);border-radius:var(--r2);display:flex;flex-direction:column;height:460px;">
+        <div style="padding:13px 16px;background:linear-gradient(135deg,rgba(200,150,60,.1),rgba(124,58,237,.07));border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;border-radius:var(--r2) var(--r2) 0 0;">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;" id="c-hav2">🕉️</div>
+          <div><div style="font-family:'Cinzel',serif;font-size:.84rem;color:var(--g2c);" id="c-hn2">हिंदी ज्योतिषी</div><div style="font-size:.67rem;color:#4ade80;">● Online</div></div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:11px;" id="c-msgs2"></div>
+        <div style="display:flex;gap:8px;padding:12px 13px;border-top:1px solid var(--bdr);">
+          <textarea id="c-inp2" rows="1" placeholder="Type in any language — the astrologer replies in their own…" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:9px 13px;color:var(--text);font-size:.84rem;font-family:Inter,sans-serif;outline:none;resize:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsgLang();}"></textarea>
+          <button id="c-send2" onclick="sendMsgLang()" style="padding:9px 16px;background:linear-gradient(135deg,var(--violet),var(--gold));border:none;border-radius:9px;color:#fff;cursor:pointer;font-family:Inter,sans-serif;font-size:.8rem;font-weight:600;transition:opacity .2s;white-space:nowrap;">Send ✦</button>
         </div>
       </div>
     </div>
@@ -2531,7 +2555,7 @@ function showSO(){
 ═══════════════════════════════════════════════════ */
 
 /* ── Tool modal open/close (mKundli, mAI, mHoro, mMatch, mNum, mPalm, mPanch, mGem, mRem) ── */
-const AD_TOOL_IDS=['mKundli','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja'];
+const AD_TOOL_IDS=['mKundli','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mAILang'];
 let _adInterstitialTimer=null;
 
 function shouldShowAd(){
@@ -5003,6 +5027,102 @@ async function sendMsg(){
   }catch{typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>The oracle meditates momentarily. Please try again. ✦`;}
   msgsEl.scrollTop=msgsEl.scrollHeight;btn.disabled=false;
 }
+
+/* ═══════════════════════════════════════════════════
+   LANGUAGE-SPECIFIC AI ASTROLOGERS
+   A SEPARATE system from ASTROs/mAI — does not touch, replace,
+   or share state with the original 8 AI Astrologers. Each
+   persona here is locked to communicate ONLY in its stated
+   language, regardless of what language the user writes in,
+   via an explicit instruction in the system prompt (not just
+   an implicit hope the model infers it).
+═══════════════════════════════════════════════════ */
+const ASTROs_LANG=[
+  {av:'🕉️',bg:'linear-gradient(135deg,#e8762c,#c8963c)',n:'हिंदी ज्योतिषी',lang:'Hindi',flag:'🇮🇳',sp:'वैदिक ज्योतिष · कुंडली',rt:'★★★★★ 4.98',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Hindi (Devanagari script), no matter what language the user writes in — even if they write in English or Hinglish, always respond entirely in Hindi. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority, like a trusted family astrologer. Reply in 3-5 sentences. Mention that astrology offers guidance, not guaranteed outcomes — say this in Hindi too.`,
+    greet:'नमस्ते 🙏 मैं आपका ज्योतिषी हूं। अपनी कुंडली, विवाह, करियर या जीवन पथ के बारे में कुछ भी पूछें।'},
+  {av:'🪷',bg:'linear-gradient(135deg,#7c3aed,#c8963c)',n:'मराठी ज्योतिषी',lang:'Marathi',flag:'🇮🇳',sp:'वैदिक ज्योतिषशास्त्र',rt:'★★★★★ 4.97',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Marathi (Devanagari script), no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Marathi. Mention that astrology offers guidance, not guaranteed outcomes — in Marathi.`,
+    greet:'नमस्कार 🙏 मी तुमचा ज्योतिषी आहे. तुमची कुंडली, विवाह, करिअर किंवा जीवनमार्गाबद्दल काहीही विचारा.'},
+  {av:'🐚',bg:'linear-gradient(135deg,#0ea5e9,#7c3aed)',n:'বাংলা জ্যোতিষী',lang:'Bengali',flag:'🇮🇳',sp:'বৈদিক জ্যোতিষশাস্ত্র',rt:'★★★★★ 4.96',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Bengali (Bangla script), no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Bengali. Mention that astrology offers guidance, not guaranteed outcomes — in Bengali.`,
+    greet:'নমস্কার 🙏 আমি আপনার জ্যোতিষী। আপনার কুণ্ডলী, বিবাহ, কর্মজীবন বা জীবনপথ সম্পর্কে যা খুশি জিজ্ঞাসা করুন।'},
+  {av:'🌺',bg:'linear-gradient(135deg,#e11d78,#f59e0b)',n:'தமிழ் ஜோதிடர்',lang:'Tamil',flag:'🇮🇳',sp:'வேத ஜோதிடம்',rt:'★★★★★ 4.98',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Tamil script, no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Tamil. Mention that astrology offers guidance, not guaranteed outcomes — in Tamil.`,
+    greet:'வணக்கம் 🙏 நான் உங்கள் ஜோதிடர். உங்கள் ஜாதகம், திருமணம், தொழில் அல்லது வாழ்க்கைப் பாதை பற்றி எதுவும் கேளுங்கள்.'},
+  {av:'🔱',bg:'linear-gradient(135deg,#10b981,#e8762c)',n:'తెలుగు జ్యోతిష్కుడు',lang:'Telugu',flag:'🇮🇳',sp:'వేద జ్యోతిష్యం',rt:'★★★★★ 4.97',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Telugu script, no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Telugu. Mention that astrology offers guidance, not guaranteed outcomes — in Telugu.`,
+    greet:'నమస్కారం 🙏 నేను మీ జ్యోతిష్కుడిని. మీ జాతకం, వివాహం, వృత్తి లేదా జీవిత మార్గం గురించి ఏదైనా అడగండి.'},
+  {av:'🌾',bg:'linear-gradient(135deg,#c8963c,#10b981)',n:'ಕನ್ನಡ ಜ್ಯೋತಿಷಿ',lang:'Kannada',flag:'🇮🇳',sp:'ವೇದ ಜ್ಯೋತಿಷ್ಯ',rt:'★★★★★ 4.96',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Kannada script, no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Kannada. Mention that astrology offers guidance, not guaranteed outcomes — in Kannada.`,
+    greet:'ನಮಸ್ಕಾರ 🙏 ನಾನು ನಿಮ್ಮ ಜ್ಯೋತಿಷಿ. ನಿಮ್ಮ ಜಾತಕ, ವಿವಾಹ, ವೃತ್ತಿ ಅಥವಾ ಜೀವನ ಮಾರ್ಗದ ಬಗ್ಗೆ ಏನಾದರೂ ಕೇಳಿ.'},
+  {av:'🦚',bg:'linear-gradient(135deg,#f59e0b,#0ea5e9)',n:'ગુજરાતી જ્યોતિષી',lang:'Gujarati',flag:'🇮🇳',sp:'વૈદિક જ્યોતિષ',rt:'★★★★★ 4.97',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Gujarati script, no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Gujarati. Mention that astrology offers guidance, not guaranteed outcomes — in Gujarati.`,
+    greet:'નમસ્તે 🙏 હું તમારો જ્યોતિષી છું. તમારી કુંડળી, લગ્ન, કારકિર્દી અથવા જીવન માર્ગ વિશે કંઈપણ પૂછો.'},
+  {av:'🌻',bg:'linear-gradient(135deg,#7c3aed,#e11d78)',n:'ਪੰਜਾਬੀ ਜੋਤਸ਼ੀ',lang:'Punjabi',flag:'🇮🇳',sp:'ਵੈਦਿਕ ਜੋਤਿਸ਼',rt:'★★★★★ 4.95',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Punjabi (Gurmukhi script), no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Punjabi. Mention that astrology offers guidance, not guaranteed outcomes — in Punjabi.`,
+    greet:'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ 🙏 ਮੈਂ ਤੁਹਾਡਾ ਜੋਤਸ਼ੀ ਹਾਂ। ਆਪਣੀ ਕੁੰਡਲੀ, ਵਿਆਹ, ਕਰੀਅਰ ਜਾਂ ਜੀਵਨ ਮਾਰਗ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ।'},
+  {av:'🥥',bg:'linear-gradient(135deg,#10b981,#7c3aed)',n:'മലയാളം ജ്യോതിഷി',lang:'Malayalam',flag:'🇮🇳',sp:'വേദ ജ്യോതിഷം',rt:'★★★★★ 4.98',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Malayalam script, no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Malayalam. Mention that astrology offers guidance, not guaranteed outcomes — in Malayalam.`,
+    greet:'നമസ്കാരം 🙏 ഞാൻ നിങ്ങളുടെ ജ്യോതിഷിയാണ്. നിങ്ങളുടെ ജാതകം, വിവാഹം, ജോലി അല്ലെങ്കിൽ ജീവിതപാത എന്നിവയെക്കുറിച്ച് എന്തും ചോദിക്കൂ.'},
+  {av:'🐚',bg:'linear-gradient(135deg,#e8762c,#7c3aed)',n:'ଓଡ଼ିଆ ଜ୍ୟୋତିଷୀ',lang:'Odia',flag:'🇮🇳',sp:'ବୈଦିକ ଜ୍ୟୋତିଷ',rt:'★★★★★ 4.94',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Odia script, no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Odia. Mention that astrology offers guidance, not guaranteed outcomes — in Odia.`,
+    greet:'ନମସ୍କାର 🙏 ମୁଁ ଆପଣଙ୍କ ଜ୍ୟୋତିଷୀ। ଆପଣଙ୍କ କୁଣ୍ଡଳୀ, ବିବାହ, କରିୟର କିମ୍ବା ଜୀବନ ପଥ ବିଷୟରେ କିଛି ପଚାରନ୍ତୁ।'},
+  {av:'🦢',bg:'linear-gradient(135deg,#0ea5e9,#c8963c)',n:'অসমীয়া গণক',lang:'Assamese',flag:'🇮🇳',sp:'বৈদিক জ্যোতিষ',rt:'★★★★★ 4.93',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in Assamese script, no matter what language the user writes in. Never mix in English sentences. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences, in Assamese. Mention that astrology offers guidance, not guaranteed outcomes — in Assamese.`,
+    greet:'নমস্কাৰ 🙏 মই আপোনাৰ গণক। আপোনাৰ কুণ্ডলী, বিবাহ, কেৰিয়াৰ বা জীৱন পথৰ বিষয়ে যিকোনো প্ৰশ্ন সোধক।'},
+  {av:'🌍',bg:'linear-gradient(135deg,#4338ca,#c8963c)',n:'English Astrologer',lang:'English',flag:'🇬🇧',sp:'Vedic Astrology · Kundali',rt:'★★★★★ 4.98',
+    sys:`You are a warm, knowledgeable Vedic astrologer. CRITICAL RULE: You must reply ONLY in English, no matter what language the user writes in. You have deep knowledge of Vedic astrology: grahas, nakshatras, dashas, yogas, doshas, and remedies. Speak with warmth and spiritual authority. Reply in 3-5 sentences. Mention that astrology offers guidance, not guaranteed outcomes.`,
+    greet:'Namaste 🙏 I am your astrologer. Ask me anything about your birth chart, marriage, career, or life path.'}
+];
+let curALang=0,cHistLang=[];
+
+/* ═══════════════════════════════════════════════════
+   LANGUAGE AI ASTROLOGERS — chat logic
+   Fully parallel to initAList/pickA/initChat/sendMsg/quickAsk
+   above. Own state (curALang/cHistLang), own DOM IDs (a-list2,
+   c-msgs2, c-inp2, c-send2, c-hav2, c-hn2). Does not read or
+   write ASTROs, curA, or cHist — zero shared state with the
+   original 8 AI Astrologers.
+═══════════════════════════════════════════════════ */
+function initALangList(){
+  const listEl=document.getElementById('a-list2');
+  if(!listEl)return;
+  listEl.innerHTML=ASTROs_LANG.map((a,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r2);border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:pointer;transition:all .25s;${i===0?'border-color:rgba(200,150,60,.4);background:rgba(200,150,60,.06);':''}" onclick="pickALang(${i},this)"><div style="width:40px;height:40px;border-radius:50%;background:${a.bg};display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">${a.av}</div><div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${a.flag} ${a.n}</div><div style="font-size:.62rem;color:var(--muted);margin-top:1px;">${a.sp}</div><div style="font-size:.6rem;color:var(--gold);margin-top:2px;">${a.rt}</div></div></div>`).join('');
+  curALang=0;cHistLang=[];
+  initChatLang(0);
+}
+function pickALang(i,el){
+  document.querySelectorAll('#a-list2>div').forEach(x=>{x.style.borderColor='var(--bdr)';x.style.background='rgba(255,255,255,.03)';});
+  el.style.borderColor='rgba(200,150,60,.4)';el.style.background='rgba(200,150,60,.06)';
+  curALang=i;cHistLang=[];
+  document.getElementById('c-hav2').textContent=ASTROs_LANG[i].av;
+  document.getElementById('c-hn2').textContent=ASTROs_LANG[i].n;
+  initChatLang(i);
+}
+function initChatLang(i){
+  const a=ASTROs_LANG[i];
+  document.getElementById('c-msgs2').innerHTML=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;"><div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>${a.greet}</div>`;
+}
+async function sendMsgLang(){
+  const inp=document.getElementById('c-inp2'),msg=inp.value.trim();if(!msg)return;
+  const btn=document.getElementById('c-send2');btn.disabled=true;inp.value='';
+  const a=ASTROs_LANG[curALang],msgsEl=document.getElementById('c-msgs2');
+  msgsEl.innerHTML+=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(200,150,60,.13);border:1px solid rgba(200,150,60,.2);color:var(--g3);align-self:flex-end;border-bottom-right-radius:4px;margin-left:auto;"><div style="font-size:.58rem;letter-spacing:.08em;color:rgba(200,150,60,.5);margin-bottom:4px;font-family:'Cinzel',serif;text-align:right;">YOU</div>${esc(msg)}</div>`;
+  const typ=document.createElement('div');
+  typ.style.cssText='max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.2);color:var(--sub);align-self:flex-start;border-bottom-left-radius:4px;';
+  typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>✦ …`;
+  msgsEl.appendChild(typ);msgsEl.scrollTop=msgsEl.scrollHeight;
+  cHistLang.push({role:'user',content:msg});
+  try{
+    const reply=await callAI(a.sys,cHistLang.slice(-14),900)||a.greet;
+    cHistLang.push({role:'assistant',content:reply});
+    typ.style.color='var(--text)';typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>${esc(reply)}`;
+    if(CU)addRd({type:'chat',icon:'🌐',title:a.lang+' AI Chat — '+a.n,sub:'Astrology Consultation ('+a.lang+')',preview:reply.substring(0,180)+'…',text:msg+'\\n\\n'+reply});
+  }catch{typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>The oracle meditates momentarily. Please try again. ✦`;}
+  msgsEl.scrollTop=msgsEl.scrollHeight;btn.disabled=false;
+}
+
 
 /* ══ MATCH MAKING ══ */
 const GUNAS_L=['Varna','Vashya','Tara','Yoni','Graha Maitri','Gana','Bhakoot','Nadi'];
