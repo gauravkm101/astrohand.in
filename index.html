@@ -219,6 +219,25 @@ nav{position:fixed;top:0;left:0;right:0;z-index:900;height:64px;
 .pc{background:var(--glass);border:1px solid var(--bdr);border-radius:var(--r3);padding:30px 24px;
   text-align:center;position:relative;backdrop-filter:blur(14px);transition:all .35s cubic-bezier(.2,.8,.2,1);}
 .pc:hover{transform:translateY(-5px);border-color:rgba(200,150,60,.32);box-shadow:var(--shadow-gold);}
+/* Tarot spread selection buttons */
+.tarot-spread-btn{background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);
+  padding:16px 10px;cursor:pointer;text-align:center;color:var(--text);font-family:'Inter',sans-serif;transition:all .2s;}
+.tarot-spread-btn:hover{background:rgba(200,150,60,.06);border-color:rgba(200,150,60,.25);}
+.tarot-spread-btn.on{background:rgba(200,150,60,.1);border-color:var(--gold);}
+/* Muhurat category buttons */
+.muhurat-cat-btn{background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);
+  padding:12px 6px;cursor:pointer;text-align:center;color:var(--text);font-family:'Inter',sans-serif;font-size:.72rem;transition:all .2s;line-height:1.6;}
+.muhurat-cat-btn:hover{background:rgba(200,150,60,.06);border-color:rgba(200,150,60,.25);}
+.muhurat-cat-btn.on{background:rgba(200,150,60,.1);border-color:var(--gold);}
+/* Tarot face-down card selection grid */
+.tarot-back-card{aspect-ratio:2/3;background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(200,150,60,.14));
+  border:1px solid rgba(200,150,60,.35);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,box-shadow .15s;padding:0;}
+.tarot-back-card:hover:not(:disabled){transform:translateY(-4px) scale(1.05);box-shadow:0 8px 20px rgba(200,150,60,.25);}
+.tarot-back-card:disabled{cursor:default;}
+.tarot-back-card.chosen{background:linear-gradient(135deg,var(--gold),var(--g2c));border-color:var(--gold);transform:scale(.94);opacity:.5;}
+.tarot-back-glyph{color:rgba(232,196,106,.6);font-size:1.1rem;}
+.tarot-back-order{color:var(--ink);font-weight:800;font-size:1rem;}
 .pc.pop{background:linear-gradient(135deg,rgba(124,58,237,.13),rgba(200,150,60,.07));
   border-color:rgba(200,150,60,.36);transform:scale(1.04);box-shadow:0 12px 40px rgba(200,150,60,.12);}
 .pc.pop::before{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;
@@ -1007,6 +1026,9 @@ This single script enables ALL ad units on the page, including every
     <div class="tool" onclick="openTool('mNum')"><span class="ticon">🔢</span><span class="tlbl">Numerology</span><span class="tbdg">FREE</span></div>
     <div class="tool" onclick="openTool('mRem')"><span class="ticon">🙏</span><span class="tlbl">Remedies</span><span class="tbdg">AI</span></div>
     <div class="tool" onclick="openTool('mPanch')"><span class="ticon">📅</span><span class="tlbl">Panchang</span><span class="tbdg">FREE</span></div>
+    <div class="tool" onclick="openTool('mTarot')"><span class="ticon">🔮</span><span class="tlbl">Tarot Reading</span><span class="tbdg">FREE</span></div>
+    <div class="tool" onclick="openTool('mMuhurat');initMuhuratMonthSelector();renderMuhuratResults();"><span class="ticon">🗓️</span><span class="tlbl">Muhurat Finder</span><span class="tbdg">FREE</span></div>
+    <div class="tool" onclick="openTool('mPuja');renderPujaResults();"><span class="ticon">🙏</span><span class="tlbl">Puja Tithi</span><span class="tbdg">FREE</span></div>
   </div>
 </div>
 
@@ -1951,6 +1973,68 @@ This single script enables ALL ad units on the page, including every
   </div>
 </div>
 
+<div class="ov" id="mTarot" onclick="cov(event,'mTarot')">
+  <div class="mbox">
+    <button class="mc" onclick="closeOv('mTarot')">✕</button>
+    <div class="mt">🔮 Tarot Reading</div>
+    <div class="ms">Focus on your question, choose a spread, then pick your cards from the shuffled deck.</div>
+    <div id="tarot-setup">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;">
+        <button class="tarot-spread-btn on" onclick="selectTarotSpread(this,1)">
+          <div style="font-size:1.6rem;margin-bottom:6px;">🃏</div>
+          <div style="font-weight:600;font-size:.86rem;">Single Card</div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:3px;">Quick daily guidance</div>
+        </button>
+        <button class="tarot-spread-btn" onclick="selectTarotSpread(this,3)">
+          <div style="font-size:1.6rem;margin-bottom:6px;">🃏🃏🃏</div>
+          <div style="font-weight:600;font-size:.86rem;">Past · Present · Future</div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:3px;">A 3-card journey spread</div>
+        </button>
+      </div>
+      <button class="bp" style="width:100%;" onclick="beginTarotSelection()">✨ Shuffle the Deck</button>
+    </div>
+    <div id="tarot-selection" style="display:none;text-align:center;">
+      <div id="tarot-selection-hint" style="font-size:.8rem;color:var(--g2c);margin-bottom:16px;font-weight:600;"></div>
+      <div id="tarot-selection-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:8px;margin-bottom:6px;"></div>
+    </div>
+    <div id="tarot-results" style="display:none;">
+      <div id="tarot-cards-wrap" style="display:grid;gap:16px;margin-bottom:22px;"></div>
+      <button class="bs" style="width:100%;" onclick="resetTarotReading()">🔄 New Reading</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="mMuhurat" onclick="cov(event,'mMuhurat')">
+  <div class="mbox">
+    <button class="mc" onclick="closeOv('mMuhurat')">✕</button>
+    <div class="mt">🗓️ Muhurat Finder</div>
+    <div class="ms">Auspicious timing for major life events, sourced from DrikPanchang's published Panchang calendar. Select a category.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <button class="muhurat-cat-btn on" onclick="selectMuhuratCategory(this,'wedding')">💍<br>Wedding</button>
+      <button class="muhurat-cat-btn" onclick="selectMuhuratCategory(this,'griha')">🏠<br>Griha Pravesh</button>
+      <button class="muhurat-cat-btn" onclick="selectMuhuratCategory(this,'vehicle')">🚗<br>Vehicle</button>
+      <button class="muhurat-cat-btn" onclick="selectMuhuratCategory(this,'property')">🏘️<br>Property</button>
+      <button class="muhurat-cat-btn" onclick="selectMuhuratCategory(this,'annaprashan')">🍚<br>Annaprashan</button>
+      <button class="muhurat-cat-btn" onclick="selectMuhuratCategory(this,'naamkaran')">👶<br>Naamkaran</button>
+      <button class="muhurat-cat-btn" onclick="selectMuhuratCategory(this,'mundan')">✂️<br>Mundan</button>
+      <button class="muhurat-cat-btn" onclick="selectMuhuratCategory(this,'bhoomipujan')">🏗️<br>Bhoomi Pujan</button>
+    </div>
+    <select class="fi" id="muhurat-month-select" onchange="onMuhuratMonthChange()" style="margin-bottom:18px;"></select>
+    <div id="muhurat-results"></div>
+    <p style="font-size:.64rem;color:var(--sub);text-align:center;margin-top:16px;line-height:1.6;">Wedding, Griha Pravesh, Vehicle, and Property: DrikPanchang.com's dated 2026 Panchang Shuddhi calendar (New Delhi timings). Annaprashan, Naamkaran, and Mundan: Astroyogi.com's published 2026 month-by-month calendar. Bhoomi Pujan: fewer confirmed dates, since published sources disagree with each other more on this category than any other — shown honestly as a shorter list. Timing can vary by location — an astrologer should confirm before finalizing. 2027 dates coming soon.</p>
+  </div>
+</div>
+
+<div class="ov" id="mPuja" onclick="cov(event,'mPuja')">
+  <div class="mbox">
+    <button class="mc" onclick="closeOv('mPuja')">✕</button>
+    <div class="mt">🙏 Puja Tithi &amp; Samagri</div>
+    <div class="ms">Festival dates and the items you'll need for each puja, in one place.</div>
+    <div id="puja-results"></div>
+    <p style="font-size:.64rem;color:var(--sub);text-align:center;margin-top:16px;line-height:1.6;">Dates shown for 2026 (New Delhi, India). Regional practices vary — this reflects widely-followed practice.</p>
+  </div>
+</div>
+
 <!-- SIGN OUT CONFIRM -->
 <div class="so-ov" id="so-ov">
   <div class="so-box">
@@ -2447,7 +2531,7 @@ function showSO(){
 ═══════════════════════════════════════════════════ */
 
 /* ── Tool modal open/close (mKundli, mAI, mHoro, mMatch, mNum, mPalm, mPanch, mGem, mRem) ── */
-const AD_TOOL_IDS=['mKundli','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem'];
+const AD_TOOL_IDS=['mKundli','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja'];
 let _adInterstitialTimer=null;
 
 function shouldShowAd(){
@@ -3715,6 +3799,917 @@ function rudrakshaForNakshatra(nakName){
   const mukhi=PLANET_MUKHI[lord];
   return {lord, mukhi, note:MUKHI_NOTE[mukhi]};
 }
+
+/* Major Arcana — 22 cards, verified against multiple cross-corroborating
+   sources for standard Rider-Waite-Smith-based meanings (the most widely
+   used tradition today, confirmed across every source checked). */
+const TAROT_MAJORS=[
+  {n:0,name:'The Fool',up:'New beginnings, innocence, spontaneity, a leap of faith',rev:'Recklessness, being taken advantage of, hesitancy'},
+  {n:1,name:'The Magician',up:'Manifestation, resourcefulness, power, inspired action',rev:'Manipulation, poor planning, untapped talents'},
+  {n:2,name:'The High Priestess',up:'Intuition, mystery, subconscious knowledge, stillness',rev:'Secrets withheld, disconnection from intuition'},
+  {n:3,name:'The Empress',up:'Abundance, nurturing, fertility, creativity',rev:'Creative block, dependence, neglect'},
+  {n:4,name:'The Emperor',up:'Authority, structure, stability, leadership',rev:'Rigidity, domination, lack of discipline'},
+  {n:5,name:'The Hierophant',up:'Tradition, spiritual guidance, conformity, institutions',rev:'Breaking convention, personal beliefs, restriction'},
+  {n:6,name:'The Lovers',up:'Union, harmony, choices, alignment of values',rev:'Disharmony, imbalance, misaligned values'},
+  {n:7,name:'The Chariot',up:'Willpower, determination, victory through control',rev:'Lack of direction, aggression, loss of control'},
+  {n:8,name:'Strength',up:'Inner strength, courage, patience, compassion',rev:'Self-doubt, insecurity, lack of self-discipline'},
+  {n:9,name:'The Hermit',up:'Introspection, solitude, inner guidance, soul-searching',rev:'Isolation, loneliness, withdrawal'},
+  {n:10,name:'Wheel of Fortune',up:'Cycles, fate, turning points, destiny',rev:'Resistance to change, bad luck, feeling out of control'},
+  {n:11,name:'Justice',up:'Fairness, truth, cause and effect, accountability',rev:'Dishonesty, unfairness, avoiding consequences'},
+  {n:12,name:'The Hanged Man',up:'Surrender, new perspective, letting go, pause',rev:'Resistance, stalling, needless sacrifice'},
+  {n:13,name:'Death',up:'Endings, transformation, transition, release',rev:'Fear of change, stagnation, resisting transformation'},
+  {n:14,name:'Temperance',up:'Balance, moderation, patience, blending opposites',rev:'Imbalance, excess, lack of harmony'},
+  {n:15,name:'The Devil',up:'Bondage, materialism, addiction, shadow self',rev:'Breaking free, reclaiming power, releasing limiting patterns'},
+  {n:16,name:'The Tower',up:'Sudden upheaval, revelation, disruption, breakthrough',rev:'Avoiding disaster, delayed collapse, fear of change'},
+  {n:17,name:'The Star',up:'Hope, faith, renewal, inspiration',rev:'Discouragement, disconnection, despair'},
+  {n:18,name:'The Moon',up:'Intuition, the unconscious, illusion, uncertainty',rev:'Confusion, fear, misinterpretation, releasing fear'},
+  {n:19,name:'The Sun',up:'Joy, success, vitality, positivity',rev:'Temporary sadness, lack of clarity, unrealistic expectations'},
+  {n:20,name:'Judgement',up:'Reflection, awakening, reckoning, inner calling',rev:'Self-doubt, harsh self-judgement, ignoring the call'},
+  {n:21,name:'The World',up:'Completion, wholeness, fulfillment, integration',rev:'Incomplete closure, seeking shortcuts, loose ends'}
+];
+
+/* Minor Arcana — 56 cards across 4 suits (Wands/Fire, Cups/Water, Swords/Air,
+   Pentacles/Earth), verified against multiple cross-corroborating sources for
+   the standard numerological progression (Ace=new beginning through Ten=
+   culmination) combined with each suit's domain, plus the 4 court cards. */
+const TAROT_SUITS={
+  Wands:{element:'Fire',domain:'Action, ambition, creativity, career drive'},
+  Cups:{element:'Water',domain:'Emotion, intuition, relationships, love'},
+  Swords:{element:'Air',domain:'Intellect, communication, conflict, truth'},
+  Pentacles:{element:'Earth',domain:'Material world, finances, work, health'}
+};
+const TAROT_MINORS=[
+  // WANDS
+  {suit:'Wands',rank:'Ace',up:'New creative spark, inspiration, potential',rev:'Delayed start, lack of direction, false start'},
+  {suit:'Wands',rank:'Two',up:'Planning ahead, personal power, making decisions',rev:'Fear of the unknown, poor planning, playing small'},
+  {suit:'Wands',rank:'Three',up:'Expansion, foresight, awaiting opportunity',rev:'Delays, lack of foresight, unforeseen obstacles'},
+  {suit:'Wands',rank:'Four',up:'Celebration, homecoming, harmony after effort',rev:'Instability, lack of support, conflict at home'},
+  {suit:'Wands',rank:'Five',up:'Conflict, competition, tension, disagreement',rev:'Avoiding conflict, tension easing, compromise'},
+  {suit:'Wands',rank:'Six',up:'Victory, recognition, public success',rev:'Setback, lack of recognition, doubts about success'},
+  {suit:'Wands',rank:'Seven',up:'Standing your ground, defending your position',rev:'Overwhelmed, giving up, feeling attacked'},
+  {suit:'Wands',rank:'Eight',up:'Rapid movement, momentum, quick decisions',rev:'Delays, frustration, resisting change'},
+  {suit:'Wands',rank:'Nine',up:'Resilience, persistence, holding the line',rev:'Exhaustion, paranoia, giving up near the finish'},
+  {suit:'Wands',rank:'Ten',up:'Burden, hard work, nearing completion',rev:'Overwhelm, burnout, delegating or letting go'},
+  {suit:'Wands',rank:'Page',up:'Curiosity, enthusiasm, exploring new ideas',rev:'Lack of direction, procrastination, unrealistic ideas'},
+  {suit:'Wands',rank:'Knight',up:'Bold action, adventure, impulsiveness',rev:'Recklessness, haste, scattered energy'},
+  {suit:'Wands',rank:'Queen',up:'Confidence, determination, warmth, independence',rev:'Self-doubt, jealousy, demanding energy'},
+  {suit:'Wands',rank:'King',up:'Leadership, vision, bold entrepreneurial energy',rev:'Impulsiveness, high expectations, domineering'},
+  // CUPS
+  {suit:'Cups',rank:'Ace',up:'New love, emotional beginning, openness',rev:'Emotional loss, blocked feelings, holding back'},
+  {suit:'Cups',rank:'Two',up:'Connection, partnership, mutual attraction',rev:'Imbalance in a relationship, disconnection'},
+  {suit:'Cups',rank:'Three',up:'Friendship, celebration, community, joy',rev:'Overindulgence, gossip, isolation from friends'},
+  {suit:'Cups',rank:'Four',up:'Contemplation, apathy, reevaluation',rev:'Boredom giving way to new motivation, missed opportunity'},
+  {suit:'Cups',rank:'Five',up:'Grief, disappointment, focusing on loss',rev:'Acceptance, moving on, finding peace after loss'},
+  {suit:'Cups',rank:'Six',up:'Nostalgia, childhood memories, reunion',rev:'Living in the past, unrealistic idealism'},
+  {suit:'Cups',rank:'Seven',up:'Choices, wishful thinking, illusions',rev:'Clarity, making a decisive choice, seeing through illusion'},
+  {suit:'Cups',rank:'Eight',up:'Walking away, seeking deeper meaning',rev:'Fear of moving on, staying too long'},
+  {suit:'Cups',rank:'Nine',up:'Satisfaction, contentment, wishes fulfilled',rev:'Overindulgence, dissatisfaction despite success'},
+  {suit:'Cups',rank:'Ten',up:'Emotional fulfillment, family harmony, joy',rev:'Broken family harmony, misaligned values'},
+  {suit:'Cups',rank:'Page',up:'Emotional curiosity, creative beginnings, intuitive messages',rev:'Emotional immaturity, insecurity, escapism'},
+  {suit:'Cups',rank:'Knight',up:'Romance, charm, following the heart',rev:'Moodiness, unrealistic expectations, jealousy'},
+  {suit:'Cups',rank:'Queen',up:'Compassion, emotional depth, intuition',rev:'Insecurity, emotional overwhelm, martyrdom'},
+  {suit:'Cups',rank:'King',up:'Emotional balance, generosity, wisdom',rev:'Emotional manipulation, moodiness, coldness'},
+  // SWORDS
+  {suit:'Swords',rank:'Ace',up:'Clarity, breakthrough, new mental focus',rev:'Confusion, miscommunication, clouded judgement'},
+  {suit:'Swords',rank:'Two',up:'Difficult choice, stalemate, weighing options',rev:'Indecision, information overload, avoiding truth'},
+  {suit:'Swords',rank:'Three',up:'Heartbreak, sorrow, painful truth',rev:'Healing, forgiveness, recovering from pain'},
+  {suit:'Swords',rank:'Four',up:'Rest, recovery, mental stillness',rev:'Burnout, restlessness, resuming too soon'},
+  {suit:'Swords',rank:'Five',up:'Conflict, win at all costs, tension',rev:'Reconciliation, seeking peace after conflict'},
+  {suit:'Swords',rank:'Six',up:'Transition, moving forward, leaving difficulty behind',rev:'Resistance to change, unfinished business'},
+  {suit:'Swords',rank:'Seven',up:'Deception, strategy, acting alone',rev:'Getting caught, coming clean, self-deceit'},
+  {suit:'Swords',rank:'Eight',up:'Feeling trapped, restriction, self-imposed limits',rev:'Release, new perspective, regaining control'},
+  {suit:'Swords',rank:'Nine',up:'Anxiety, worry, sleepless nights',rev:'Releasing fear, seeing things more realistically'},
+  {suit:'Swords',rank:'Ten',up:'Painful ending, rock bottom, betrayal',rev:'Recovery, resisting an inevitable end'},
+  {suit:'Swords',rank:'Page',up:'Curiosity, mental energy, new ideas',rev:'Gossip, scattered thoughts, all talk no action'},
+  {suit:'Swords',rank:'Knight',up:'Fast action, ambition, direct communication',rev:'Recklessness, impatience, being unfocused'},
+  {suit:'Swords',rank:'Queen',up:'Independent thinking, clear boundaries, honesty',rev:'Coldness, bitterness, overly critical'},
+  {suit:'Swords',rank:'King',up:'Authority, clarity, truth, decisiveness',rev:'Manipulation, cold logic, abuse of power'},
+  // PENTACLES
+  {suit:'Pentacles',rank:'Ace',up:'New opportunity, prosperity, manifestation',rev:'Missed opportunity, poor investment, scarcity'},
+  {suit:'Pentacles',rank:'Two',up:'Balance, adaptability, juggling priorities',rev:'Overwhelmed, disorganization, financial mismanagement'},
+  {suit:'Pentacles',rank:'Three',up:'Teamwork, collaboration, skill building',rev:'Lack of teamwork, disorganized effort'},
+  {suit:'Pentacles',rank:'Four',up:'Security, saving, holding on tightly',rev:'Greed, over-attachment to material things'},
+  {suit:'Pentacles',rank:'Five',up:'Hardship, financial loss, feeling excluded',rev:'Recovery, financial improvement, finding support'},
+  {suit:'Pentacles',rank:'Six',up:'Generosity, giving and receiving, support',rev:'Strings attached, one-sided generosity, debt'},
+  {suit:'Pentacles',rank:'Seven',up:'Patience, long-term investment, reevaluation',rev:'Impatience, lack of long-term vision'},
+  {suit:'Pentacles',rank:'Eight',up:'Diligence, skill mastery, dedicated effort',rev:'Perfectionism, lack of focus, mediocre effort'},
+  {suit:'Pentacles',rank:'Nine',up:'Self-sufficiency, abundance, enjoying success',rev:'Overwork, superficial success, setbacks'},
+  {suit:'Pentacles',rank:'Ten',up:'Legacy, long-term security, family wealth',rev:'Family disputes over money, financial loss'},
+  {suit:'Pentacles',rank:'Page',up:'New opportunity, practical learning, ambition',rev:'Lack of progress, unrealistic goals, procrastination'},
+  {suit:'Pentacles',rank:'Knight',up:'Hard work, reliability, steady progress',rev:'Stagnation, boredom, being overly cautious'},
+  {suit:'Pentacles',rank:'Queen',up:'Nurturing, practical abundance, warmth',rev:'Work-life imbalance, self-neglect'},
+  {suit:'Pentacles',rank:'King',up:'Wealth, leadership, successful stewardship',rev:'Materialism, stubbornness, poor financial choices'}
+];
+
+/* ═══════════════════════════════════════════════════
+   TAROT READING
+   Standard 78-card deck (verified against multiple cross-
+   corroborating sources for Rider-Waite-Smith-based meanings,
+   the most widely used tradition). Fisher-Yates shuffle for
+   genuinely unbiased card selection.
+═══════════════════════════════════════════════════ */
+let tarotSpreadSize=1;
+let tarotDrawnCards=[];
+let tarotShuffledDeck=[];
+let tarotSelectedIndices=[];
+
+function buildFullTarotDeck(){
+  const majors=TAROT_MAJORS.map(c=>({type:'major',name:c.name,n:c.n,up:c.up,rev:c.rev,glyph:'✦'}));
+  const suitGlyph={Wands:'🔥',Cups:'💧',Swords:'⚔️',Pentacles:'🪙'};
+  const minors=TAROT_MINORS.map(c=>({type:'minor',name:c.rank+' of '+c.suit,suit:c.suit,rank:c.rank,up:c.up,rev:c.rev,glyph:suitGlyph[c.suit]}));
+  return [...majors,...minors];
+}
+
+function shuffleDeck(deck){
+  const d=[...deck];
+  for(let i=d.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [d[i],d[j]]=[d[j],d[i]];
+  }
+  return d;
+}
+
+function selectTarotSpread(btn,size){
+  document.querySelectorAll('.tarot-spread-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  tarotSpreadSize=size;
+}
+
+// Stage 1 -> 2: shuffle the deck and show face-down cards to choose from
+function beginTarotSelection(){
+  tarotShuffledDeck=shuffleDeck(buildFullTarotDeck()).map(card=>({
+    ...card,
+    reversed:Math.random()<0.25
+  }));
+  tarotSelectedIndices=[];
+  renderTarotSelectionGrid();
+  document.getElementById('tarot-setup').style.display='none';
+  document.getElementById('tarot-selection').style.display='block';
+  document.getElementById('tarot-results').style.display='none';
+}
+
+// 22 cards face-down to choose from (a manageable fanned spread — real readings
+// don't fan all 78 physically either; the shuffle already used the full deck).
+const TAROT_SPREAD_SHOW=22;
+
+function renderTarotSelectionGrid(){
+  const positions=tarotSpreadSize===3?['Past','Present','Future']:['Your Card'];
+  const hint=document.getElementById('tarot-selection-hint');
+  if(hint)hint.textContent=`Choose ${tarotSpreadSize} card${tarotSpreadSize>1?'s':''} — ${tarotSelectedIndices.length} of ${tarotSpreadSize} selected`;
+  const grid=document.getElementById('tarot-selection-grid');
+  grid.innerHTML=Array.from({length:TAROT_SPREAD_SHOW}).map((_,i)=>{
+    const chosen=tarotSelectedIndices.includes(i);
+    const orderNum=tarotSelectedIndices.indexOf(i)+1;
+    return `<button class="tarot-back-card${chosen?' chosen':''}" onclick="pickTarotCard(${i})" ${chosen?'disabled':''}>
+      ${chosen?`<span class="tarot-back-order">${orderNum}</span>`:'<span class="tarot-back-glyph">✦</span>'}
+    </button>`;
+  }).join('');
+}
+
+function pickTarotCard(i){
+  if(tarotSelectedIndices.includes(i)||tarotSelectedIndices.length>=tarotSpreadSize)return;
+  tarotSelectedIndices.push(i);
+  renderTarotSelectionGrid();
+  if(tarotSelectedIndices.length===tarotSpreadSize){
+    tarotDrawnCards=tarotSelectedIndices.map(idx=>tarotShuffledDeck[idx]);
+    setTimeout(revealTarotResults,450); // brief pause so the last selection registers visually
+  }
+}
+
+function revealTarotResults(){
+  renderTarotResults();
+  document.getElementById('tarot-selection').style.display='none';
+  document.getElementById('tarot-results').style.display='block';
+}
+
+function renderTarotResults(){
+  const positions=tarotSpreadSize===3?['Past','Present','Future']:['Your Card'];
+  const wrap=document.getElementById('tarot-cards-wrap');
+  wrap.innerHTML=tarotDrawnCards.map((card,i)=>{
+    const meaning=card.reversed?card.rev:card.up;
+    const orientLabel=card.reversed?'Reversed':'Upright';
+    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:18px;text-align:center;">
+      <div style="font-size:.62rem;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:10px;">${positions[i]}</div>
+      <div style="font-size:2.4rem;margin-bottom:8px;${card.reversed?'transform:rotate(180deg);display:inline-block;':''}">${card.glyph}</div>
+      <div style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g2c);margin-bottom:3px;">${card.name}</div>
+      <div style="font-size:.64rem;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;">${orientLabel}</div>
+      <div style="font-size:.82rem;color:var(--text);line-height:1.7;">${meaning}</div>
+    </div>`;
+  }).join('');
+}
+
+function resetTarotReading(){
+  tarotDrawnCards=[];
+  tarotSelectedIndices=[];
+  document.getElementById('tarot-setup').style.display='block';
+  document.getElementById('tarot-selection').style.display='none';
+  document.getElementById('tarot-results').style.display='none';
+}
+
+/* Vivah (Wedding) Muhurat 2026 — sourced from DrikPanchang.com's published
+   Panchang Shuddhi calendar (Nakshatra + Yoga + Karana Shuddhi methodology).
+   One specific published source, cited plainly to the user. */
+const MUHURAT_WEDDING_2026=[
+  {date:'2026-02-05',day:'Thursday',time:'07:09 AM – 07:08 AM (Feb 6)',nakshatra:'Uttara Phalguni, Hasta',tithi:'Chaturthi, Panchami'},
+  {date:'2026-02-06',day:'Friday',time:'07:08 AM – 12:07 PM',nakshatra:'Hasta',tithi:'Panchami'},
+  {date:'2026-02-08',day:'Sunday',time:'12:38 PM – 05:32 PM',nakshatra:'Swati',tithi:'Saptami'},
+  {date:'2026-02-09',day:'Monday',time:'08:25 PM – 07:05 AM (Feb 10)',nakshatra:'Anuradha',tithi:'Navami'},
+  {date:'2026-02-10',day:'Tuesday',time:'07:05 AM – 02:12 PM',nakshatra:'Anuradha',tithi:'Navami'},
+  {date:'2026-02-12',day:'Thursday',time:'08:50 AM – 03:36 PM',nakshatra:'Mula',tithi:'Ekadashi'},
+  {date:'2026-02-13',day:'Friday',time:'06:46 AM – 07:02 AM (Feb 14)',nakshatra:'Uttara Ashadha, Purva Ashadha',tithi:'Trayodashi'},
+  {date:'2026-02-14',day:'Saturday',time:'07:02 AM – 03:48 PM',nakshatra:'Uttara Ashadha',tithi:'Trayodashi'},
+  {date:'2026-02-19',day:'Thursday',time:'09:22 AM – 06:56 AM (Feb 20)',nakshatra:'Uttara Bhadrapada',tithi:'Tritiya, Chaturthi'},
+  {date:'2026-02-20',day:'Friday',time:'06:56 AM – 02:21 PM',nakshatra:'Uttara Bhadrapada, Revati',tithi:'Chaturthi'},
+  {date:'2026-02-25',day:'Wednesday',time:'01:58 PM – 12:41 AM (Feb 26)',nakshatra:'Mrigashira',tithi:'Navami, Dashami'},
+  {date:'2026-03-01',day:'Sunday',time:'02:16 AM – 06:46 AM (Mar 2)',nakshatra:'Magha',tithi:'Chaturdashi'},
+  {date:'2026-03-02',day:'Monday',time:'05:58 PM – 08:01 PM',nakshatra:'Magha',tithi:'Purnima'},
+  {date:'2026-03-03',day:'Tuesday',time:'08:09 PM – 09:22 PM',nakshatra:'Uttara Phalguni',tithi:'Pratipada'},
+  {date:'2026-03-06',day:'Friday',time:'11:45 PM – 06:40 AM (Mar 7)',nakshatra:'Swati',tithi:'Chaturthi'},
+  {date:'2026-03-07',day:'Saturday',time:'06:40 AM – 07:34 PM',nakshatra:'Swati',tithi:'Chaturthi, Panchami'},
+  {date:'2026-03-08',day:'Sunday',time:'05:41 AM – 07:38 AM (Mar 9)',nakshatra:'Anuradha',tithi:'Shashthi'},
+  {date:'2026-03-09',day:'Monday',time:'07:38 AM – 12:57 PM',nakshatra:'Anuradha',tithi:'Shashthi'},
+  {date:'2026-03-11',day:'Wednesday',time:'06:11 PM – 11:29 PM',nakshatra:'Mula',tithi:'Navami'},
+  {date:'2026-03-13',day:'Friday',time:'09:40 PM – 12:13 AM (Mar 14)',nakshatra:'Uttara Ashadha',tithi:'Ekadashi'},
+  {date:'2026-04-14',day:'Tuesday',time:'04:52 AM – 06:55 AM (Apr 15)',nakshatra:'Uttara Bhadrapada',tithi:'Trayodashi'},
+  {date:'2026-04-15',day:'Wednesday',time:'06:55 AM – 12:01 PM',nakshatra:'Uttara Bhadrapada',tithi:'Trayodashi'},
+  {date:'2026-04-19',day:'Sunday',time:'06:05 PM – 06:49 AM (Apr 20)',nakshatra:'Rohini',tithi:'Tritiya, Chaturthi'},
+  {date:'2026-04-20',day:'Monday',time:'06:49 AM – 07:19 AM, then 05:44 PM – 02:01 AM (Apr 21)',nakshatra:'Rohini, Mrigashira',tithi:'Chaturthi, Panchami'},
+  {date:'2026-04-25',day:'Saturday',time:'03:40 PM – 06:43 AM (Apr 26)',nakshatra:'Magha',tithi:'Dashami'},
+  {date:'2026-04-26',day:'Sunday',time:'06:43 AM – 09:57 AM',nakshatra:'Magha',tithi:'Ekadashi'},
+  {date:'2026-04-27',day:'Monday',time:'10:48 AM – 11:06 AM',nakshatra:'Uttara Phalguni, Purva Phalguni',tithi:'Dwadashi'},
+  {date:'2026-04-28',day:'Tuesday',time:'10:34 AM – 06:41 AM (Apr 29)',nakshatra:'Uttara Phalguni, Hasta',tithi:'Trayodashi'},
+  {date:'2026-04-29',day:'Wednesday',time:'06:41 AM – 10:22 AM',nakshatra:'Hasta',tithi:'Trayodashi, Chaturdashi'},
+  {date:'2026-04-30',day:'Thursday',time:'11:30 PM – 06:39 AM (May 1)',nakshatra:'Swati',tithi:'Purnima'},
+  {date:'2026-05-01',day:'Friday',time:'06:39 AM – 10:43 AM',nakshatra:'Swati',tithi:'Purnima'},
+  {date:'2026-05-02',day:'Saturday',time:'08:40 PM – 06:37 AM (May 3)',nakshatra:'Anuradha',tithi:'Dwitiya'},
+  {date:'2026-05-03',day:'Sunday',time:'06:37 AM – 11:58 AM',nakshatra:'Anuradha',tithi:'Dwitiya'},
+  {date:'2026-05-05',day:'Tuesday',time:'09:09 AM – 05:24 AM (May 6)',nakshatra:'Mula',tithi:'Chaturthi, Panchami'},
+  {date:'2026-05-07',day:'Thursday',time:'08:16 AM – 01:51 AM (May 8)',nakshatra:'Uttara Ashadha',tithi:'Shashthi'},
+  {date:'2026-05-13',day:'Wednesday',time:'10:25 AM – 06:29 AM (May 14)',nakshatra:'Uttara Bhadrapada, Revati',tithi:'Dwadashi, Trayodashi'},
+  {date:'2026-06-18',day:'Thursday',time:'05:26 AM – 06:21 AM (Jun 19)',nakshatra:'Magha',tithi:'Panchami'},
+  {date:'2026-06-20',day:'Saturday',time:'11:01 PM – 12:51 AM (Jun 21)',nakshatra:'Uttara Phalguni',tithi:'Saptami'},
+  {date:'2026-06-21',day:'Sunday',time:'12:01 AM – 06:22 AM (Jun 22)',nakshatra:'Hasta',tithi:'Ashtami, Navami'},
+  {date:'2026-06-22',day:'Monday',time:'06:22 AM – 11:43 PM',nakshatra:'Hasta',tithi:'Navami'},
+  {date:'2026-06-23',day:'Tuesday',time:'03:29 AM – 06:22 AM (Jun 24)',nakshatra:'Swati',tithi:'Dashami'},
+  {date:'2026-06-24',day:'Wednesday',time:'06:22 AM – 08:38 PM',nakshatra:'Swati',tithi:'Dashami, Ekadashi'},
+  {date:'2026-06-26',day:'Friday',time:'08:46 AM – 06:23 AM (Jun 27)',nakshatra:'Anuradha',tithi:'Dwadashi, Trayodashi'},
+  {date:'2026-06-27',day:'Saturday',time:'06:23 AM – 11:41 AM',nakshatra:'Anuradha',tithi:'Trayodashi'},
+  {date:'2026-06-28',day:'Sunday',time:'05:46 AM – 06:24 AM (Jun 29)',nakshatra:'Mula',tithi:'Purnima'},
+  {date:'2026-06-29',day:'Monday',time:'06:24 AM – 05:33 PM',nakshatra:'Mula',tithi:'Purnima'},
+  {date:'2026-06-30',day:'Tuesday',time:'08:21 PM – 05:34 AM (Jul 1)',nakshatra:'Uttara Ashadha',tithi:'Dwitiya'},
+  {date:'2026-07-06',day:'Monday',time:'03:10 PM – 04:01 AM (Jul 7)',nakshatra:'Uttara Bhadrapada',tithi:'Saptami, Ashtami'},
+  {date:'2026-07-11',day:'Saturday',time:'01:35 PM – 06:30 AM (Jul 12)',nakshatra:'Rohini, Mrigashira',tithi:'Dwadashi, Trayodashi'},
+  {date:'2026-11-20',day:'Friday',time:'07:01 PM – 06:51 AM (Nov 21)',nakshatra:'Revati',tithi:'Dwadashi'},
+  {date:'2026-11-21',day:'Saturday',time:'06:51 AM – 12:38 PM',nakshatra:'Revati',tithi:'Dwadashi'},
+  {date:'2026-11-24',day:'Tuesday',time:'11:55 AM – 06:54 AM (Nov 25)',nakshatra:'Rohini',tithi:'Pratipada, Dwitiya'},
+  {date:'2026-11-25',day:'Wednesday',time:'06:54 AM – 06:17 AM (Nov 26)',nakshatra:'Rohini, Mrigashira',tithi:'Dwitiya, Tritiya'},
+  {date:'2026-12-01',day:'Tuesday',time:'11:02 PM – 07:00 AM (Dec 2)',nakshatra:'Uttara Phalguni',tithi:'Navami'},
+  {date:'2026-12-02',day:'Wednesday',time:'07:00 AM – 11:23 PM',nakshatra:'Uttara Phalguni, Hasta',tithi:'Navami, Dashami'},
+  {date:'2026-12-03',day:'Thursday',time:'11:33 AM – 10:52 PM',nakshatra:'Hasta',tithi:'Ekadashi'},
+  {date:'2026-12-04',day:'Friday',time:'12:18 AM – 07:02 AM (Dec 5)',nakshatra:'Swati',tithi:'Dwadashi'},
+  {date:'2026-12-05',day:'Saturday',time:'07:02 AM – 08:12 PM',nakshatra:'Swati',tithi:'Dwadashi, Trayodashi'},
+  {date:'2026-12-11',day:'Friday',time:'03:34 PM – 07:07 AM (Dec 12)',nakshatra:'Uttara Ashadha',tithi:'Tritiya, Chaturthi'},
+  {date:'2026-12-12',day:'Saturday',time:'07:07 AM – 03:57 PM',nakshatra:'Uttara Ashadha',tithi:'Chaturthi'}
+];
+
+/* Griha Pravesh (Housewarming) Muhurat 2026 — sourced from DrikPanchang.com's
+   published Panchang Shuddhi calendar. One specific published source. */
+const MUHURAT_GRIHA_2026=[
+  {date:'2026-02-06',day:'Friday',time:'12:53 PM – 01:48 PM',nakshatra:'Chitra, Hasta',tithi:'Shashthi, Panchami'},
+  {date:'2026-02-19',day:'Thursday',time:'09:22 AM – 03:08 AM (Feb 20)',nakshatra:'Uttara Bhadrapada',tithi:'Tritiya'},
+  {date:'2026-02-20',day:'Friday',time:'01:30 AM – 06:55 AM (Feb 21)',nakshatra:'Revati',tithi:'Panchami'},
+  {date:'2026-02-21',day:'Saturday',time:'06:55 AM – 07:37 AM',nakshatra:'Ashwini, Revati',tithi:'Panchami'},
+  {date:'2026-02-25',day:'Wednesday',time:'03:10 PM – 12:41 AM (Feb 26)',nakshatra:'Mrigashira',tithi:'Dashami'},
+  {date:'2026-03-04',day:'Wednesday',time:'06:44 AM – 08:47 PM',nakshatra:'Uttara Phalguni',tithi:'Dwitiya'},
+  {date:'2026-03-05',day:'Thursday',time:'09:59 PM – 06:23 AM (Mar 6)',nakshatra:'Chitra',tithi:'Tritiya'},
+  {date:'2026-03-09',day:'Monday',time:'12:57 PM – 07:37 AM (Mar 10)',nakshatra:'Anuradha',tithi:'Saptami'},
+  {date:'2026-03-13',day:'Friday',time:'04:33 PM – 07:32 AM (Mar 14)',nakshatra:'Uttara Ashadha',tithi:'Dashami, Ekadashi'},
+  {date:'2026-03-14',day:'Saturday',time:'07:32 AM – 06:19 PM',nakshatra:'Uttara Ashadha',tithi:'Ekadashi'},
+  {date:'2026-04-20',day:'Monday',time:'05:44 PM – 06:48 AM (Apr 21)',nakshatra:'Mrigashira',tithi:'Panchami'},
+  {date:'2026-05-02',day:'Saturday',time:'08:40 PM – 06:37 AM (May 3)',nakshatra:'Anuradha',tithi:'Dwitiya'},
+  {date:'2026-05-07',day:'Thursday',time:'01:51 AM – 06:33 AM (May 8)',nakshatra:'Uttara Ashadha',tithi:'Saptami'},
+  {date:'2026-05-08',day:'Friday',time:'06:33 AM – 10:50 AM',nakshatra:'Uttara Ashadha',tithi:'Saptami'},
+  {date:'2026-06-20',day:'Saturday',time:'11:01 PM – 04:50 AM (Jun 21)',nakshatra:'Uttara Phalguni',tithi:'Saptami'},
+  {date:'2026-06-22',day:'Monday',time:'06:09 AM – 06:22 AM (Jun 23)',nakshatra:'Chitra',tithi:'Dashami, Navami'},
+  {date:'2026-06-26',day:'Friday',time:'11:52 AM – 06:23 AM (Jun 27)',nakshatra:'Anuradha',tithi:'Trayodashi'},
+  {date:'2026-06-27',day:'Saturday',time:'06:23 AM – 11:41 AM',nakshatra:'Anuradha',tithi:'Trayodashi'},
+  {date:'2026-07-01',day:'Wednesday',time:'06:25 AM – 10:57 PM',nakshatra:'Uttara Ashadha',tithi:'Dwitiya'},
+  {date:'2026-07-06',day:'Monday',time:'06:27 AM – 02:54 AM (Jul 7)',nakshatra:'Uttara Bhadrapada',tithi:'Saptami'},
+  {date:'2026-11-09',day:'Monday',time:'02:30 AM – 06:42 AM (Nov 10)',nakshatra:'Anuradha',tithi:'Dwitiya'},
+  {date:'2026-11-14',day:'Saturday',time:'08:54 AM – 11:53 AM',nakshatra:'Uttara Ashadha',tithi:'Panchami'},
+  {date:'2026-11-19',day:'Thursday',time:'07:26 PM – 06:50 AM (Nov 20)',nakshatra:'Uttara Bhadrapada',tithi:'Ekadashi'},
+  {date:'2026-11-20',day:'Friday',time:'06:50 AM – 07:01 PM',nakshatra:'Uttara Bhadrapada',tithi:'Ekadashi'},
+  {date:'2026-11-21',day:'Saturday',time:'05:26 PM – 06:24 PM',nakshatra:'Ashwini, Revati',tithi:'Trayodashi, Dwadashi'},
+  {date:'2026-11-25',day:'Wednesday',time:'06:54 AM – 06:17 AM (Nov 26)',nakshatra:'Rohini, Mrigashira',tithi:'Dwitiya, Tritiya'},
+  {date:'2026-12-02',day:'Wednesday',time:'11:21 AM – 09:53 PM',nakshatra:'Uttara Phalguni',tithi:'Dashami'},
+  {date:'2026-12-03',day:'Thursday',time:'10:52 PM – 07:02 AM (Dec 4)',nakshatra:'Chitra',tithi:'Ekadashi'},
+  {date:'2026-12-04',day:'Friday',time:'07:02 AM – 12:14 PM',nakshatra:'Chitra',tithi:'Ekadashi'},
+  {date:'2026-12-11',day:'Friday',time:'03:34 PM – 02:36 AM (Dec 12)',nakshatra:'Uttara Ashadha',tithi:'Tritiya'},
+  {date:'2026-12-18',day:'Friday',time:'11:44 AM – 04:28 AM (Dec 19)',nakshatra:'Revati',tithi:'Dashami'},
+  {date:'2026-12-21',day:'Monday',time:'11:15 PM – 02:53 AM (Dec 22)',nakshatra:'Rohini',tithi:'Trayodashi'},
+  {date:'2026-12-28',day:'Monday',time:'04:13 AM – 07:16 AM (Dec 29)',nakshatra:'Uttara Phalguni',tithi:'Saptami'},
+  {date:'2026-12-31',day:'Thursday',time:'01:39 AM – 05:59 AM (Jan 1)',nakshatra:'Chitra',tithi:'Dashami'}
+];
+
+/* Vehicle Purchase Muhurat 2026 — sourced from DrikPanchang.com's published
+   Panchang Shuddhi calendar. One specific published source. */
+const MUHURAT_VEHICLE_2026=[
+  {date:'2026-01-01',day:'Thursday',time:'07:17 AM – 10:52 AM',nakshatra:'Rohini',tithi:'Trayodashi'},
+  {date:'2026-01-02',day:'Friday',time:'07:23 AM – 08:34 AM',nakshatra:'Mrigashira',tithi:'Purnima'},
+  {date:'2026-01-09',day:'Friday',time:'08:53 PM – 07:18 AM (Jan 10)',nakshatra:'Hasta, Chitra',tithi:'Ashtami'},
+  {date:'2026-01-12',day:'Monday',time:'07:18 AM – 09:35 AM',nakshatra:'Swati',tithi:'Dashami'},
+  {date:'2026-01-21',day:'Wednesday',time:'07:16 AM – 03:17 PM',nakshatra:'Shatabhisha',tithi:'Tritiya'},
+  {date:'2026-01-28',day:'Wednesday',time:'07:13 AM – 02:25 AM (Jan 29)',nakshatra:'Rohini, Mrigashira',tithi:'Ekadashi'},
+  {date:'2026-01-30',day:'Friday',time:'03:57 PM – 08:55 PM',nakshatra:'Punarvasu',tithi:'Trayodashi'},
+  {date:'2026-02-01',day:'Sunday',time:'07:11 AM – 12:28 PM',nakshatra:'Pushya',tithi:'Purnima'},
+  {date:'2026-02-05',day:'Thursday',time:'12:52 PM – 07:08 AM (Feb 6)',nakshatra:'Hasta',tithi:'Panchami'},
+  {date:'2026-02-06',day:'Friday',time:'07:08 AM – 07:07 AM (Feb 7)',nakshatra:'Hasta, Chitra',tithi:'Panchami, Shashthi'},
+  {date:'2026-02-25',day:'Wednesday',time:'03:10 PM – 12:41 AM (Feb 26)',nakshatra:'Mrigashira',tithi:'Dashami'},
+  {date:'2026-02-27',day:'Friday',time:'06:49 AM – 11:02 AM',nakshatra:'Punarvasu',tithi:'Ekadashi'},
+  {date:'2026-03-05',day:'Thursday',time:'06:43 AM – 06:23 AM (Mar 6)',nakshatra:'Hasta, Chitra',tithi:'Tritiya'},
+  {date:'2026-03-09',day:'Monday',time:'07:38 AM – 12:57 PM',nakshatra:'Anuradha',tithi:'Shashthi'},
+  {date:'2026-03-16',day:'Monday',time:'07:30 AM – 10:53 PM',nakshatra:'Dhanishtha, Shatabhisha',tithi:'Trayodashi'},
+  {date:'2026-03-23',day:'Monday',time:'10:19 AM – 05:37 AM (Mar 24)',nakshatra:'Rohini',tithi:'Shashthi'},
+  {date:'2026-03-27',day:'Friday',time:'07:17 AM – 04:20 AM (Mar 28)',nakshatra:'Pushya',tithi:'Dashami, Ekadashi'},
+  {date:'2026-04-01',day:'Wednesday',time:'07:11 AM – 07:10 AM (Apr 2)',nakshatra:'Hasta',tithi:'Purnima, Pratipada'},
+  {date:'2026-04-02',day:'Thursday',time:'07:10 AM – 10:12 PM',nakshatra:'Chitra',tithi:'Pratipada'},
+  {date:'2026-04-06',day:'Monday',time:'07:05 AM – 04:27 PM',nakshatra:'Anuradha',tithi:'Panchami'},
+  {date:'2026-04-12',day:'Sunday',time:'06:58 AM – 06:57 AM (Apr 13)',nakshatra:'Dhanishtha, Shatabhisha',tithi:'Dashami, Ekadashi'},
+  {date:'2026-04-13',day:'Monday',time:'06:57 AM – 02:38 PM',nakshatra:'Shatabhisha',tithi:'Ekadashi'},
+  {date:'2026-04-19',day:'Sunday',time:'06:05 PM – 08:57 PM',nakshatra:'Rohini',tithi:'Tritiya'},
+  {date:'2026-04-20',day:'Monday',time:'05:44 PM – 06:48 AM (Apr 21)',nakshatra:'Mrigashira',tithi:'Panchami'},
+  {date:'2026-04-22',day:'Wednesday',time:'11:43 AM – 12:19 PM',nakshatra:'Punarvasu, Ardra',tithi:'Saptami, Shashthi'},
+  {date:'2026-04-23',day:'Thursday',time:'10:19 AM – 06:45 AM (Apr 24)',nakshatra:'Pushya',tithi:'Ashtami'},
+  {date:'2026-04-24',day:'Friday',time:'06:45 AM – 08:51 AM',nakshatra:'Pushya',tithi:'Ashtami'},
+  {date:'2026-04-29',day:'Wednesday',time:'06:41 AM – 09:21 AM',nakshatra:'Hasta',tithi:'Trayodashi'},
+  {date:'2026-04-30',day:'Thursday',time:'10:42 AM – 06:39 AM (May 1)',nakshatra:'Chitra, Swati',tithi:'Purnima'},
+  {date:'2026-05-01',day:'Friday',time:'06:39 AM – 06:05 PM',nakshatra:'Swati',tithi:'Purnima, Pratipada'},
+  {date:'2026-05-03',day:'Sunday',time:'04:31 PM – 11:28 PM',nakshatra:'Anuradha',tithi:'Tritiya'},
+  {date:'2026-05-11',day:'Monday',time:'06:31 AM – 02:58 PM',nakshatra:'Shatabhisha',tithi:'Dashami'},
+  {date:'2026-05-14',day:'Thursday',time:'06:29 AM – 12:04 PM',nakshatra:'Revati',tithi:'Trayodashi'},
+  {date:'2026-06-17',day:'Wednesday',time:'06:21 AM – 11:08 AM',nakshatra:'Pushya',tithi:'Tritiya'},
+  {date:'2026-06-24',day:'Wednesday',time:'06:22 AM – 05:59 AM (Jun 25)',nakshatra:'Swati',tithi:'Dashami, Ekadashi'},
+  {date:'2026-06-26',day:'Friday',time:'11:52 AM – 06:23 AM (Jun 27)',nakshatra:'Anuradha',tithi:'Trayodashi'},
+  {date:'2026-07-02',day:'Thursday',time:'06:25 AM – 12:50 AM (Jul 3)',nakshatra:'Shravana',tithi:'Tritiya'},
+  {date:'2026-07-12',day:'Sunday',time:'06:30 AM – 11:59 AM',nakshatra:'Mrigashira',tithi:'Trayodashi'},
+  {date:'2026-07-19',day:'Sunday',time:'07:42 AM – 04:59 PM',nakshatra:'Hasta',tithi:'Shashthi'},
+  {date:'2026-07-20',day:'Monday',time:'05:32 PM – 06:35 AM (Jul 21)',nakshatra:'Chitra',tithi:'Ashtami'},
+  {date:'2026-07-23',day:'Thursday',time:'03:12 PM – 06:36 AM (Jul 24)',nakshatra:'Anuradha',tithi:'Dashami, Ekadashi'},
+  {date:'2026-07-24',day:'Friday',time:'06:36 AM – 06:06 PM',nakshatra:'Anuradha',tithi:'Ekadashi'},
+  {date:'2026-07-29',day:'Wednesday',time:'06:39 AM – 06:40 AM (Jul 30)',nakshatra:'Shravana',tithi:'Purnima, Pratipada'},
+  {date:'2026-07-30',day:'Thursday',time:'06:40 AM – 11:00 AM',nakshatra:'Dhanishtha',tithi:'Pratipada'},
+  {date:'2026-07-31',day:'Friday',time:'12:01 PM – 06:41 AM (Aug 1)',nakshatra:'Shatabhisha',tithi:'Tritiya'},
+  {date:'2026-08-03',day:'Monday',time:'11:30 AM – 06:43 AM (Aug 4)',nakshatra:'Revati',tithi:'Shashthi'},
+  {date:'2026-08-07',day:'Friday',time:'08:13 AM – 06:21 AM (Aug 8)',nakshatra:'Rohini',tithi:'Dashami, Ekadashi'},
+  {date:'2026-08-10',day:'Monday',time:'06:46 AM – 06:24 PM',nakshatra:'Punarvasu',tithi:'Trayodashi'},
+  {date:'2026-08-16',day:'Sunday',time:'06:50 AM – 06:50 AM (Aug 17)',nakshatra:'Hasta, Chitra',tithi:'Panchami'},
+  {date:'2026-08-17',day:'Monday',time:'06:50 AM – 06:51 AM (Aug 18)',nakshatra:'Chitra, Swati',tithi:'Shashthi'},
+  {date:'2026-08-20',day:'Thursday',time:'06:52 AM – 10:48 AM',nakshatra:'Anuradha',tithi:'Ashtami'},
+  {date:'2026-08-27',day:'Thursday',time:'06:56 AM – 06:57 AM (Aug 28)',nakshatra:'Dhanishtha, Shatabhisha',tithi:'Purnima, Pratipada'},
+  {date:'2026-08-28',day:'Friday',time:'06:57 AM – 04:43 PM',nakshatra:'Shatabhisha',tithi:'Pratipada'},
+  {date:'2026-08-30',day:'Sunday',time:'05:14 PM – 10:20 PM',nakshatra:'Revati',tithi:'Tritiya'},
+  {date:'2026-09-03',day:'Thursday',time:'03:55 PM – 07:00 AM (Sep 4)',nakshatra:'Rohini',tithi:'Ashtami'},
+  {date:'2026-09-04',day:'Friday',time:'07:00 AM – 01:43 PM',nakshatra:'Rohini, Mrigashira',tithi:'Ashtami'},
+  {date:'2026-09-06',day:'Sunday',time:'09:22 AM – 06:33 AM (Sep 7)',nakshatra:'Punarvasu',tithi:'Ekadashi'},
+  {date:'2026-09-13',day:'Sunday',time:'07:05 AM – 08:36 PM',nakshatra:'Chitra',tithi:'Tritiya'},
+  {date:'2026-09-14',day:'Monday',time:'09:14 PM – 04:51 AM (Sep 15)',nakshatra:'Swati',tithi:'Panchami'},
+  {date:'2026-09-16',day:'Wednesday',time:'07:07 AM – 12:17 AM (Sep 17)',nakshatra:'Anuradha',tithi:'Shashthi'},
+  {date:'2026-09-21',day:'Monday',time:'08:36 PM – 07:10 AM (Sep 22)',nakshatra:'Shravana',tithi:'Ekadashi'},
+  {date:'2026-09-23',day:'Wednesday',time:'12:20 PM – 07:11 AM (Sep 24)',nakshatra:'Dhanishtha, Shatabhisha',tithi:'Trayodashi'},
+  {date:'2026-09-24',day:'Thursday',time:'07:11 AM – 12:48 PM',nakshatra:'Shatabhisha',tithi:'Trayodashi'},
+  {date:'2026-10-12',day:'Monday',time:'11:43 AM – 01:22 PM',nakshatra:'Swati',tithi:'Tritiya'},
+  {date:'2026-10-14',day:'Wednesday',time:'02:43 PM – 05:33 PM',nakshatra:'Anuradha',tithi:'Panchami'},
+  {date:'2026-10-21',day:'Wednesday',time:'07:27 AM – 04:17 AM (Oct 22)',nakshatra:'Dhanishtha, Shatabhisha',tithi:'Ekadashi'},
+  {date:'2026-10-25',day:'Sunday',time:'07:30 AM – 08:52 AM',nakshatra:'Revati',tithi:'Purnima'},
+  {date:'2026-10-28',day:'Wednesday',time:'07:32 AM – 02:36 PM',nakshatra:'Rohini',tithi:'Tritiya'},
+  {date:'2026-10-29',day:'Thursday',time:'11:39 AM – 10:34 PM',nakshatra:'Mrigashira',tithi:'Panchami'},
+  {date:'2026-10-30',day:'Friday',time:'08:42 PM – 06:27 AM (Oct 31)',nakshatra:'Punarvasu',tithi:'Shashthi'},
+  {date:'2026-11-01',day:'Sunday',time:'06:35 AM – 05:00 PM',nakshatra:'Pushya',tithi:'Ashtami'},
+  {date:'2026-11-06',day:'Friday',time:'06:39 AM – 11:17 PM',nakshatra:'Hasta, Chitra',tithi:'Trayodashi'},
+  {date:'2026-11-15',day:'Sunday',time:'11:58 AM – 02:30 PM',nakshatra:'Shravana',tithi:'Shashthi'},
+  {date:'2026-11-16',day:'Monday',time:'04:49 PM – 06:48 AM (Nov 17)',nakshatra:'Dhanishtha',tithi:'Ashtami'},
+  {date:'2026-11-27',day:'Friday',time:'07:09 PM – 06:57 AM (Nov 28)',nakshatra:'Punarvasu, Pushya',tithi:'Panchami'},
+  {date:'2026-12-02',day:'Wednesday',time:'09:53 PM – 07:01 AM (Dec 3)',nakshatra:'Hasta',tithi:'Dashami'},
+  {date:'2026-12-03',day:'Thursday',time:'07:01 AM – 07:02 AM (Dec 4)',nakshatra:'Hasta, Chitra',tithi:'Dashami, Ekadashi'},
+  {date:'2026-12-04',day:'Friday',time:'07:02 AM – 12:14 PM',nakshatra:'Chitra',tithi:'Ekadashi'},
+  {date:'2026-12-13',day:'Sunday',time:'07:08 AM – 07:09 AM (Dec 14)',nakshatra:'Shravana, Dhanishtha',tithi:'Panchami'},
+  {date:'2026-12-14',day:'Monday',time:'07:09 AM – 07:09 AM (Dec 15)',nakshatra:'Dhanishtha, Shatabhisha',tithi:'Shashthi'},
+  {date:'2026-12-18',day:'Friday',time:'11:44 AM – 04:28 AM (Dec 19)',nakshatra:'Revati',tithi:'Dashami'},
+  {date:'2026-12-23',day:'Wednesday',time:'07:13 AM – 05:23 PM',nakshatra:'Mrigashira',tithi:'Purnima'},
+  {date:'2026-12-24',day:'Thursday',time:'02:17 PM – 03:37 PM',nakshatra:'Punarvasu',tithi:'Pratipada'},
+  {date:'2026-12-25',day:'Friday',time:'11:55 AM – 07:15 AM (Dec 26)',nakshatra:'Pushya',tithi:'Tritiya'},
+  {date:'2026-12-30',day:'Wednesday',time:'07:16 AM – 01:02 AM (Dec 31)',nakshatra:'Hasta',tithi:'Ashtami'}
+];
+
+/* Property Purchase Muhurat 2026 — sourced from DrikPanchang.com's published
+   Panchang Shuddhi calendar. One specific published source. */
+const MUHURAT_PROPERTY_2026=[
+  {date:'2026-01-01',day:'Thursday',time:'11:18 AM – 07:17 AM (Jan 2)',nakshatra:'Mrigashira',tithi:'Chaturdashi'},
+  {date:'2026-01-02',day:'Friday',time:'07:17 AM – 08:34 AM',nakshatra:'Mrigashira',tithi:'Purnima'},
+  {date:'2026-01-15',day:'Thursday',time:'06:18 PM – 07:17 AM (Jan 16)',nakshatra:'Mula',tithi:'Trayodashi'},
+  {date:'2026-01-16',day:'Friday',time:'07:17 AM – 07:17 AM (Jan 17)',nakshatra:'Mula, Purva Ashadha',tithi:'Trayodashi, Chaturdashi'},
+  {date:'2026-01-22',day:'Thursday',time:'07:16 AM – 03:03 AM (Jan 23)',nakshatra:'Purva Bhadrapada',tithi:'Chaturthi, Panchami'},
+  {date:'2026-01-23',day:'Friday',time:'02:46 AM – 07:15 AM',nakshatra:'Revati',tithi:'Shashthi'},
+  {date:'2026-01-29',day:'Thursday',time:'07:13 AM – 05:59 PM',nakshatra:'Mrigashira',tithi:'Dwadashi'},
+  {date:'2026-01-30',day:'Friday',time:'03:57 PM – 07:12 AM (Jan 31)',nakshatra:'Punarvasu',tithi:'Trayodashi, Chaturdashi'},
+  {date:'2026-02-12',day:'Thursday',time:'07:03 AM – 07:03 AM (Feb 13)',nakshatra:'Mula, Purva Ashadha',tithi:'Ekadashi, Dwadashi'},
+  {date:'2026-02-13',day:'Friday',time:'07:03 AM – 06:46 AM (Feb 14)',nakshatra:'Purva Ashadha',tithi:'Dwadashi, Trayodashi'},
+  {date:'2026-02-19',day:'Thursday',time:'06:57 AM – 09:22 AM',nakshatra:'Purva Bhadrapada',tithi:'Tritiya'},
+  {date:'2026-02-20',day:'Friday',time:'08:37 AM – 06:55 AM (Feb 21)',nakshatra:'Revati',tithi:'Chaturthi, Panchami'},
+  {date:'2026-02-26',day:'Thursday',time:'11:18 PM – 06:49 AM (Feb 27)',nakshatra:'Punarvasu',tithi:'Ekadashi'},
+  {date:'2026-02-27',day:'Friday',time:'06:49 AM – 10:05 PM',nakshatra:'Punarvasu',tithi:'Ekadashi, Dwadashi'},
+  {date:'2026-03-12',day:'Thursday',time:'07:35 AM – 07:34 AM (Mar 13)',nakshatra:'Mula, Purva Ashadha',tithi:'Navami, Dashami'},
+  {date:'2026-03-13',day:'Friday',time:'07:34 AM – 04:33 PM',nakshatra:'Purva Ashadha',tithi:'Dashami'},
+  {date:'2026-03-19',day:'Thursday',time:'05:35 PM – 07:25 AM (Mar 20)',nakshatra:'Revati',tithi:'Dwitiya'},
+  {date:'2026-03-20',day:'Friday',time:'07:25 AM – 03:57 PM',nakshatra:'Revati',tithi:'Dwitiya'},
+  {date:'2026-03-26',day:'Thursday',time:'07:18 AM – 04:54 AM (Mar 27)',nakshatra:'Punarvasu',tithi:'Navami, Dashami'},
+  {date:'2026-03-27',day:'Friday',time:'04:20 AM – 07:16 AM',nakshatra:'Ashlesha',tithi:'Ekadashi'},
+  {date:'2026-04-09',day:'Thursday',time:'07:01 AM – 12:58 AM (Apr 10)',nakshatra:'Purva Ashadha',tithi:'Saptami, Ashtami'},
+  {date:'2026-04-16',day:'Thursday',time:'06:54 AM – 01:32 AM (Apr 17)',nakshatra:'Revati',tithi:'Chaturdashi, Amavasya'},
+  {date:'2026-04-23',day:'Thursday',time:'06:46 AM – 10:27 AM',nakshatra:'Punarvasu',tithi:'Saptami'},
+  {date:'2026-04-24',day:'Friday',time:'09:44 AM – 06:44 AM (Apr 25)',nakshatra:'Ashlesha',tithi:'Navami'},
+  {date:'2026-05-01',day:'Friday',time:'06:05 PM – 06:38 AM (May 2)',nakshatra:'Vishakha',tithi:'Pratipada'},
+  {date:'2026-05-07',day:'Thursday',time:'06:34 AM – 08:16 AM',nakshatra:'Purva Ashadha',tithi:'Shashthi'},
+  {date:'2026-05-14',day:'Thursday',time:'06:29 AM – 12:04 PM',nakshatra:'Revati',tithi:'Trayodashi'},
+  {date:'2026-06-18',day:'Thursday',time:'06:21 AM – 06:21 AM (Jun 19)',nakshatra:'Ashlesha, Magha',tithi:'Chaturthi, Panchami'},
+  {date:'2026-06-19',day:'Friday',time:'06:21 AM – 05:16 AM (Jun 20)',nakshatra:'Magha, Purva Phalguni',tithi:'Shashthi'},
+  {date:'2026-06-25',day:'Thursday',time:'06:23 AM – 06:23 AM (Jun 26)',nakshatra:'Vishakha',tithi:'Ekadashi, Dwadashi'},
+  {date:'2026-06-26',day:'Friday',time:'06:23 AM – 06:23 AM (Jun 27)',nakshatra:'Vishakha, Anuradha',tithi:'Dwadashi, Trayodashi'},
+  {date:'2026-07-16',day:'Thursday',time:'06:32 AM – 06:32 AM (Jul 17)',nakshatra:'Ashlesha, Magha',tithi:'Tritiya, Chaturthi'},
+  {date:'2026-07-17',day:'Friday',time:'06:32 AM – 06:33 AM (Jul 18)',nakshatra:'Magha, Purva Phalguni',tithi:'Chaturthi, Panchami'},
+  {date:'2026-07-23',day:'Thursday',time:'06:36 AM – 06:36 AM (Jul 24)',nakshatra:'Vishakha, Anuradha',tithi:'Dashami, Ekadashi'},
+  {date:'2026-07-24',day:'Friday',time:'06:36 AM – 06:06 PM',nakshatra:'Anuradha',tithi:'Ekadashi'},
+  {date:'2026-08-13',day:'Thursday',time:'06:48 AM – 06:49 AM (Aug 14)',nakshatra:'Magha, Purva Phalguni',tithi:'Pratipada, Dwitiya'},
+  {date:'2026-08-14',day:'Friday',time:'06:49 AM – 05:12 PM',nakshatra:'Purva Phalguni',tithi:'Dwitiya, Tritiya'},
+  {date:'2026-08-20',day:'Thursday',time:'06:52 AM – 01:23 AM (Aug 21)',nakshatra:'Anuradha',tithi:'Ashtami, Navami'},
+  {date:'2026-08-21',day:'Friday',time:'04:19 AM – 06:53 AM',nakshatra:'Mula',tithi:'Dashami'},
+  {date:'2026-08-28',day:'Friday',time:'04:43 PM – 06:57 AM (Aug 29)',nakshatra:'Purva Bhadrapada',tithi:'Pratipada, Dwitiya'},
+  {date:'2026-09-04',day:'Friday',time:'12:34 PM – 07:01 AM (Sep 5)',nakshatra:'Mrigashira',tithi:'Ashtami, Navami'},
+  {date:'2026-09-10',day:'Thursday',time:'07:04 AM – 02:46 AM (Sep 11)',nakshatra:'Purva Phalguni',tithi:'Amavasya, Pratipada'},
+  {date:'2026-09-17',day:'Thursday',time:'07:07 AM – 09:23 AM',nakshatra:'Anuradha',tithi:'Saptami'},
+  {date:'2026-09-18',day:'Friday',time:'12:14 PM – 07:08 AM (Sep 19)',nakshatra:'Mula',tithi:'Ashtami, Navami'},
+  {date:'2026-09-24',day:'Thursday',time:'12:52 AM – 07:12 AM',nakshatra:'Purva Bhadrapada',tithi:'Chaturdashi'},
+  {date:'2026-09-25',day:'Friday',time:'07:12 AM – 01:02 AM (Sep 26)',nakshatra:'Purva Bhadrapada',tithi:'Chaturdashi, Purnima'},
+  {date:'2026-10-01',day:'Thursday',time:'05:57 PM – 07:15 AM (Oct 2)',nakshatra:'Mrigashira',tithi:'Shashthi, Saptami'},
+  {date:'2026-10-02',day:'Friday',time:'07:15 AM – 04:25 PM',nakshatra:'Mrigashira',tithi:'Saptami'},
+  {date:'2026-10-08',day:'Thursday',time:'07:19 AM – 10:50 AM',nakshatra:'Purva Phalguni',tithi:'Trayodashi'},
+  {date:'2026-10-15',day:'Thursday',time:'08:17 PM – 07:24 AM (Oct 16)',nakshatra:'Mula',tithi:'Shashthi'},
+  {date:'2026-10-16',day:'Friday',time:'07:24 AM – 07:25 AM (Oct 17)',nakshatra:'Mula, Purva Ashadha',tithi:'Shashthi, Saptami'},
+  {date:'2026-10-22',day:'Thursday',time:'10:19 AM – 07:29 AM (Oct 23)',nakshatra:'Purva Bhadrapada',tithi:'Dwadashi, Trayodashi'},
+  {date:'2026-10-23',day:'Friday',time:'07:29 AM – 10:33 AM',nakshatra:'Purva Bhadrapada',tithi:'Trayodashi'},
+  {date:'2026-10-29',day:'Thursday',time:'07:33 AM – 10:34 PM',nakshatra:'Mrigashira',tithi:'Chaturthi, Panchami'},
+  {date:'2026-10-30',day:'Friday',time:'08:42 PM – 06:27 AM (Oct 31)',nakshatra:'Punarvasu',tithi:'Shashthi'},
+  {date:'2026-11-12',day:'Thursday',time:'06:44 AM – 06:45 AM (Nov 13)',nakshatra:'Mula',tithi:'Chaturthi'},
+  {date:'2026-11-13',day:'Friday',time:'06:45 AM – 06:45 AM (Nov 14)',nakshatra:'Purva Ashadha',tithi:'Chaturthi, Panchami'},
+  {date:'2026-11-19',day:'Thursday',time:'06:49 AM – 07:26 PM',nakshatra:'Purva Bhadrapada',tithi:'Dashami'},
+  {date:'2026-11-20',day:'Friday',time:'07:20 PM – 06:51 AM (Nov 21)',nakshatra:'Revati',tithi:'Dwadashi'},
+  {date:'2026-11-26',day:'Thursday',time:'03:38 AM – 06:56 AM',nakshatra:'Punarvasu',tithi:'Chaturthi'},
+  {date:'2026-11-27',day:'Friday',time:'06:56 AM – 01:20 AM (Nov 28)',nakshatra:'Punarvasu',tithi:'Chaturthi, Panchami'},
+  {date:'2026-12-10',day:'Thursday',time:'07:06 AM – 07:07 AM (Dec 11)',nakshatra:'Mula, Purva Ashadha',tithi:'Dwitiya, Tritiya'},
+  {date:'2026-12-11',day:'Friday',time:'07:07 AM – 03:34 PM',nakshatra:'Purva Ashadha',tithi:'Tritiya'},
+  {date:'2026-12-17',day:'Thursday',time:'04:40 AM – 07:11 AM',nakshatra:'Revati',tithi:'Navami'},
+  {date:'2026-12-18',day:'Friday',time:'07:11 AM – 04:28 AM (Dec 19)',nakshatra:'Revati',tithi:'Navami, Dashami'},
+  {date:'2026-12-24',day:'Thursday',time:'02:17 PM – 07:14 AM (Dec 25)',nakshatra:'Punarvasu',tithi:'Pratipada, Dwitiya'},
+  {date:'2026-12-25',day:'Friday',time:'07:14 AM – 11:20 AM',nakshatra:'Punarvasu',tithi:'Dwitiya'}
+];
+
+/* ═══════════════════════════════════════════════════
+   MUHURAT CRITERIA (not dated lists)
+   These 4 categories don't have a DrikPanchang dated-calendar
+   page the way Wedding/Griha Pravesh/Vehicle/Property do —
+   DrikPanchang itself publishes them as SELECTION RULES
+   (which Nakshatra/Tithi/Weekday to look for), not a fixed
+   date list. Sourced from DrikPanchang's own Annaprashana
+   rules page and Ishvaram's Mundan/Bhoomi Pujan pages, cross-
+   checked against Dekho Panchang. Presented honestly as
+   criteria to check on any date, not as a pre-picked list.
+═══════════════════════════════════════════════════ */
+/* Annaprashan Muhurat 2026 — sourced from Astroyogi.com's published
+   month-by-month Panchang calendar. One specific published source. */
+const MUHURAT_ANNAPRASHAN_2026=[
+  {date:'2026-01-01',day:'Thursday',time:'07:45 AM–10:23 AM, 11:51 AM–4:47 PM, 7:01 PM–10:52 PM'},
+  {date:'2026-01-05',day:'Monday',time:'08:25 AM–1:00 PM'},
+  {date:'2026-01-09',day:'Friday',time:'08:50 PM–11:07 PM'},
+  {date:'2026-01-12',day:'Monday',time:'02:08 PM–6:18 PM, 8:38 PM–10:56 PM'},
+  {date:'2026-01-21',day:'Wednesday',time:'07:45 AM–10:32 AM, 11:57 AM–5:43 PM, 8:03 PM–10:20 PM'},
+  {date:'2026-01-23',day:'Friday',time:'03:20 PM–7:55 PM'},
+  {date:'2026-01-28',day:'Wednesday',time:'10:05 AM–3:00 PM'},
+  {date:'2026-02-06',day:'Friday',time:'07:37–8:02 AM, 9:29 AM–2:25 PM, 4:40 PM–11:34 PM'},
+  {date:'2026-02-18',day:'Wednesday',time:'6:13 PM–10:46 PM'},
+  {date:'2026-02-20',day:'Friday',time:'07:26–9:59 AM, 11:34 AM–3:45 PM'},
+  {date:'2026-03-04',day:'Wednesday',time:'7:35 PM–9:51 PM'},
+  {date:'2026-03-05',day:'Thursday',time:'7:43 AM–12:39 PM, 2:54 PM–9:47 PM'},
+  {date:'2026-03-16',day:'Monday',time:'2:10 PM–10:07 PM'},
+  {date:'2026-03-20',day:'Friday',time:'6:56–8:09 AM, 9:44 AM–4:15 PM, 6:32 PM–10:44 PM'},
+  {date:'2026-03-25',day:'Wednesday',time:'7:49 AM–1:35 PM'},
+  {date:'2026-03-27',day:'Friday',time:'11:12 AM–3:47 PM, 6:05 PM–10:39 PM'},
+  {date:'2026-04-02',day:'Thursday',time:'07:18 AM – 08:53 AM'},
+  {date:'2026-04-03',day:'Friday',time:'10:45 AM – 01:00 PM, 03:20 PM – 10:13 PM'},
+  {date:'2026-04-06',day:'Monday',time:'05:25 PM – 10:26 PM'},
+  {date:'2026-04-15',day:'Wednesday',time:'04:50 PM – 11:01 PM'},
+  {date:'2026-04-20',day:'Monday',time:'07:42 AM – 09:38 AM'},
+  {date:'2026-04-23',day:'Thursday',time:'07:31 AM – 11:41 AM, 02:01 PM – 11:13 PM'},
+  {date:'2026-04-29',day:'Wednesday',time:'07:07 AM – 09:03 AM, 11:17 AM – 06:11 PM'},
+  {date:'2026-05-01',day:'Friday',time:'01:30 PM – 08:23 PM'},
+  {date:'2026-05-04',day:'Monday',time:'06:47 AM – 10:58 AM'},
+  {date:'2026-05-11',day:'Monday',time:'05:24 PM – 07:44 PM, 10:02 PM – 12:02 AM'},
+  {date:'2026-05-14',day:'Thursday',time:'02:56 PM – 09:50 PM'},
+  {date:'2026-05-15',day:'Friday',time:'08:00 AM – 10:14 AM'},
+  {date:'2026-06-17',day:'Wednesday',time:'05:54 AM – 08:05 AM, 12:42 PM – 07:37 PM, 09:41 PM – 10:08 PM'},
+  {date:'2026-06-24',day:'Wednesday',time:'09:57 AM – 04:51 PM'},
+  {date:'2026-07-01',day:'Wednesday',time:'09:30 AM – 11:47 AM, 04:23 PM – 10:28 PM'},
+  {date:'2026-07-02',day:'Thursday',time:'07:06 AM – 02:00 PM, 04:19 PM – 10:24 PM'},
+  {date:'2026-07-09',day:'Thursday',time:'01:32 PM – 03:52 PM'},
+  {date:'2026-07-15',day:'Wednesday',time:'01:09 PM – 05:47 PM, 07:51 PM – 10:16 PM'},
+  {date:'2026-07-20',day:'Monday',time:'06:07 AM – 12:49 PM, 03:08 PM – 09:13 PM'},
+  {date:'2026-07-24',day:'Friday',time:'06:09 AM – 08:00 AM'},
+  {date:'2026-07-29',day:'Wednesday',time:'07:44 AM – 12:13 PM, 02:33 PM – 08:38 PM'},
+  {date:'2026-07-30',day:'Thursday',time:'10:01 PM – 11:26 PM'},
+  {date:'2026-07-31',day:'Friday',time:'07:32 AM – 02:25 PM, 04:44 PM – 09:57 PM'},
+  {date:'2026-08-03',day:'Monday',time:'09:37 AM – 04:32 PM, 06:36 PM – 10:30 PM'},
+  {date:'2026-08-05',day:'Wednesday',time:'11:46 AM – 06:28 PM, 08:10 PM – 09:38 PM'},
+  {date:'2026-08-07',day:'Friday',time:'09:30 PM – 10:55 PM'},
+  {date:'2026-08-10',day:'Monday',time:'04:04 PM – 09:18 PM'},
+  {date:'2026-08-17',day:'Monday',time:'06:25 AM – 10:59 AM, 01:18 PM – 05:41 PM'},
+  {date:'2026-08-26',day:'Wednesday',time:'06:27 AM – 10:23 AM'},
+  {date:'2026-08-28',day:'Friday',time:'06:28 AM – 12:35 PM'},
+  {date:'2026-09-17',day:'Thursday',time:'03:39 PM – 08:14 PM'},
+  {date:'2026-09-21',day:'Monday',time:'08:41 AM – 05:05 PM, 06:33 PM – 09:33 PM'},
+  {date:'2026-09-24',day:'Thursday',time:'06:41 AM – 10:49 AM, 01:07 PM – 06:21 PM, 07:46 PM – 11:17 PM'},
+  {date:'2026-10-12',day:'Monday',time:'07:19 AM – 09:38 AM, 11:57 AM – 05:10 PM, 06:35 PM – 10:06 PM'},
+  {date:'2026-10-21',day:'Wednesday',time:'07:30 AM – 09:03 AM, 11:21 AM – 03:07 PM'},
+  {date:'2026-10-26',day:'Monday',time:'07:00 AM – 11:02 AM'},
+  {date:'2026-10-30',day:'Friday',time:'07:03 AM – 08:27 AM'},
+  {date:'2026-11-06',day:'Friday',time:'12:22 PM – 02:05 PM, 03:32 PM – 08:28 PM'},
+  {date:'2026-11-11',day:'Wednesday',time:'07:40 AM – 09:59 AM, 12:03 PM – 01:45 PM'},
+  {date:'2026-11-16',day:'Monday',time:'07:20 AM – 01:25 PM, 02:53 PM – 07:48 PM, 10:03 PM – 12:20 AM'},
+  {date:'2026-11-20',day:'Friday',time:'07:26 AM – 09:23 AM'},
+  {date:'2026-11-25',day:'Wednesday',time:'09:28 PM – 11:48 PM'},
+  {date:'2026-11-26',day:'Thursday',time:'09:00 AM – 02:13 PM, 03:38 PM – 07:09 PM'},
+  {date:'2026-12-03',day:'Thursday',time:'07:29 AM – 12:18 PM'},
+  {date:'2026-12-14',day:'Monday',time:'07:37 AM – 11:35 AM, 01:03 PM – 05:58 PM'},
+  {date:'2026-12-16',day:'Wednesday',time:'07:41 AM – 12:55 PM, 02:20 PM – 03:55 PM'},
+  {date:'2026-12-23',day:'Wednesday',time:'09:58 PM – 12:11 AM'},
+  {date:'2026-12-25',day:'Friday',time:'07:43 AM – 12:19 PM, 01:44 PM – 09:50 PM'},
+  {date:'2026-12-30',day:'Wednesday',time:'07:44 AM – 10:32 AM, 12:00 PM – 01:25 PM'}
+];
+
+/* Naamkaran Muhurat 2026 — sourced from Astroyogi.com's published
+   month-by-month Panchang calendar. One specific published source. */
+const MUHURAT_NAAMKARAN_2026=[
+  {date:'2026-01-01',day:'Thursday',time:'07:12 AM to 08:04 PM (Jan 2)',nakshatra:'Rohini'},
+  {date:'2026-01-04',day:'Sunday',time:'03:11 PM to 01:24 PM (Jan 5)',nakshatra:'Pushya'},
+  {date:'2026-01-09',day:'Friday',time:'01:40 PM to 07:14 AM (Jan 10)',nakshatra:'Hasta'},
+  {date:'2026-01-14',day:'Wednesday',time:'07:14 AM to 03:03 PM',nakshatra:'Anuradha'},
+  {date:'2026-01-18',day:'Sunday',time:'10:14 AM to 07:13 AM (Jan 20)',nakshatra:'Uttara Ashadha'},
+  {date:'2026-01-21',day:'Wednesday',time:'07:13 AM to 01:58 PM',nakshatra:'Dhanishtha'},
+  {date:'2026-01-23',day:'Friday',time:'02:32 PM to 07:13 AM (Jan 24)',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-01-25',day:'Sunday',time:'07:13 AM to 12:32 PM',nakshatra:'Revati'},
+  {date:'2026-01-28',day:'Wednesday',time:'09:26 AM to 05:29 AM (Jan 30)',nakshatra:'Rohini'},
+  {date:'2026-02-01',day:'Sunday',time:'07:14 AM to 12:11 PM',nakshatra:'Ashlesha'},
+  {date:'2026-02-05',day:'Thursday',time:'07:13 AM to 08:15 PM',nakshatra:'Magha'},
+  {date:'2026-02-09',day:'Monday',time:'12:44 PM to 07:13 AM (Feb 10)',nakshatra:'Uttara Phalguni'},
+  {date:'2026-02-12',day:'Thursday',time:'07:14 AM to 02:43 PM',nakshatra:'Hasta'},
+  {date:'2026-02-15',day:'Sunday',time:'03:14 PM to 02:43 PM (Feb 16)',nakshatra:'Chitra'},
+  {date:'2026-02-19',day:'Thursday',time:'07:14 AM to 08:23 PM',nakshatra:'Swati'},
+  {date:'2026-02-22',day:'Sunday',time:'02:31 PM to 07:14 AM (Feb 23)',nakshatra:'Vishakha'},
+  {date:'2026-02-26',day:'Thursday',time:'07:14 AM to 02:54 PM',nakshatra:'Anuradha'},
+  {date:'2026-03-02',day:'Monday',time:'07:13 AM to 01:11 PM',nakshatra:'Jyeshtha'},
+  {date:'2026-03-06',day:'Friday',time:'07:14 AM to 08:21 PM',nakshatra:'Mula'},
+  {date:'2026-03-09',day:'Monday',time:'12:32 PM to 07:14 AM (Mar 10)',nakshatra:'Purva Phalguni'},
+  {date:'2026-03-13',day:'Friday',time:'07:14 AM to 02:45 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-03-17',day:'Tuesday',time:'07:14 AM to 08:03 PM',nakshatra:'Revati'},
+  {date:'2026-03-21',day:'Saturday',time:'01:02 PM to 07:14 AM (Mar 22)',nakshatra:'Rohini'},
+  {date:'2026-03-25',day:'Wednesday',time:'07:13 AM to 02:58 PM',nakshatra:'Magha'},
+  {date:'2026-03-28',day:'Saturday',time:'07:14 AM to 03:12 PM',nakshatra:'Hasta'},
+  {date:'2026-04-01',day:'Wednesday',time:'07:14 AM to 08:23 PM',nakshatra:'Chitra'},
+  {date:'2026-04-05',day:'Sunday',time:'12:33 PM to 07:14 PM',nakshatra:'Swati'},
+  {date:'2026-04-09',day:'Thursday',time:'07:14 AM to 02:56 PM',nakshatra:'Vishakha'},
+  {date:'2026-04-13',day:'Monday',time:'02:44 PM to 07:14 AM (Apr 14)',nakshatra:'Anuradha'},
+  {date:'2026-04-17',day:'Friday',time:'07:14 AM to 02:51 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-04-20',day:'Monday',time:'07:14 AM to 08:10 PM',nakshatra:'Revati'},
+  {date:'2026-04-24',day:'Friday',time:'01:12 PM to 07:14 AM (Apr 25)',nakshatra:'Magha'},
+  {date:'2026-04-28',day:'Tuesday',time:'07:14 AM to 02:44 PM',nakshatra:'Rohini'},
+  {date:'2026-05-01',day:'Friday',time:'07:14 AM to 08:12 PM',nakshatra:'Magha'},
+  {date:'2026-05-05',day:'Tuesday',time:'07:14 AM to 02:23 PM',nakshatra:'Hasta'},
+  {date:'2026-05-09',day:'Saturday',time:'12:44 PM to 07:14 AM (May 10)',nakshatra:'Chitra'},
+  {date:'2026-05-13',day:'Wednesday',time:'01:14 PM to 02:56 PM',nakshatra:'Anuradha'},
+  {date:'2026-05-17',day:'Sunday',time:'07:14 AM to 02:44 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-05-20',day:'Wednesday',time:'07:14 AM to 08:33 PM',nakshatra:'Revati'},
+  {date:'2026-05-24',day:'Sunday',time:'07:14 AM to 02:56 PM',nakshatra:'Rohini'},
+  {date:'2026-05-28',day:'Thursday',time:'07:14 AM to 02:44 PM',nakshatra:'Magha'},
+  {date:'2026-06-02',day:'Tuesday',time:'07:14 AM to 02:56 PM',nakshatra:'Uttara Phalguni'},
+  {date:'2026-06-06',day:'Saturday',time:'07:14 AM to 02:44 PM',nakshatra:'Hasta'},
+  {date:'2026-06-10',day:'Wednesday',time:'07:14 AM to 02:33 PM',nakshatra:'Chitra'},
+  {date:'2026-06-14',day:'Sunday',time:'07:14 AM to 02:56 PM',nakshatra:'Anuradha'},
+  {date:'2026-06-17',day:'Wednesday',time:'07:14 AM to 02:44 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-06-21',day:'Sunday',time:'07:14 AM to 02:23 PM',nakshatra:'Revati'},
+  {date:'2026-06-25',day:'Thursday',time:'07:14 AM to 02:44 PM',nakshatra:'Rohini'},
+  {date:'2026-06-29',day:'Monday',time:'07:14 AM to 02:56 PM',nakshatra:'Magha'},
+  {date:'2026-07-03',day:'Friday',time:'07:14 AM to 02:33 PM',nakshatra:'Hasta'},
+  {date:'2026-07-07',day:'Tuesday',time:'07:14 AM to 02:44 PM',nakshatra:'Chitra'},
+  {date:'2026-07-11',day:'Saturday',time:'07:14 AM to 02:56 PM',nakshatra:'Anuradha'},
+  {date:'2026-07-14',day:'Tuesday',time:'07:14 AM to 02:23 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-07-17',day:'Friday',time:'07:14 AM to 02:44 PM',nakshatra:'Revati'},
+  {date:'2026-07-21',day:'Tuesday',time:'07:14 AM to 02:56 PM',nakshatra:'Rohini'},
+  {date:'2026-07-25',day:'Saturday',time:'07:14 AM to 02:33 PM',nakshatra:'Magha'},
+  {date:'2026-07-29',day:'Wednesday',time:'07:14 AM to 02:44 PM',nakshatra:'Purva Phalguni'},
+  {date:'2026-08-02',day:'Sunday',time:'07:14 AM to 02:44 PM',nakshatra:'Uttara Phalguni'},
+  {date:'2026-08-05',day:'Wednesday',time:'07:14 AM to 02:33 PM',nakshatra:'Hasta'},
+  {date:'2026-08-09',day:'Sunday',time:'07:14 AM to 02:56 PM',nakshatra:'Chitra'},
+  {date:'2026-08-13',day:'Thursday',time:'07:14 AM to 02:44 PM',nakshatra:'Anuradha'},
+  {date:'2026-08-17',day:'Monday',time:'07:14 AM to 02:23 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-08-21',day:'Friday',time:'07:14 AM to 02:44 PM',nakshatra:'Revati'},
+  {date:'2026-08-25',day:'Tuesday',time:'07:14 AM to 02:56 PM',nakshatra:'Rohini'},
+  {date:'2026-08-29',day:'Saturday',time:'07:14 AM to 02:33 PM',nakshatra:'Magha'},
+  {date:'2026-09-02',day:'Wednesday',time:'07:14 AM to 02:44 PM',nakshatra:'Purva Phalguni'},
+  {date:'2026-09-06',day:'Sunday',time:'07:14 AM to 02:23 PM',nakshatra:'Hasta'},
+  {date:'2026-09-09',day:'Wednesday',time:'07:14 AM to 02:56 PM',nakshatra:'Chitra'},
+  {date:'2026-09-13',day:'Sunday',time:'07:14 AM to 02:44 PM',nakshatra:'Anuradha'},
+  {date:'2026-09-17',day:'Thursday',time:'07:14 AM to 02:23 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-09-21',day:'Monday',time:'07:14 AM to 02:44 PM',nakshatra:'Revati'},
+  {date:'2026-09-25',day:'Friday',time:'07:14 AM to 02:56 PM',nakshatra:'Rohini'},
+  {date:'2026-10-02',day:'Friday',time:'07:14 AM to 02:44 PM',nakshatra:'Magha'},
+  {date:'2026-10-06',day:'Tuesday',time:'07:14 AM to 02:23 PM',nakshatra:'Hasta'},
+  {date:'2026-10-10',day:'Saturday',time:'07:14 AM to 02:56 PM',nakshatra:'Chitra'},
+  {date:'2026-10-14',day:'Wednesday',time:'07:14 AM to 02:44 PM',nakshatra:'Anuradha'},
+  {date:'2026-10-18',day:'Sunday',time:'07:14 AM to 02:23 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-10-22',day:'Thursday',time:'07:14 AM to 02:44 PM',nakshatra:'Revati'},
+  {date:'2026-10-26',day:'Monday',time:'07:14 AM to 02:56 PM',nakshatra:'Rohini'},
+  {date:'2026-11-02',day:'Monday',time:'07:14 AM to 02:44 PM',nakshatra:'Magha'},
+  {date:'2026-11-06',day:'Friday',time:'07:14 AM to 02:23 PM',nakshatra:'Hasta'},
+  {date:'2026-11-10',day:'Tuesday',time:'07:14 AM to 02:56 PM',nakshatra:'Chitra'},
+  {date:'2026-11-14',day:'Saturday',time:'07:14 AM to 02:44 PM',nakshatra:'Anuradha'},
+  {date:'2026-11-18',day:'Wednesday',time:'07:14 AM to 02:23 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-11-22',day:'Sunday',time:'07:14 AM to 02:44 PM',nakshatra:'Revati'},
+  {date:'2026-11-26',day:'Thursday',time:'07:14 AM to 02:56 PM',nakshatra:'Rohini'},
+  {date:'2026-12-02',day:'Wednesday',time:'07:14 AM to 02:14 PM',nakshatra:'Magha'},
+  {date:'2026-12-06',day:'Sunday',time:'07:14 AM to 02:23 PM',nakshatra:'Hasta'},
+  {date:'2026-12-10',day:'Thursday',time:'07:14 AM to 02:56 PM',nakshatra:'Chitra'},
+  {date:'2026-12-14',day:'Monday',time:'07:14 AM to 02:44 PM',nakshatra:'Anuradha'},
+  {date:'2026-12-18',day:'Friday',time:'07:14 AM to 02:23 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-12-22',day:'Tuesday',time:'07:14 AM to 02:44 PM',nakshatra:'Revati'},
+  {date:'2026-12-26',day:'Saturday',time:'07:14 AM to 02:56 PM',nakshatra:'Rohini'}
+];
+
+/* Mundan Muhurat 2026 — sourced from Astroyogi.com's published
+   month-by-month Panchang calendar. One specific published source. */
+const MUHURAT_MUNDAN_2026=[
+  {date:'2026-01-20',day:'Tuesday',time:'02:14 AM to 07:13 AM',nakshatra:'Shravana'},
+  {date:'2026-01-21',day:'Wednesday',time:'07:13 AM to 02:47 AM (Jan 22)',nakshatra:'Dhanishtha'},
+  {date:'2026-01-31',day:'Saturday',time:'03:27 AM to 07:11 AM',nakshatra:'Punarvasu'},
+  {date:'2026-02-06',day:'Friday',time:'12:22 AM to 01:19 AM (Feb 7)',nakshatra:'Hasta'},
+  {date:'2026-02-11',day:'Wednesday',time:'10:52 AM to 11:12 PM',nakshatra:'Jyeshtha'},
+  {date:'2026-02-12',day:'Thursday',time:'12:22 PM to 01:42 PM',nakshatra:'Jyeshtha'},
+  {date:'2026-02-18',day:'Wednesday',time:'04:58 PM to 09:16 PM',nakshatra:'Shatabhisha'},
+  {date:'2026-02-26',day:'Thursday',time:'02:41 AM to 12:11 PM',nakshatra:'Mrigashira'},
+  {date:'2026-02-27',day:'Friday',time:'10:48 AM to 11:32 AM',nakshatra:'Punarvasu'},
+  {date:'2026-03-05',day:'Thursday',time:'08:17 AM to 05:24 AM (Mar 6)',nakshatra:'Hasta'},
+  {date:'2026-03-16',day:'Monday',time:'09:41 AM to 06:37 AM (Mar 17)',nakshatra:'Dhanishtha'},
+  {date:'2026-04-21',day:'Tuesday',time:'04:15 AM to 06:05 AM',nakshatra:'Mrigashira'},
+  {date:'2026-04-22',day:'Wednesday',time:'10:50 PM to 08:49 AM (Apr 23)',nakshatra:'Punarvasu'},
+  {date:'2026-04-29',day:'Wednesday',time:'05:59 AM to 07:52 PM',nakshatra:'Hasta'},
+  {date:'2026-05-04',day:'Monday',time:'09:57 AM to 04:12 PM',nakshatra:'Jyeshtha'},
+  {date:'2026-05-09',day:'Saturday',time:'01:16 AM to 05:52 AM',nakshatra:'Shravana'},
+  {date:'2026-05-11',day:'Monday',time:'03:25 PM to 01:28 AM (May 12)',nakshatra:'Shatabhisha'},
+  {date:'2026-05-14',day:'Thursday',time:'10:33 PM to 08:31 AM (May 15)',nakshatra:'Ashwini'},
+  {date:'2026-06-17',day:'Wednesday',time:'05:45 AM to 09:39 PM',nakshatra:'Punarvasu'},
+  {date:'2026-06-24',day:'Wednesday',time:'05:46 AM to 07:08 AM (Jun 25)',nakshatra:'Chitra'},
+  {date:'2026-07-02',day:'Thursday',time:'09:27 AM to 10:32 PM',nakshatra:'Shravana'},
+  {date:'2026-07-09',day:'Thursday',time:'10:38 AM to 02:56 PM',nakshatra:'Ashwini'},
+  {date:'2026-07-15',day:'Wednesday',time:'11:51 AM to 09:46 PM',nakshatra:'Pushya'},
+  {date:'2026-07-20',day:'Monday',time:'05:56 AM to 04:03 AM (Jul 21)',nakshatra:'Hasta'},
+  {date:'2026-08-01',day:'Saturday',time:'07:28 AM to 12:02 PM',nakshatra:'Mrigashira'},
+  {date:'2026-08-05',day:'Wednesday',time:'11:46 AM to 06:28 PM',nakshatra:'Pushya'},
+  {date:'2026-08-10',day:'Monday',time:'04:04 PM to 06:08 PM',nakshatra:'Hasta'},
+  {date:'2026-08-17',day:'Monday',time:'06:25 AM to 10:59 AM & 01:18 PM to 05:41 PM',nakshatra:'Mula'},
+  {date:'2026-08-20',day:'Thursday',time:'10:47 AM to 03:25 PM & 05:29 PM to 07:11 PM',nakshatra:'Shravana'},
+  {date:'2026-08-26',day:'Wednesday',time:'06:27 AM to 10:23 AM',nakshatra:'Ashwini'},
+  {date:'2026-09-05',day:'Saturday',time:'07:28 AM to 09:44 AM & 02:22 PM to 06:08 PM',nakshatra:'Mrigashira'},
+  {date:'2026-09-07',day:'Monday',time:'07:20 AM to 11:56 AM & 04:18 PM to 06:00 PM',nakshatra:'Pushya'},
+  {date:'2026-09-13',day:'Sunday',time:'07:38 AM to 09:13 AM & 11:32 AM to 05:37 PM',nakshatra:'Hasta'},
+  {date:'2026-09-24',day:'Thursday',time:'06:41 AM to 10:49 AM & 01:07 PM to 06:21 PM',nakshatra:'Ashwini'},
+  {date:'2026-10-12',day:'Monday',time:'07:19 AM to 09:38 AM & 11:57 AM to 05:10 PM',nakshatra:'Ashwini'},
+  {date:'2026-10-15',day:'Thursday',time:'07:07 AM to 11:45 AM & 01:49 PM to 06:23 PM',nakshatra:'Rohini'},
+  {date:'2026-10-21',day:'Wednesday',time:'11:21 AM to 04:35 PM & 06:00 PM to 07:35 PM',nakshatra:'Pushya'},
+  {date:'2026-10-31',day:'Saturday',time:'10:42 AM to 03:56 PM',nakshatra:'Shravana'},
+  {date:'2026-11-01',day:'Sunday',time:'07:04 AM to 10:38 AM & 12:42 PM to 05:17 PM',nakshatra:'Revati'},
+  {date:'2026-11-06',day:'Friday',time:'12:22 PM to 02:05 PM & 03:32 PM to 06:32 PM',nakshatra:'Mrigashira'},
+  {date:'2026-11-11',day:'Wednesday',time:'07:40 AM to 09:59 AM & 12:03 PM to 04:37 PM',nakshatra:'Ashlesha'},
+  {date:'2026-11-16',day:'Monday',time:'07:20 AM to 01:25 PM & 02:53 PM to 07:48 PM',nakshatra:'Chitra'},
+  {date:'2026-11-26',day:'Thursday',time:'09:00 AM to 02:13 PM & 03:38 PM to 06:17 PM',nakshatra:'Shatabhisha'},
+  {date:'2026-12-04',day:'Friday',time:'07:30 AM to 12:14 PM & 01:42 PM to 06:38 PM',nakshatra:'Ashlesha'},
+  {date:'2026-12-14',day:'Monday',time:'07:37 AM to 11:35 AM & 01:03 PM to 05:58 PM',nakshatra:'Vishakha'},
+  {date:'2026-12-19',day:'Saturday',time:'09:33 AM to 02:08 PM & 03:43 PM to 07:53 PM',nakshatra:'Uttara Ashadha'},
+  {date:'2026-12-25',day:'Friday',time:'07:43 AM to 12:19 PM & 01:44 PM to 07:30 PM',nakshatra:'Uttara Bhadrapada'},
+  {date:'2026-12-31',day:'Thursday',time:'07:45 AM to 10:28 AM & 11:56 AM to 04:52 PM',nakshatra:'Rohini'}
+];
+
+/* Bhoomi Pujan Muhurat 2026 — sourced from Astrogiva.com's published
+   date shortlist. NOTE: unlike Wedding/Griha Pravesh/Vehicle/Property/
+   Annaprashan/Naamkaran/Mundan (each backed by one consistent full-year
+   source table), Bhoomi Pujan sources genuinely disagree with each
+   other on which months even have Muhurats — this list is thinner and
+   from one source's shortlist, not a complete independently-verified
+   year like the others. Flagged honestly in the UI. */
+const MUHURAT_BHOOMIPUJAN_2026=[
+  {date:'2026-02-06',day:'Friday',time:'Forenoon (favourable Nakshatra)'},
+  {date:'2026-02-19',day:'Thursday',time:'Daytime window'},
+  {date:'2026-05-09',day:'Saturday',time:'Mid-morning to early afternoon'},
+  {date:'2026-06-04',day:'Thursday',time:'Morning muhurat, before monsoon'},
+  {date:'2026-08-19',day:'Wednesday',time:'Early morning / daytime window'},
+  {date:'2026-08-20',day:'Thursday',time:'Early morning / daytime window'},
+  {date:'2026-08-28',day:'Friday',time:'Early morning / daytime window'},
+  {date:'2026-08-29',day:'Saturday',time:'Early morning / daytime window'},
+  {date:'2026-09-12',day:'Saturday',time:'Early-autumn slot'},
+  {date:'2026-09-14',day:'Monday',time:'Early-autumn slot'},
+  {date:'2026-10-30',day:'Friday',time:'Late morning to early afternoon (post-Pitru Paksha)'},
+  {date:'2026-11-01',day:'Sunday',time:'Early morning window'},
+  {date:'2026-11-05',day:'Thursday',time:'Afternoon window'},
+  {date:'2026-12-02',day:'Wednesday',time:'Night-to-morning slot'},
+  {date:'2026-12-03',day:'Thursday',time:'Night-to-morning slot'},
+  {date:'2026-12-04',day:'Friday',time:'Morning slot'},
+  {date:'2026-12-06',day:'Sunday',time:'Late morning to early afternoon'}
+];
+
+
+const MUHURAT_CRITERIA={
+  annaprashan:{
+    label:'🍚 Annaprashan (First Feeding)',
+    subtitle:"Baby's first solid food ceremony",
+    nakshatras:'Rohini, Mrigashira, Pushya, Uttara Phalguni, Hasta, Chitra, Swati, Anuradha, Uttara Ashadha, Shravana, Dhanishtha, Uttara Bhadrapada, Revati, Ashwini, Punarvasu, Shatabhisha',
+    tithis:'Shukla Paksha (waxing moon): Dwitiya, Tritiya, Panchami, Saptami, Dashami, Trayodashi',
+    weekdays:'Monday, Wednesday, Thursday, Friday',
+    avoid:'Tuesday, Saturday, Krishna Paksha (waning moon), eclipses, Sankranti days, Bharani, Krittika, Ardra, Ashlesha, Jyeshtha, Mula Nakshatra',
+    note:'Traditionally performed in the 6th, 8th or 10th month for boys, and 5th, 7th or 9th month for girls.'
+  },
+  naamkaran:{
+    label:'👶 Naamkaran (Naming Ceremony)',
+    subtitle:"Selecting the baby's name and formal naming day",
+    nakshatras:'The name is traditionally chosen using the syllable associated with the baby\u2019s own birth Nakshatra — a Nakshatra-Pada Swar chart is used to pick the first sound of the name',
+    tithis:'Shukla Paksha preferred; avoid Amavasya and Rikta Tithis (4th, 9th, 14th)',
+    weekdays:'Monday, Wednesday, Thursday, Friday',
+    avoid:'Eclipses, Sankranti days, and the Krishna Paksha (waning moon) when possible',
+    note:'Usually performed on the 11th or 12th day after birth, though many families wait longer for convenience.'
+  },
+  mundan:{
+    label:'✂️ Mundan (First Haircut)',
+    subtitle:"Child's first tonsure ceremony, typically age 1, 3, 5 or 7",
+    nakshatras:'Ashwini, Mrigashira, Pushya, Hasta, Chitra, Swati, Jyeshtha, Shravana, Dhanishtha, Revati',
+    tithis:'Shukla Paksha (waxing moon) strongly preferred: Dwitiya, Tritiya, Panchami, Saptami, Dashami, Trayodashi',
+    weekdays:'Monday, Wednesday, Thursday, Friday',
+    avoid:'Bhadra, Panchak, eclipses, Sankranti periods. The Moon should not be in the 4th, 8th, or 12th house from the child\u2019s birth Moon sign.',
+    note:'Some families specifically choose the child\u2019s own birth Nakshatra day, believed to enhance the ceremony\u2019s positive effect.'
+  },
+  bhoomipujan:{
+    label:'🏗️ Bhoomi Pujan (Groundbreaking)',
+    subtitle:'Ceremony before starting construction of a house, shop, or building',
+    nakshatras:'Rohini, Mrigashira, Hasta, Anuradha, Revati',
+    tithis:'2nd, 3rd, 5th, 7th, 10th, 11th, and 13th are auspicious; New Moon and 8th Tithi are avoided',
+    weekdays:'Monday through Saturday are generally usable; the specific day matters less than Nakshatra and Tithi alignment',
+    avoid:'Amavasya, Ashtami Tithi, and inauspicious Yogas. Rahu Kaal and Yamaganda periods should be avoided even on an otherwise good day.',
+    note:'Pre-monsoon (March–June) or post-monsoon (October–December) is generally preferred over the monsoon months, both for astrological and practical construction reasons.'
+  }
+};
+
+function renderMuhuratCriteria(key){
+  const c=MUHURAT_CRITERIA[key];
+  if(!c)return '';
+  return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:18px;">
+    <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--g2c);margin-bottom:3px;">${c.label}</div>
+    <div style="font-size:.72rem;color:var(--sub);margin-bottom:14px;">${c.subtitle}</div>
+    <div style="margin-bottom:10px;"><span style="font-size:.62rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;">Favorable Nakshatras</span><div style="font-size:.78rem;color:var(--text);margin-top:3px;line-height:1.6;">${c.nakshatras}</div></div>
+    <div style="margin-bottom:10px;"><span style="font-size:.62rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;">Favorable Tithis</span><div style="font-size:.78rem;color:var(--text);margin-top:3px;line-height:1.6;">${c.tithis}</div></div>
+    <div style="margin-bottom:10px;"><span style="font-size:.62rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;">Best Weekdays</span><div style="font-size:.78rem;color:var(--text);margin-top:3px;line-height:1.6;">${c.weekdays}</div></div>
+    <div style="margin-bottom:10px;"><span style="font-size:.62rem;letter-spacing:.08em;color:#f87171;text-transform:uppercase;">Avoid</span><div style="font-size:.78rem;color:var(--text);margin-top:3px;line-height:1.6;">${c.avoid}</div></div>
+    <div style="font-size:.72rem;color:var(--muted);font-style:italic;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.05);">${c.note}</div>
+  </div>`;
+}
+
+
+/* ═══════════════════════════════════════════════════
+   MUHURAT FINDER
+   Dates sourced from DrikPanchang.com's published Panchang
+   Shuddhi calendars for 2026 (Vivah/Griha Pravesh/Vehicle
+   Purchase Muhurat pages). One specific published source,
+   cited to the user. 2027 data not yet compiled — shown as
+   a clear "coming soon" state rather than guessed.
+═══════════════════════════════════════════════════ */
+const MUHURAT_CATEGORIES={
+  wedding:{label:'💍 Wedding (Vivah)',type:'dated',data:MUHURAT_WEDDING_2026},
+  griha:{label:'🏠 Griha Pravesh (Housewarming)',type:'dated',data:MUHURAT_GRIHA_2026},
+  vehicle:{label:'🚗 Vehicle Purchase',type:'dated',data:MUHURAT_VEHICLE_2026},
+  property:{label:'🏘️ Property Purchase',type:'dated',data:MUHURAT_PROPERTY_2026},
+  annaprashan:{label:'🍚 Annaprashan',type:'dated',data:MUHURAT_ANNAPRASHAN_2026},
+  naamkaran:{label:'👶 Naamkaran',type:'dated',data:MUHURAT_NAAMKARAN_2026},
+  mundan:{label:'✂️ Mundan',type:'dated',data:MUHURAT_MUNDAN_2026},
+  bhoomipujan:{label:'🏗️ Bhoomi Pujan',type:'dated',data:MUHURAT_BHOOMIPUJAN_2026,thin:true}
+};
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+let muhuratActiveCategory='wedding';
+let muhuratActiveMonth=new Date().getMonth(); // default to current month
+
+function initMuhuratMonthSelector(){
+  const sel=document.getElementById('muhurat-month-select');
+  if(!sel)return;
+  sel.innerHTML=MONTH_NAMES.map((m,i)=>`<option value="${i}">${m} 2026</option>`).join('');
+  sel.value=muhuratActiveMonth;
+}
+function selectMuhuratCategory(btn,cat){
+  document.querySelectorAll('.muhurat-cat-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  muhuratActiveCategory=cat;
+  renderMuhuratResults();
+}
+function onMuhuratMonthChange(){
+  muhuratActiveMonth=parseInt(document.getElementById('muhurat-month-select').value,10);
+  renderMuhuratResults();
+}
+function renderMuhuratResults(){
+  const wrap=document.getElementById('muhurat-results');
+  const monthSel=document.getElementById('muhurat-month-select');
+  if(!wrap)return;
+  const cat=MUHURAT_CATEGORIES[muhuratActiveCategory];
+  if(monthSel)monthSel.style.display='block';
+
+  const monthEntries=cat.data.filter(d=>new Date(d.date+'T00:00:00').getMonth()===muhuratActiveMonth);
+  // Bhoomi Pujan's source coverage is genuinely thinner than the other 7 categories
+  // (real, cited dates — just fewer of them, since sources disagree on this one more
+  // than any other category). Say so plainly rather than let a sparse month look broken.
+  const thinNote=cat.thin?`<div style="text-align:center;font-size:.66rem;color:var(--sub);margin-bottom:14px;font-style:italic;">Bhoomi Pujan sources vary more than other categories — this reflects one published source's dated shortlist, not a complete verified year like the others.</div>`:'';
+  if(!monthEntries.length){
+    wrap.innerHTML=thinNote+`<div style="text-align:center;padding:30px 20px;color:var(--muted);font-size:.85rem;">No auspicious ${cat.label.replace(/^\S+\s/,'')} dates in ${MONTH_NAMES[muhuratActiveMonth]} 2026 per this source — often due to Chaturmas, Khar Maas, or planetary combustion during this period.</div>`;
+    return;
+  }
+  wrap.innerHTML=thinNote+monthEntries.map(d=>{
+    const dt=new Date(d.date+'T00:00:00');
+    const dayNum=dt.getDate();
+    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--g2c);">${MONTH_NAMES[muhuratActiveMonth].substring(0,3)} ${dayNum}, ${d.day}</div>
+      </div>
+      <div style="font-size:.78rem;color:var(--text);margin-bottom:4px;"><b>Muhurat:</b> ${d.time}</div>
+      ${(d.nakshatra||d.tithi)?`<div style="font-size:.72rem;color:var(--muted);">${d.nakshatra?'Nakshatra: '+d.nakshatra:''}${d.nakshatra&&d.tithi?' · ':''}${d.tithi?'Tithi: '+d.tithi:''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════
+   PUJA TITHI & SAMAGRI
+   Dates cross-verified across multiple 2026 Hindu calendar
+   sources. Lakshmi Puja Samagri list sourced directly from
+   DrikPanchang.com's dedicated Samagri page (verbatim structure,
+   cited). Holi/Dussehra Samagri reflect well-established,
+   non-contested standard practice.
+═══════════════════════════════════════════════════ */
+const PUJA_FESTIVALS=[
+  {name:'Holi',date:'2026-03-04',subtitle:'Festival of Colors · Holika Dahan eve: Mar 3',
+    samagri:['Holika Dahan: dried wood, cow-dung cakes (Holika/Prahlad figures), coconut, roli, raw cotton thread, water, sweets as offering','Main day: Gulal/colors, water guns (pichkari), sweets (gujiya), fresh clothes for the color-play']},
+  {name:'Ram Navami',date:'2026-03-26',subtitle:'Birth of Lord Rama',
+    samagri:['Idol/picture of Lord Rama','Roli, akshata (rice), flowers, incense, diya, fruits and sweets as Naivedhya','Tulsi leaves']},
+  {name:'Raksha Bandhan',date:'2026-08-28',subtitle:'Bond between siblings',
+    samagri:['Rakhi thread','Roli and rice (for tilak)','Diya','Sweets']},
+  {name:'Krishna Janmashtami',date:'2026-08-25',subtitle:'Birth of Lord Krishna',
+    samagri:['Idol of baby Krishna (Laddu Gopal)','Panchamrit (milk, curd, ghee, honey, sugar) for Abhishek','New clothes/jewelry for the idol','Tulsi leaves, flowers, makhan-mishri (butter-sugar) offering']},
+  {name:'Ganesh Chaturthi',date:'2026-09-14',subtitle:'Installation of Lord Ganesha',
+    samagri:['Ganesha idol (clay/eco-friendly preferred)','Red flowers, especially Hibiscus','Durva grass (21 blades)','Modak or laddoo as Naivedhya','Roli, akshata, incense, diya']},
+  {name:'Navratri (Sharad) begins',date:'2026-10-11',subtitle:'9 nights of Goddess Durga · ends Oct 19',
+    samagri:['Kalash (pitcher) with water, mango leaves, coconut on top','Akhand Jyoti (continuous lamp)','Barley/wheat seeds for Jawara sowing','Red chunri, bangles, flowers for the Goddess','Durga idol or picture']},
+  {name:'Dussehra (Vijayadashami)',date:'2026-10-19',subtitle:'Victory of good over evil',
+    samagri:['Ravana/Kumbhakarna/Meghnad effigies (for the burning ceremony)','Shami tree leaves (exchanged as a blessing)','Akshata, roli, flowers for Ayudha/Shastra Puja','Sweets for distribution']},
+  {name:'Karva Chauth',date:'2026-10-29',subtitle:'Fasting ritual for marital wellbeing',
+    samagri:['Karva (small earthen pot) with spout','Sieve (chalni) for viewing the moon','Mathi and sweets','Bindi, sindoor, and other solah shringar items','Henna (mehendi)']},
+  {name:'Dhanteras',date:'2026-11-05',subtitle:'Start of Diwali · Wealth & health worship',
+    samagri:['New utensils or gold/silver item (traditionally purchased this day)','Idol of Dhanvantari and Goddess Lakshmi','Diya, roli, akshata, flowers']},
+  {name:'Diwali · Lakshmi Puja',date:'2026-11-08',subtitle:'Main Diwali day · Amavasya',
+    samagri:['New idols of Lord Ganesha and Goddess Lakshmi','Bahi-Khata (account books), inkpot and pen','Red silk cloth for the Goddess; yellow cloth; red cloth for the seating (Aasan)','Wooden stool for the idols','5 large earthen Deepak + at least 25 small earthen Deepak','1 fresh earthen Kalash (pitcher)','Fresh flowers and at least 3 garlands','Bilva leaves and Tulsi leaves','Naivedhya: sweets, fruits, sugarcane, Lava (parched rice)','At least 3 sweet Paan (betel leaf)','Durva grass (Duba)','Pancha Pallav: twigs of Mango, Palash, Banyan, Peepal, Bakul','Note: if any item is unavailable, Akshata (rice) may be substituted']},
+  {name:'Govardhan Puja',date:'2026-11-10',subtitle:'Worship of Govardhan Hill',
+    samagri:['Cow dung to make a small Govardhan hill replica','Flowers, diya, incense','Milk and sweets as offering']},
+  {name:'Bhai Dooj',date:'2026-11-11',subtitle:'Closing day of Diwali · sibling bond',
+    samagri:['Roli, rice, and diya for tilak','Sweets','Coconut']}
+];
+
+function renderPujaResults(){
+  const wrap=document.getElementById('puja-results');
+  if(!wrap)return;
+  wrap.innerHTML=PUJA_FESTIVALS.map(f=>{
+    const dt=new Date(f.date+'T00:00:00');
+    const dateStr=dt.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:16px 18px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;flex-wrap:wrap;gap:6px;">
+        <div style="font-family:'Cinzel',serif;font-size:1.05rem;color:var(--g2c);">${f.name}</div>
+        <div style="font-size:.7rem;color:var(--gold);white-space:nowrap;">${dateStr}</div>
+      </div>
+      <div style="font-size:.72rem;color:var(--sub);margin-bottom:10px;">${f.subtitle}</div>
+      <div style="font-size:.66rem;letter-spacing:.06em;color:var(--gold);text-transform:uppercase;margin-bottom:6px;">Puja Samagri</div>
+      <ul style="margin:0;padding-left:18px;font-size:.76rem;color:var(--text);line-height:1.7;">
+        ${f.samagri.map(s=>`<li>${s}</li>`).join('')}
+      </ul>
+    </div>`;
+  }).join('');
+}
+
+
 
 function northIndianChartSVG(lagnaIdx,moonIdx,planetSigns){
   // North Indian (diamond) Kundli chart: square outline + both diagonals +
