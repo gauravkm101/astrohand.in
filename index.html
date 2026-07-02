@@ -2884,13 +2884,32 @@ async function doForgot(){
   const sb=getSB();
   if(sb){
     try{
-      const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:window.location.origin});
-      if(error)throw new Error(error.message);
-      toast('Password reset email sent! Check your inbox.','ok');
+      // Send users back to the site root; the recovery listener catches the token there.
+      // Using location.origin so it works from whatever domain the site is actually served
+      // on (astrohand.in, the GitHub Pages URL, etc) — this MUST be in Supabase's
+      // Authentication → URL Configuration → Redirect URLs allow-list or Supabase rejects it.
+      const redirectUrl=window.location.origin+window.location.pathname;
+      const {data,error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:redirectUrl});
+      if(error){
+        // Surface a REAL message instead of an empty {} — pull whatever Supabase gives us,
+        // in whatever field it lands, so the user (and we) can see the actual cause.
+        const msg=error.message||error.error_description||error.msg||error.error||(error.status?('Request failed (HTTP '+error.status+')'):'')||'Could not send reset email. Please check your connection and try again.';
+        const low=(msg+'').toLowerCase();
+        if(error.status===429||low.includes('rate limit')||low.includes('too many')){
+          throw new Error('Too many reset emails requested. Please wait a little while, then try again.');
+        }
+        if(low.includes('redirect')||low.includes('not allowed')||low.includes('invalid')&&low.includes('url')){
+          throw new Error('Reset link configuration issue. Please contact support.');
+        }
+        throw new Error(msg);
+      }
+      toast('Password reset email sent! Check your inbox (and spam folder).','ok');
       router('login');
       return;
     }catch(err){
-      showErr('fp-err',err.message||'Could not send reset email.');
+      const finalMsg=(err&&err.message)?err.message:'Could not send reset email. Please try again in a moment.';
+      showErr('fp-err',finalMsg);
+      console.warn('Password reset error detail:',err);
       return;
     }
   }
