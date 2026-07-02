@@ -236,6 +236,16 @@ nav.z{z-index:900;}
   padding:12px 6px;cursor:pointer;text-align:center;color:var(--text);font-family:'Inter',sans-serif;font-size:.72rem;transition:all .2s;line-height:1.6;}
 .muhurat-cat-btn:hover{background:rgba(200,150,60,.06);border-color:rgba(200,150,60,.25);}
 .muhurat-cat-btn.on{background:rgba(200,150,60,.1);border-color:var(--gold);}
+/* Vaastu tab buttons */
+.vaastu-tab-btn{background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);
+  padding:12px 6px;cursor:pointer;text-align:center;color:var(--text);font-family:'Inter',sans-serif;font-size:.74rem;transition:all .2s;line-height:1.6;}
+.vaastu-tab-btn:hover{background:rgba(200,150,60,.06);border-color:rgba(200,150,60,.25);}
+.vaastu-tab-btn.on{background:rgba(200,150,60,.1);border-color:var(--gold);}
+/* City autocomplete dropdown */
+.city-ac-menu{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:100;background:var(--card,#0d0b27);
+  border:1px solid var(--bdr);border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.5);padding:5px;max-height:240px;overflow-y:auto;}
+.city-ac-item{padding:9px 12px;border-radius:7px;cursor:pointer;font-size:.82rem;color:var(--text);transition:background .12s;}
+.city-ac-item:hover,.city-ac-item.active{background:rgba(200,150,60,.14);color:var(--g2c);}
 /* Tarot face-down card selection grid */
 .tarot-back-card{aspect-ratio:2/3;background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(200,150,60,.14));
   border:1px solid rgba(200,150,60,.35);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -1038,6 +1048,7 @@ This single script enables ALL ad units on the page, including every
     <div class="tool" onclick="openTool('mTarot')"><span class="ticon">🔮</span><span class="tlbl">Tarot Reading</span><span class="tbdg">FREE</span></div>
     <div class="tool" onclick="openTool('mMuhurat');initMuhuratMonthSelector();renderMuhuratResults();"><span class="ticon">🗓️</span><span class="tlbl">Muhurat Finder</span><span class="tbdg">FREE</span></div>
     <div class="tool" onclick="openTool('mPuja');renderPujaResults();"><span class="ticon">🙏</span><span class="tlbl">Puja Tithi</span><span class="tbdg">FREE</span></div>
+    <div class="tool" onclick="openTool('mVaastu');initVaastu();"><span class="ticon">🏛️</span><span class="tlbl">Vaastu Guide</span><span class="tbdg">FREE</span></div>
   </div>
 </div>
 
@@ -2066,6 +2077,23 @@ This single script enables ALL ad units on the page, including every
   </div>
 </div>
 
+<div class="ov" id="mVaastu" onclick="cov(event,'mVaastu')">
+  <div class="mbox">
+    <button class="mc" onclick="closeOv('mVaastu')">✕</button>
+    <div class="mt">🏛️ Vaastu Shastra Guide</div>
+    <div class="ms">Room-by-room and direction-by-direction guidance to align your home with Vaastu principles.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px;">
+      <button class="vaastu-tab-btn on" onclick="switchVaastuTab(this,'directions')">🧭<br>Directions</button>
+      <button class="vaastu-tab-btn" onclick="switchVaastuTab(this,'rooms')">🏠<br>Rooms</button>
+      <button class="vaastu-tab-btn" onclick="switchVaastuTab(this,'remedies')">🔧<br>Remedies</button>
+    </div>
+    <div id="vaastu-directions"></div>
+    <div id="vaastu-rooms" style="display:none;"></div>
+    <div id="vaastu-remedies" style="display:none;"></div>
+    <p style="font-size:.64rem;color:var(--sub);text-align:center;margin-top:16px;line-height:1.6;">These are traditional Vaastu principles, cross-referenced across multiple established sources. Vaastu offers guidance for harmony and wellbeing — not guaranteed outcomes. For a full home assessment, consult a qualified Vaastu consultant.</p>
+  </div>
+</div>
+
 <!-- SIGN OUT CONFIRM -->
 <div class="so-ov" id="so-ov">
   <div class="so-box">
@@ -2523,11 +2551,19 @@ async function syncReadingsFromCloud(){
       at:r.created_at||new Date().toISOString(),
       icon:r.type==='kundli'?'📜':r.type==='match'?'💍':r.type==='remedy'?'🙏':'✨'
     }));
-    // Merge with any local-only readings, dedupe by title+at (cloud wins on conflict)
+    // Merge cloud + local, de-duplicated. Dedup by a STABLE signature (id when present,
+    // else title+type+content) rather than title+timestamp-to-the-minute — the old key
+    // let the same reading appear twice (local 'at' and cloud 'created_at' differ by a
+    // few seconds) OR silently drop one. This is the "not showing exactly right" bug.
     const local=DB.getRds(CU.em);
-    const seen=new Set(cloudRds.map(r=>r.title+'|'+(r.at||'').slice(0,16)));
-    const localOnly=local.filter(r=>!seen.has(r.title+'|'+(r.at||'').slice(0,16)));
-    const merged=[...cloudRds,...localOnly].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,50);
+    const sig=r=>String(r.id||'')||((r.title||'')+'|'+(r.type||'')+'|'+((r.text||r.preview||'').slice(0,40)));
+    const seen=new Set(cloudRds.map(sig));
+    const localOnly=local.filter(r=>!seen.has(sig(r)));
+    // Also de-dupe within the combined list, in case local already held a cloud copy.
+    const combined=[...cloudRds,...localOnly];
+    const uniq=[];const useen=new Set();
+    for(const r of combined){const s=sig(r);if(!useen.has(s)){useen.add(s);uniq.push(r);}}
+    const merged=uniq.sort((a,b)=>new Date(b.at||0)-new Date(a.at||0)).slice(0,50);
     DB.s('rds_'+CU.em,merged);
     // Always refresh the count and re-render the list once cloud data has merged in.
     // Rendering a hidden panel is harmless, and doing it unconditionally removes the
@@ -2594,7 +2630,123 @@ function showSO(){
 ═══════════════════════════════════════════════════ */
 
 /* ── Tool modal open/close (mKundli, mAI, mHoro, mMatch, mNum, mPalm, mPanch, mGem, mRem) ── */
-const AD_TOOL_IDS=['mKundli','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mAILang'];
+/* ═══════════════════════════════════════════════════
+   CITY AUTOCOMPLETE — Indian cities + states
+   Offline dataset (no API). Covers all state capitals, major
+   cities, and many tier-2 cities so typing "de" -> Delhi,
+   "ra" -> Ranchi/Raipur/Rajkot etc. Format: "City, State".
+   Not every village — a practical set of well-known places.
+═══════════════════════════════════════════════════ */
+const INDIAN_CITIES=[
+"Delhi, Delhi","New Delhi, Delhi","Mumbai, Maharashtra","Pune, Maharashtra","Nagpur, Maharashtra","Nashik, Maharashtra","Thane, Maharashtra","Aurangabad, Maharashtra","Solapur, Maharashtra","Kolhapur, Maharashtra","Amravati, Maharashtra","Navi Mumbai, Maharashtra",
+"Bangalore, Karnataka","Mysore, Karnataka","Hubli, Karnataka","Mangalore, Karnataka","Belgaum, Karnataka","Gulbarga, Karnataka","Davanagere, Karnataka",
+"Chennai, Tamil Nadu","Coimbatore, Tamil Nadu","Madurai, Tamil Nadu","Tiruchirappalli, Tamil Nadu","Salem, Tamil Nadu","Tirunelveli, Tamil Nadu","Erode, Tamil Nadu","Vellore, Tamil Nadu","Thoothukudi, Tamil Nadu",
+"Hyderabad, Telangana","Warangal, Telangana","Nizamabad, Telangana","Karimnagar, Telangana",
+"Kolkata, West Bengal","Howrah, West Bengal","Durgapur, West Bengal","Asansol, West Bengal","Siliguri, West Bengal","Darjeeling, West Bengal",
+"Ahmedabad, Gujarat","Surat, Gujarat","Vadodara, Gujarat","Rajkot, Gujarat","Bhavnagar, Gujarat","Jamnagar, Gujarat","Gandhinagar, Gujarat","Junagadh, Gujarat",
+"Jaipur, Rajasthan","Jodhpur, Rajasthan","Udaipur, Rajasthan","Kota, Rajasthan","Bikaner, Rajasthan","Ajmer, Rajasthan","Bhilwara, Rajasthan","Alwar, Rajasthan",
+"Lucknow, Uttar Pradesh","Kanpur, Uttar Pradesh","Ghaziabad, Uttar Pradesh","Agra, Uttar Pradesh","Varanasi, Uttar Pradesh","Meerut, Uttar Pradesh","Allahabad, Uttar Pradesh","Prayagraj, Uttar Pradesh","Bareilly, Uttar Pradesh","Aligarh, Uttar Pradesh","Moradabad, Uttar Pradesh","Gorakhpur, Uttar Pradesh","Noida, Uttar Pradesh","Greater Noida, Uttar Pradesh","Mathura, Uttar Pradesh","Jhansi, Uttar Pradesh","Ayodhya, Uttar Pradesh",
+"Patna, Bihar","Gaya, Bihar","Bhagalpur, Bihar","Muzaffarpur, Bihar","Darbhanga, Bihar","Purnia, Bihar","Ara, Bihar",
+"Ranchi, Jharkhand","Jamshedpur, Jharkhand","Dhanbad, Jharkhand","Bokaro, Jharkhand","Deoghar, Jharkhand","Hazaribagh, Jharkhand",
+"Bhopal, Madhya Pradesh","Indore, Madhya Pradesh","Gwalior, Madhya Pradesh","Jabalpur, Madhya Pradesh","Ujjain, Madhya Pradesh","Sagar, Madhya Pradesh","Rewa, Madhya Pradesh","Satna, Madhya Pradesh",
+"Raipur, Chhattisgarh","Bhilai, Chhattisgarh","Bilaspur, Chhattisgarh","Korba, Chhattisgarh","Durg, Chhattisgarh",
+"Bhubaneswar, Odisha","Cuttack, Odisha","Rourkela, Odisha","Puri, Odisha","Sambalpur, Odisha","Berhampur, Odisha",
+"Thiruvananthapuram, Kerala","Kochi, Kerala","Kozhikode, Kerala","Thrissur, Kerala","Kollam, Kerala","Kannur, Kerala","Alappuzha, Kerala","Palakkad, Kerala",
+"Chandigarh, Chandigarh","Amritsar, Punjab","Ludhiana, Punjab","Jalandhar, Punjab","Patiala, Punjab","Bathinda, Punjab","Mohali, Punjab","Pathankot, Punjab",
+"Guwahati, Assam","Silchar, Assam","Dibrugarh, Assam","Jorhat, Assam","Nagaon, Assam","Tezpur, Assam",
+"Dehradun, Uttarakhand","Haridwar, Uttarakhand","Roorkee, Uttarakhand","Haldwani, Uttarakhand","Rishikesh, Uttarakhand","Nainital, Uttarakhand",
+"Shimla, Himachal Pradesh","Manali, Himachal Pradesh","Dharamshala, Himachal Pradesh","Solan, Himachal Pradesh","Mandi, Himachal Pradesh",
+"Srinagar, Jammu and Kashmir","Jammu, Jammu and Kashmir","Anantnag, Jammu and Kashmir","Baramulla, Jammu and Kashmir","Leh, Ladakh",
+"Panaji, Goa","Margao, Goa","Vasco da Gama, Goa","Mapusa, Goa",
+"Visakhapatnam, Andhra Pradesh","Vijayawada, Andhra Pradesh","Guntur, Andhra Pradesh","Nellore, Andhra Pradesh","Kurnool, Andhra Pradesh","Tirupati, Andhra Pradesh","Rajahmundry, Andhra Pradesh","Kadapa, Andhra Pradesh","Amaravati, Andhra Pradesh",
+"Imphal, Manipur","Aizawl, Mizoram","Kohima, Nagaland","Dimapur, Nagaland","Shillong, Meghalaya","Agartala, Tripura","Itanagar, Arunachal Pradesh","Gangtok, Sikkim",
+"Faridabad, Haryana","Gurgaon, Haryana","Gurugram, Haryana","Panipat, Haryana","Ambala, Haryana","Hisar, Haryana","Rohtak, Haryana","Karnal, Haryana","Sonipat, Haryana","Yamunanagar, Haryana",
+"Port Blair, Andaman and Nicobar Islands","Kavaratti, Lakshadweep","Daman, Daman and Diu","Silvassa, Dadra and Nagar Haveli",
+"Pondicherry, Puducherry","Puducherry, Puducherry"
+];
+
+/* ═══════════════════════════════════════════════════
+   CITY AUTOCOMPLETE — reusable for any input
+   attachCityAutocomplete('inputId') wires a live dropdown to
+   an input. Matches by prefix first (so "ra" -> Ranchi at top),
+   then by substring, so partial mid-word matches still appear.
+   Keyboard: ↑/↓ to move, Enter to pick, Esc to close. Fully
+   self-contained; does not touch the AI astrologer systems.
+═══════════════════════════════════════════════════ */
+function cityMatches(query){
+  const q=query.trim().toLowerCase();
+  if(!q)return [];
+  const starts=[],contains=[];
+  for(const c of INDIAN_CITIES){
+    // Match against the CITY NAME (the part before the comma), not the state — otherwise
+    // "ra" would surface Mumbai/Pune just because they're in "Maharashtra", which is
+    // confusing. City-name matching keeps results intuitive: "ra" -> Ranchi/Raipur/Rajkot.
+    const cityName=c.split(',')[0].toLowerCase();
+    if(cityName.startsWith(q))starts.push(c);
+    else if(cityName.includes(q))contains.push(c);
+  }
+  return [...starts,...contains].slice(0,8);
+}
+
+function attachCityAutocomplete(inputId){
+  const input=document.getElementById(inputId);
+  if(!input||input.dataset.acWired)return; // don't double-wire
+  input.dataset.acWired='1';
+  input.setAttribute('autocomplete','off');
+
+  // Wrap the input so the dropdown can position relative to it
+  const wrap=document.createElement('div');
+  wrap.style.position='relative';
+  input.parentNode.insertBefore(wrap,input);
+  wrap.appendChild(input);
+
+  const menu=document.createElement('div');
+  menu.className='city-ac-menu';
+  menu.style.display='none';
+  wrap.appendChild(menu);
+
+  let activeIdx=-1;
+  let current=[];
+
+  function close(){menu.style.display='none';activeIdx=-1;}
+  function render(list){
+    current=list;activeIdx=-1;
+    if(!list.length){close();return;}
+    menu.innerHTML=list.map((c,i)=>`<div class="city-ac-item" data-i="${i}">${esc(c)}</div>`).join('');
+    menu.style.display='block';
+    menu.querySelectorAll('.city-ac-item').forEach(el=>{
+      el.onmousedown=(e)=>{e.preventDefault();pick(parseInt(el.dataset.i,10));};
+    });
+  }
+  function pick(i){
+    if(i<0||i>=current.length)return;
+    input.value=current[i];
+    close();
+  }
+  function highlight(){
+    menu.querySelectorAll('.city-ac-item').forEach((el,i)=>{
+      el.classList.toggle('active',i===activeIdx);
+    });
+  }
+
+  input.addEventListener('input',()=>render(cityMatches(input.value)));
+  input.addEventListener('focus',()=>{if(input.value.trim())render(cityMatches(input.value));});
+  input.addEventListener('blur',()=>setTimeout(close,150)); // delay so click registers
+  input.addEventListener('keydown',(e)=>{
+    if(menu.style.display==='none')return;
+    if(e.key==='ArrowDown'){e.preventDefault();activeIdx=Math.min(activeIdx+1,current.length-1);highlight();}
+    else if(e.key==='ArrowUp'){e.preventDefault();activeIdx=Math.max(activeIdx-1,0);highlight();}
+    else if(e.key==='Enter'){if(activeIdx>=0){e.preventDefault();pick(activeIdx);}}
+    else if(e.key==='Escape'){close();}
+  });
+}
+
+// Wire all known place inputs. Safe to call repeatedly (guards against double-wiring).
+function initCityAutocomplete(){
+  ['kp','g-p','b-p','panch-city','gem-p','rem-p'].forEach(attachCityAutocomplete);
+}
+
+const AD_TOOL_IDS=['mKundli','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mAILang','mVaastu'];
 let _adInterstitialTimer=null;
 
 function shouldShowAd(){
@@ -3413,6 +3565,7 @@ window.addEventListener('DOMContentLoaded',async function(){
   safe(loadPanch,'Panchang');
   safe(initCurrMenu,'CurrencyMenu');
   safe(initStarfield,'Starfield');
+  safe(initCityAutocomplete,'CityAutocomplete');
   try{loadCurrRates();}catch(e){console.warn('Rate load failed:',e);}
   try{await restoreSession();}catch(e){console.log('Session restore:',e);}
   // Don't fall back to home if we're mid password-reset — the reset screen must stay put.
@@ -3452,10 +3605,40 @@ function renderHome(){
 /* ══ READINGS ══ */
 function renderReadings(){
   const rds=DB.getRds(CU.em),el=document.getElementById('rd-list');
+  if(!el)return;
   if(!rds.length){el.innerHTML='<div class="act-empty">📜<br><br>No readings saved yet. Generate a Kundli or Palm Reading to see your history here.</div>';return;}
-  el.innerHTML=rds.map(r=>`<div class="rd-c"><div class="rd-ic">${r.icon||'📜'}</div><div style="flex:1"><div class="rd-t">${r.title}</div><div class="rd-m">${r.sub||''} · ${new Date(r.at).toLocaleDateString('en-IN')}</div><div class="rd-p">${r.preview||''}</div><div class="rd-acts"><button class="rda rda-v" onclick="viewRd('${r.id}')">View Full Reading</button><button class="rda rda-d" onclick="delRd('${r.id}')">Delete</button></div></div></div>`).join('');
+  // Use data-rid attributes + a delegated click handler rather than inline onclick with
+  // the id interpolated into a string. IDs can be numbers, UUIDs, or contain characters
+  // that break an inline onclick="viewRd('...')" — which is exactly why "View" did
+  // nothing for some readings. Indexing by array position is b/ stored on the element is bulletproof.
+  el.innerHTML=rds.map((r,idx)=>`<div class="rd-c"><div class="rd-ic">${esc(r.icon||'📜')}</div><div style="flex:1"><div class="rd-t">${esc(r.title||'Reading')}</div><div class="rd-m">${esc(r.sub||'')} · ${r.at?new Date(r.at).toLocaleDateString('en-IN'):''}</div><div class="rd-p">${esc(r.preview||'')}</div><div class="rd-acts"><button class="rda rda-v" data-rid="${esc(String(r.id))}" data-ridx="${idx}">View Full Reading</button><button class="rda rda-d" data-rid="${esc(String(r.id))}" data-ridx="${idx}">Delete</button></div></div></div>`).join('');
+  // Wire the buttons after rendering — no fragile string interpolation of the id.
+  el.querySelectorAll('.rda-v').forEach(b=>b.onclick=()=>viewRdByIndex(parseInt(b.dataset.ridx,10)));
+  el.querySelectorAll('.rda-d').forEach(b=>b.onclick=()=>delRdByIndex(parseInt(b.dataset.ridx,10)));
 }
-function viewRd(id){const r=DB.getRds(CU.em).find(x=>x.id===id);if(!r)return;document.getElementById('rd-title').textContent=r.title;document.getElementById('rd-meta').textContent=(r.sub||'')+' · '+new Date(r.at).toLocaleDateString('en-IN');document.getElementById('rd-txt').textContent=r.text||r.preview||'No content saved.';document.getElementById('rd-ov').classList.add('open');}
+// Open a reading by its position in the current list — never fails to match an id.
+function viewRdByIndex(idx){
+  if(!CU||!CU.em)return;
+  const rds=DB.getRds(CU.em);
+  const r=rds[idx];
+  if(!r){toast('Could not open this reading.','');return;}
+  document.getElementById('rd-title').textContent=r.title||'Reading';
+  document.getElementById('rd-meta').textContent=(r.sub||'')+(r.at?' · '+new Date(r.at).toLocaleDateString('en-IN'):'');
+  document.getElementById('rd-txt').textContent=r.text||r.preview||'No content saved for this reading.';
+  document.getElementById('rd-ov').classList.add('open');
+}
+function delRdByIndex(idx){
+  if(!CU||!CU.em)return;
+  const rds=DB.getRds(CU.em);
+  const r=rds[idx];
+  if(!r)return;
+  DB.delRd(CU.em,r.id);
+  toast('Reading deleted.','g');
+  renderReadings();
+  const dmrd=document.getElementById('dm-rd');if(dmrd)dmrd.textContent=DB.getRds(CU.em).length;
+}
+// Kept for any older callers, now routed through the safe path.
+function viewRd(id){const rds=DB.getRds(CU.em);const idx=rds.findIndex(x=>String(x.id)===String(id));if(idx>=0)viewRdByIndex(idx);}
 function delRd(id){DB.delRd(CU.em,id);toast('Reading deleted.','g');renderReadings();document.getElementById('dm-rd').textContent=DB.getRds(CU.em).length;}
 
 /* ══ PROFILE ══ */
@@ -4839,6 +5022,141 @@ const PUJA_FESTIVALS=[
   {name:'Bhai Dooj',date:'2026-11-11',subtitle:'Closing day of Diwali · sibling bond',
     samagri:['Roli, rice, and diya for tilak','Sweets','Coconut']}
 ];
+
+/* ═══════════════════════════════════════════════════
+   VAASTU SHASTRA REFERENCE GUIDE
+   Directional and room-placement principles, cross-verified
+   across 10+ independent Vastu sources that agree on the core
+   placements (kitchen SE, master bedroom SW, pooja NE, etc).
+   These fundamentals are consistent across schools — unlike
+   Muhurat dates, there's genuine consensus here. Presented as
+   traditional guidance, not guaranteed outcomes.
+═══════════════════════════════════════════════════ */
+const VAASTU_DIRECTIONS=[
+  {dir:'North-East',hindi:'ईशान (Ishan)',glyph:'🧭',ruler:'Lord Shiva / Jupiter',element:'Water',
+   best:'Pooja room, meditation space, main entrance, living room, water sources (borewell, underground tank)',
+   avoid:'Toilet, kitchen, bedroom, heavy storage, staircase',
+   note:'The most sacred zone — keep it light, clean, and clutter-free. A defect here is considered serious, so this corner is best left open and airy.'},
+  {dir:'East',hindi:'पूर्व (Purva)',glyph:'🌅',ruler:'Lord Indra / Sun',element:'Air',
+   best:'Main entrance, large windows, living room, study/reading area',
+   avoid:'Tall compound walls or heavy blockage that stops morning sunlight',
+   note:'Tied to health and fresh beginnings. East-facing doors receive the first morning light — associated with vitality and clarity.'},
+  {dir:'South-East',hindi:'आग्नेय (Agni Kona)',glyph:'🔥',ruler:'Venus / Agni (Fire)',element:'Fire',
+   best:'Kitchen (the ideal placement), electrical appliances, inverter/electrical panel',
+   avoid:'Bedroom, toilet, pooja room, water storage (keep fire and water apart)',
+   note:'The fire corner. Kitchen here is considered ideal; the cook should face East while cooking.'},
+  {dir:'South',hindi:'दक्षिण (Dakshin)',glyph:'🏔️',ruler:'Lord Yama',element:'Earth',
+   best:'Heavy storage, staircase, tall/heavy furniture',
+   avoid:'Main water source; keep this side grounded and solid',
+   note:'Represents strength and stability. A south-facing house is NOT inauspicious by itself — that is a widespread myth; what matters is the pada (grid position) of the main door.'},
+  {dir:'South-West',hindi:'नैऋत्य (Nairutya)',glyph:'🛏️',ruler:'Rahu / Nairitti',element:'Earth',
+   best:'Master bedroom (ideal), heavy storage, tall cupboards',
+   avoid:'Toilet, underground water tank, any hollow or open space',
+   note:'The zone of stability and authority — ideal for the head of the family. Sleep with your head pointing South or West. This corner should be the heaviest, most solid part of the home.'},
+  {dir:'West',hindi:'पश्चिम (Paschim)',glyph:'🌇',ruler:'Lord Varuna',element:'Water',
+   best:'Dining room, children\u2019s bedroom, study room, storage',
+   avoid:'Main entrance is workable but less ideal than N/E/NE',
+   note:'Related to gains and results. A good, flexible zone for dining and children\u2019s rooms.'},
+  {dir:'North-West',hindi:'वायव्य (Vayavya)',glyph:'💨',ruler:'Vayu (Air) / Moon',element:'Air',
+   best:'Guest room, children\u2019s bedroom, store room, bathroom, garage',
+   avoid:'Master bedroom, pooja room',
+   note:'Linked with movement and change — suits spaces with regular turnover like guest rooms and utility areas.'},
+  {dir:'North',hindi:'उत्तर (Uttar)',glyph:'💰',ruler:'Kuber (Lord of Wealth)',element:'Water',
+   best:'Main entrance, living room, water features (fountain, aquarium), cash/valuables',
+   avoid:'Toilet, heavy storage, clutter blocking the north wall',
+   note:'Governed by Kuber, the Lord of Wealth — considered strong for career and financial growth. A water feature on the north/northeast side is favorable.'}
+];
+
+const VAASTU_ROOMS=[
+  {room:'Main Entrance',glyph:'🚪',best:'North, East, or North-East',
+   tips:'The entry point for all energy and opportunity. Use a solid wood door that opens inward, well-lit and clutter-free. A threshold (dehleez) is traditionally recommended.',
+   avoid:'A south-facing home is fine if the door is in the correct pada; avoid a dark, cramped, or obstructed entrance.'},
+  {room:'Kitchen',glyph:'🍳',best:'South-East (Agni Kona); North-West as second option',
+   tips:'Cook facing East. Keep the gas stove in the SE. Place the sink/water source in the North or North-East — fire and water kept apart.',
+   avoid:'Kitchen in the North-East or directly above/below the pooja room. Stove and sink should not be adjacent or facing each other.'},
+  {room:'Master Bedroom',glyph:'🛏️',best:'South-West',
+   tips:'Sleep with your head towards South or East. Keep the bed in the SW corner of the room. Use calming colors.',
+   avoid:'Bed directly opposite the door ("coffin position"), a mirror facing the bed, idols/puja shelf inside the bedroom, and broken/unused items.'},
+  {room:'Pooja / Mandir Room',glyph:'🕉️',best:'North-East (Ishan Kona); North or East as alternatives',
+   tips:'Idols placed a few inches from the wall, raised above the ground, worshipper facing East or North. Light colors (white, cream, pale yellow). Ground floor preferred.',
+   avoid:'South direction, inside a bedroom, near/above/below a toilet, or under a staircase. No images of the deceased, no broken idols.'},
+  {room:'Living Room',glyph:'🛋️',best:'North, East, or North-East',
+   tips:'Arrange seating so guests face North or East. Keep the NE corner of the room light and open. Heavy furniture towards South/West.',
+   avoid:'Sitting with your back directly to the main entrance; heavy clutter in the NE.'},
+  {room:'Dining Room',glyph:'🍽️',best:'West or North-West',
+   tips:'Use a square or rectangular table. Face East, North, or West while eating. Keep it close to the kitchen.',
+   avoid:'Dining directly under a beam; round tables are less preferred.'},
+  {room:'Toilet / Bathroom',glyph:'🚽',best:'North-West or West-South-West',
+   tips:'Keep the toilet seat facing North-South. Keep the door closed when not in use. Fix leaking taps promptly (they symbolise wealth drainage).',
+   avoid:'North-East and South-West corners (serious defects). Not directly above the kitchen or pooja room.'},
+  {room:'Staircase',glyph:'🪜',best:'South, West, or South-West',
+   tips:'Should ascend clockwise, from North to South or East to West. Use an odd number of steps. Keep it well-lit.',
+   avoid:'North-East corner or the centre of the house. Landing should not directly face the main door. Don\u2019t use the space under stairs as pooja/bedroom/kitchen.'},
+  {room:'Study Room',glyph:'📚',best:'West, North, or East',
+   tips:'The study table should face East or North for focus and clarity. Keep the space well-lit and organized.',
+   avoid:'Sitting under a beam; back facing the door; clutter on the desk.'}
+];
+
+// Common remedies (from the sources) for when ideal placement isn't possible —
+// honest inclusion since most real homes can't be perfectly Vastu-compliant.
+const VAASTU_REMEDIES=[
+  'If a toilet is in the North-East, keep the door closed, place a bowl of sea salt inside, and consider a Vastu pyramid.',
+  'For any defect direction, mirrors, yantras, proper lighting, indoor plants, and crystals are traditional corrective measures.',
+  'Keep broken clocks, dried flowers, and non-functional items out of the home.',
+  'Do not block North or East windows with heavy furniture — let light and air flow.',
+  'Avoid thorny plants (like cacti) indoors and black as a primary wall color in any room.',
+  'Many defects can be corrected without structural changes; only major issues may need renovation.'
+];
+
+function renderVaastuDirections(){
+  const el=document.getElementById('vaastu-directions');
+  if(!el)return;
+  el.innerHTML=VAASTU_DIRECTIONS.map(d=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:16px 18px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span style="font-size:1.4rem;">${d.glyph}</span>
+      <div><div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--g2c);">${d.dir} <span style="font-size:.72rem;color:var(--muted);">· ${esc(d.hindi)}</span></div>
+      <div style="font-size:.64rem;color:var(--sub);">${esc(d.ruler)} · ${esc(d.element)} element</div></div>
+    </div>
+    <div style="font-size:.76rem;color:var(--text);line-height:1.7;margin-bottom:5px;"><b style="color:#4ade80;">Best for:</b> ${esc(d.best)}</div>
+    <div style="font-size:.76rem;color:var(--text);line-height:1.7;margin-bottom:5px;"><b style="color:#f87171;">Avoid:</b> ${esc(d.avoid)}</div>
+    <div style="font-size:.72rem;color:var(--muted);font-style:italic;line-height:1.6;">${esc(d.note)}</div>
+  </div>`).join('');
+}
+
+function renderVaastuRooms(){
+  const el=document.getElementById('vaastu-rooms');
+  if(!el)return;
+  el.innerHTML=VAASTU_ROOMS.map(r=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:16px 18px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span style="font-size:1.4rem;">${r.glyph}</span>
+      <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--g2c);">${r.room}</div>
+    </div>
+    <div style="font-size:.76rem;color:var(--text);line-height:1.7;margin-bottom:5px;"><b style="color:var(--gold);">Ideal direction:</b> ${esc(r.best)}</div>
+    <div style="font-size:.76rem;color:var(--text);line-height:1.7;margin-bottom:5px;">${esc(r.tips)}</div>
+    <div style="font-size:.74rem;color:#f87171;line-height:1.6;"><b>Avoid:</b> ${esc(r.avoid)}</div>
+  </div>`).join('');
+}
+
+function renderVaastuRemedies(){
+  const el=document.getElementById('vaastu-remedies');
+  if(!el)return;
+  el.innerHTML='<ul style="margin:0;padding-left:18px;font-size:.78rem;color:var(--text);line-height:1.8;">'+VAASTU_REMEDIES.map(r=>`<li>${esc(r)}</li>`).join('')+'</ul>';
+}
+
+function switchVaastuTab(btn,tab){
+  document.querySelectorAll('.vaastu-tab-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  ['directions','rooms','remedies'].forEach(t=>{
+    const p=document.getElementById('vaastu-'+t);
+    if(p)p.style.display=t===tab?'block':'none';
+  });
+}
+
+function initVaastu(){
+  renderVaastuDirections();
+  renderVaastuRooms();
+  renderVaastuRemedies();
+}
 
 function renderPujaResults(){
   const wrap=document.getElementById('puja-results');
