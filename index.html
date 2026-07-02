@@ -246,6 +246,12 @@ nav.z{z-index:900;}
   border:1px solid var(--bdr);border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.5);padding:5px;max-height:240px;overflow-y:auto;}
 .city-ac-item{padding:9px 12px;border-radius:7px;cursor:pointer;font-size:.82rem;color:var(--text);transition:background .12s;}
 .city-ac-item:hover,.city-ac-item.active{background:rgba(200,150,60,.14);color:var(--g2c);}
+/* Content translation bar */
+.tr-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:8px 10px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.18);border-radius:10px;flex-wrap:wrap;}
+.tr-bar-label{font-size:.72rem;color:var(--g2c);font-weight:600;white-space:nowrap;}
+.tr-bar-select{background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:7px;padding:5px 9px;color:var(--text);font-family:'Inter',sans-serif;font-size:.76rem;cursor:pointer;outline:none;}
+.tr-bar-status{font-size:.68rem;color:var(--gold);font-style:italic;}
+.tr-translated{font-size:.84rem;line-height:1.8;color:var(--text);white-space:normal;}
 /* Tarot face-down card selection grid */
 .tarot-back-card{aspect-ratio:2/3;background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(200,150,60,.14));
   border:1px solid rgba(200,150,60,.35);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -2062,6 +2068,7 @@ This single script enables ALL ad units on the page, including every
       <button class="muhurat-cat-btn" onclick="selectMuhuratCategory(this,'bhoomipujan')">🏗️<br>Bhoomi Pujan</button>
     </div>
     <select class="fi" id="muhurat-month-select" onchange="onMuhuratMonthChange()" style="margin-bottom:18px;"></select>
+    <div id="muhurat-tr-bar"></div>
     <div id="muhurat-results"></div>
     <p style="font-size:.64rem;color:var(--sub);text-align:center;margin-top:16px;line-height:1.6;">Wedding, Griha Pravesh, Vehicle, and Property: DrikPanchang.com's dated 2026 Panchang Shuddhi calendar (New Delhi timings). Annaprashan, Naamkaran, and Mundan: Astroyogi.com's published 2026 month-by-month calendar. Bhoomi Pujan: fewer confirmed dates, since published sources disagree with each other more on this category than any other — shown honestly as a shorter list. Timing can vary by location — an astrologer should confirm before finalizing. 2027 dates coming soon.</p>
   </div>
@@ -2072,6 +2079,7 @@ This single script enables ALL ad units on the page, including every
     <button class="mc" onclick="closeOv('mPuja')">✕</button>
     <div class="mt">🙏 Puja Tithi &amp; Samagri</div>
     <div class="ms">Festival dates and the items you'll need for each puja, in one place.</div>
+    <div id="puja-tr-bar"></div>
     <div id="puja-results"></div>
     <p style="font-size:.64rem;color:var(--sub);text-align:center;margin-top:16px;line-height:1.6;">Dates shown for 2026 (New Delhi, India). Regional practices vary — this reflects widely-followed practice.</p>
   </div>
@@ -2087,6 +2095,7 @@ This single script enables ALL ad units on the page, including every
       <button class="vaastu-tab-btn" onclick="switchVaastuTab(this,'rooms')">🏠<br>Rooms</button>
       <button class="vaastu-tab-btn" onclick="switchVaastuTab(this,'remedies')">🔧<br>Remedies</button>
     </div>
+    <div id="vaastu-tr-bar"></div>
     <div id="vaastu-directions"></div>
     <div id="vaastu-rooms" style="display:none;"></div>
     <div id="vaastu-remedies" style="display:none;"></div>
@@ -2744,6 +2753,124 @@ function attachCityAutocomplete(inputId){
 // Wire all known place inputs. Safe to call repeatedly (guards against double-wiring).
 function initCityAutocomplete(){
   ['kp','g-p','b-p','panch-city','gem-p','rem-p'].forEach(attachCityAutocomplete);
+}
+
+/* ═══════════════════════════════════════════════════
+   CONTENT TRANSLATION (live, via Groq/callAI)
+   Adds a language selector above a result container. On pick,
+   the container's text is translated by the AI and swapped in;
+   "Original" restores it. Only translates RESULT/READING content
+   — never buttons/labels, and never touches the 8 AI Astrologers
+   or the Language AI systems.
+
+   Reusable: mountTranslateBar(barId, targetId) puts a bar into
+   the element barId that translates the element targetId.
+═══════════════════════════════════════════════════ */
+const TRANSLATE_LANGS=[
+  {code:'Original',label:'🌐 English (Original)'},
+  {code:'Hindi',label:'हिंदी Hindi'},
+  {code:'Marathi',label:'मराठी Marathi'},
+  {code:'Bengali',label:'বাংলা Bengali'},
+  {code:'Tamil',label:'தமிழ் Tamil'},
+  {code:'Telugu',label:'తెలుగు Telugu'},
+  {code:'Kannada',label:'ಕನ್ನಡ Kannada'},
+  {code:'Gujarati',label:'ગુજરાતી Gujarati'},
+  {code:'Punjabi',label:'ਪੰਜਾਬੀ Punjabi'},
+  {code:'Malayalam',label:'മലയാളം Malayalam'},
+  {code:'Odia',label:'ଓଡ଼ିଆ Odia'},
+  {code:'Assamese',label:'অসমীয়া Assamese'}
+];
+
+// Store each container's original HTML so we can restore it and re-translate cleanly.
+const _translateOriginals={};
+
+function mountTranslateBar(barId,targetId){
+  const bar=document.getElementById(barId);
+  if(!bar)return;
+  bar.innerHTML=`<div class="tr-bar">
+    <span class="tr-bar-label">🌐 Read in:</span>
+    <select class="tr-bar-select" onchange="translateContainer('${targetId}',this.value,this)">
+      ${TRANSLATE_LANGS.map(l=>`<option value="${l.code}">${l.label}</option>`).join('')}
+    </select>
+    <span class="tr-bar-status" id="${barId}-status"></span>
+  </div>`;
+}
+
+async function translateContainer(targetId,lang,selectEl){
+  const el=document.getElementById(targetId);
+  if(!el)return;
+  const statusEl=selectEl?selectEl.parentElement.querySelector('.tr-bar-status'):null;
+
+  // First use: snapshot the original rendered HTML.
+  if(!(targetId in _translateOriginals)){
+    _translateOriginals[targetId]=el.innerHTML;
+  }
+
+  if(lang==='Original'){
+    el.innerHTML=_translateOriginals[targetId];
+    if(statusEl)statusEl.textContent='';
+    return;
+  }
+
+  // Pull the readable text from the ORIGINAL snapshot (not already-translated content),
+  // so switching languages always translates from the source, never a translation.
+  const tmp=document.createElement('div');
+  tmp.innerHTML=_translateOriginals[targetId];
+  const sourceText=tmp.innerText.trim();
+  if(!sourceText){if(statusEl)statusEl.textContent='';return;}
+
+  if(statusEl)statusEl.textContent='translating…';
+  if(selectEl)selectEl.disabled=true;
+  try{
+    const sys=`You are a professional translator. Translate the user's text into ${lang}. Output ONLY the translation in ${lang} script — no preamble, no notes, no English. Preserve line breaks and the overall structure (headings, lists). Keep proper nouns and Sanskrit/astrological terms (like Nakshatra names, planet names, Rashi names) recognizable — you may transliterate them into ${lang} script. Do not add or remove information.`;
+    const translated=await callAI(sys,[{role:'user',content:sourceText}],2000);
+    if(translated){
+      // Render as escaped text with line breaks preserved (safe — no HTML injection).
+      el.innerHTML=`<div class="tr-translated">${esc(translated).replace(/\n/g,'<br>')}</div>`;
+      if(statusEl)statusEl.textContent='';
+    }else{
+      throw new Error('empty');
+    }
+  }catch(e){
+    if(statusEl)statusEl.textContent='translation failed';
+    el.innerHTML=_translateOriginals[targetId]; // restore original on failure
+    if(selectEl)selectEl.value='Original';
+    toast('Translation failed. Please try again.','');
+  }finally{
+    if(selectEl)selectEl.disabled=false;
+  }
+}
+
+// Reset a container's stored original (call when NEW content is generated, so the
+// next translation snapshots the fresh result rather than a stale one).
+function resetTranslation(targetId){
+  delete _translateOriginals[targetId];
+}
+
+// ── Per-modal wiring ────────────────────────────────────────
+// Puja: single container.
+function mountPujaTranslate(){mountTranslateBar('puja-tr-bar','puja-results');resetTranslation('puja-results');}
+// Muhurat: single container (re-snapshot whenever category/month changes).
+function mountMuhuratTranslate(){mountTranslateBar('muhurat-tr-bar','muhurat-results');resetTranslation('muhurat-results');}
+// Vaastu: 3 tabs. The bar translates whichever tab is currently visible.
+function mountVaastuTranslate(){
+  const bar=document.getElementById('vaastu-tr-bar');
+  if(!bar)return;
+  bar.innerHTML=`<div class="tr-bar">
+    <span class="tr-bar-label">🌐 Read in:</span>
+    <select class="tr-bar-select" onchange="translateVaastuActive(this.value,this)">
+      ${TRANSLATE_LANGS.map(l=>`<option value="${l.code}">${l.label}</option>`).join('')}
+    </select>
+    <span class="tr-bar-status"></span>
+  </div>`;
+}
+function vaastuActiveTabId(){
+  const ids=['vaastu-directions','vaastu-rooms','vaastu-remedies'];
+  for(const id of ids){const el=document.getElementById(id);if(el&&el.style.display!=='none')return id;}
+  return 'vaastu-directions';
+}
+function translateVaastuActive(lang,selectEl){
+  translateContainer(vaastuActiveTabId(),lang,selectEl);
 }
 
 const AD_TOOL_IDS=['mKundli','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mAILang','mVaastu'];
@@ -4965,6 +5092,9 @@ function renderMuhuratResults(){
   if(!wrap)return;
   const cat=MUHURAT_CATEGORIES[muhuratActiveCategory];
   if(monthSel)monthSel.style.display='block';
+  // Mount the translate bar and clear any stale snapshot so translation reflects the
+  // freshly-rendered category/month. Done after the content is set below via a microtask.
+  setTimeout(()=>{if(typeof mountMuhuratTranslate==='function')mountMuhuratTranslate();},0);
 
   const monthEntries=cat.data.filter(d=>new Date(d.date+'T00:00:00').getMonth()===muhuratActiveMonth);
   // Bhoomi Pujan's source coverage is genuinely thinner than the other 7 categories
@@ -5156,6 +5286,7 @@ function initVaastu(){
   renderVaastuDirections();
   renderVaastuRooms();
   renderVaastuRemedies();
+  if(typeof mountVaastuTranslate==='function')mountVaastuTranslate();
 }
 
 function renderPujaResults(){
@@ -5176,6 +5307,7 @@ function renderPujaResults(){
       </ul>
     </div>`;
   }).join('');
+  if(typeof mountPujaTranslate==='function')mountPujaTranslate();
 }
 
 
