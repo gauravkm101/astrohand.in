@@ -47,6 +47,13 @@ body{font-family:'Inter','Noto Sans Devanagari','Noto Sans Bengali','Noto Sans T
 nav{position:fixed;top:0;left:0;right:0;z-index:900;height:64px;
   display:flex;align-items:center;justify-content:space-between;padding:0 36px;
   background:rgba(4,4,18,.95);backdrop-filter:blur(22px);border-bottom:1px solid var(--bdr);}
+/* The nav element also carries the shared .z utility class (z-index:1), which as a
+   class selector outranks the plain "nav" tag selector by CSS specificity — silently
+   capping the whole nav (and everything in it, including the currency dropdown) at
+   z-index:1 and tying it with .hero, which then wins the paint order and swallows
+   clicks. This override restores the intended stacking without touching the shared
+   .z class used by 13 other elements elsewhere on the page. */
+nav.z{z-index:900;}
 .brand{display:flex;align-items:center;gap:9px;cursor:pointer;}
 .brand-icon{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--violet));
   display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
