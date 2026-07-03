@@ -1113,6 +1113,16 @@ This single script enables ALL ad units on the page, including every
   </div>
 </section>
 
+<section class="sec">
+  <div class="con">
+    <p class="eye">✦ LEARN ✦</p>
+    <h2 class="h2">Vedic Astrology <span>Articles &amp; Guides</span></h2>
+    <p class="sdesc">Understand the wisdom behind the stars — from zodiac signs and birth charts to Nakshatras, doshas, and remedies.</p>
+    <div id="home-articles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:32px;"></div>
+    <div style="text-align:center;"><button onclick="router('blog')" style="background:linear-gradient(135deg,var(--gold),var(--violet));border:none;color:#fff;padding:13px 30px;border-radius:100px;cursor:pointer;font-family:Inter,sans-serif;font-size:.86rem;font-weight:600;">📚 View All Articles →</button></div>
+  </div>
+</section>
+
 <section class="sec" style="background:var(--deep)">
   <div class="con">
     <p class="eye">✦ FAQ ✦</p>
@@ -3313,6 +3323,19 @@ function renderBlogList(){
 }
 
 // Open a single article in the article page.
+// Homepage featured articles — show the first 3 as a teaser linking to the full blog.
+function renderHomeArticles(){
+  const el=document.getElementById('home-articles');
+  if(!el||typeof BLOG_ARTICLES==='undefined')return;
+  el.innerHTML=BLOG_ARTICLES.slice(0,3).map(a=>`<div onclick="openArticle('${a.id}')" style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:24px;cursor:pointer;transition:all .2s;text-align:left;" onmouseover="this.style.borderColor='rgba(200,150,60,.4)';this.style.transform='translateY(-3px)'" onmouseout="this.style.borderColor='var(--bdr2)';this.style.transform='none'">
+    <div style="font-size:2rem;margin-bottom:12px;">${a.icon}</div>
+    <div style="display:inline-block;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--g2c);background:rgba(200,150,60,.1);padding:3px 10px;border-radius:100px;margin-bottom:10px;">${esc(a.cat)}</div>
+    <h3 style="font-family:'Cinzel',serif;font-size:1rem;color:var(--text);line-height:1.4;margin-bottom:8px;">${esc(a.title)}</h3>
+    <p style="font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:10px;">${esc(a.desc)}</p>
+    <div style="font-size:.72rem;color:var(--sub);">${esc(a.read)} · Read →</div>
+  </div>`).join('');
+}
+
 function openArticle(id){
   const a=BLOG_ARTICLES.find(x=>x.id===id);
   if(!a)return;
@@ -4205,6 +4228,7 @@ window.addEventListener('DOMContentLoaded',async function(){
   const safe=(fn,label)=>{try{fn();}catch(e){console.warn('Init "'+label+'" failed:',e);}};
   safe(initFAQ,'FAQ');
   safe(renderBlogList,'BlogList');
+  safe(renderHomeArticles,'HomeArticles');
   safe(initZodiac,'Zodiac');
   safe(initAList,'AstrologerList');
   safe(loadPanch,'Panchang');
@@ -6539,8 +6563,11 @@ const GUNAS_L=['Varna','Vashya','Tara','Yoni','Graha Maitri','Gana','Bhakoot','N
 const GMAX=[1,2,3,4,5,5,7,8];
 async function doMatch(){
   const gn=v('g-n'),bn=v('b-n');
-  if(!gn||!bn){toast('⚠️ Please enter both names.','');return;}
   const gd=v('g-d'),bd=v('b-d');
+  // Matchmaking (Guna Milan) is based on both people's birth details. Without them the
+  // score would be meaningless, so both names AND both dates of birth are required.
+  if(!gn||!bn){toast('⚠️ Please enter both names.','');return;}
+  if(!gd||!bd){toast('⚠️ Please enter date of birth for both people — matchmaking needs birth details.','');return;}
   const s1=gd?new Date(gd).getDate()+new Date(gd).getMonth()*3:15;
   const s2=bd?new Date(bd).getDate()+new Date(bd).getMonth()*3:12;
   const score=Math.min(34,Math.max(16,Math.round((s1+s2+37)%36)||24));
@@ -6592,13 +6619,18 @@ function selHand(btn,h){document.querySelectorAll('.htb').forEach(b=>b.classList
 function setPalm(e){const f=e.target.files[0];if(!f)return;document.getElementById('p-img').src=URL.createObjectURL(f);document.getElementById('p-prev').style.display='block';}
 async function doPalm(){
   const fi=document.getElementById('p-file'),dob=v('p-db'),t=v('p-tb'),city=v('p-ci');
+  // A palm reading requires an actual palm photo. Without it there is nothing real to read,
+  // so we require the image rather than generating a fake "birth energy" reading.
+  if(!fi||!fi.files||fi.files.length===0){
+    toast('📷 Please upload a clear photo of your palm first — a palm reading needs your actual hand.','');
+    return;
+  }
   const btn=document.getElementById('p-btn');btn.disabled=true;btn.textContent='✨ Reading your palm…';
   document.getElementById('p-res').style.display='block';document.getElementById('p-ldr').style.display='block';document.getElementById('p-cnt').style.display='none';
   const sys=`You are AstroHand's master palm reader trained in Vedic Samudrika Shastra, Western chiromancy (Cheiro/Benham tradition), Chinese palmistry, and Arabic Ilmu'l-Kaff. For each reading analyze systematically: HEART LINE (depth, length, curvature, starting point) → emotional life, love capacity, romantic destiny; HEAD LINE (slope, length, depth) → intellect, decision style, creativity vs logic; LIFE LINE (arc width, depth, markings) → vital energy, health constitution, major life turning points; FATE LINE (presence/absence, starting point) → career path, self-determination; SUN LINE → success, recognition, creative fulfillment; MERCURY LINE → health, communication gifts; MARRIAGE LINES → relationship timing; MOUNTS (Venus, Jupiter, Saturn, Apollo, Mercury, Moon, Mars) → personality amplifiers. Write 400-450 words. Be specific with approximate age timings (e.g., "around age 28–34"). Close with one Vedic gemstone remedy and one mantra. State readings provide guidance, not certainty.`;
-  const hasImg=fi.files.length>0;
-  const userPrompt=`Hand: ${selH}.${dob?` DOB: ${dob}.`:''}${t?` Time: ${t}.`:''}${city?` Birth city: ${city}.`:''}${hasImg?' An image has been uploaded — provide the most likely Vedic and Western palmistry characteristics for this hand type and birth profile, written as if observing the lines.':' Provide a rich cosmic reading based on birth energy — likely palm characteristics, life themes, love destiny, career trajectory, health constitution, spiritual path, and peak life years with specific ages.'}`;
+  const userPrompt=`Hand: ${selH}.${dob?` DOB: ${dob}.`:''}${t?` Time: ${t}.`:''}${city?` Birth city: ${city}.`:''} The user has uploaded a photo of their palm. Provide a detailed Vedic and Western palmistry reading of the hand, describing the lines and mounts as observed.`;
   try{
-    const txt=await callAI(sys,[{role:'user',content:userPrompt}],900)||'Upload your palm image for a full reading. The cosmic script awaits.';
+    const txt=await callAI(sys,[{role:'user',content:userPrompt}],900)||'The oracle momentarily meditates. Please try again.';
     document.getElementById('p-ldr').style.display='none';document.getElementById('p-cnt').style.display='block';document.getElementById('p-txt').textContent=txt;
     if(CU)addRd({type:'palm',icon:'🤚',title:'Palm Reading',sub:selH.charAt(0).toUpperCase()+selH.slice(1)+' Hand',preview:txt.substring(0,200)+'…',text:txt});
   }catch{document.getElementById('p-ldr').style.display='none';document.getElementById('p-cnt').style.display='block';document.getElementById('p-txt').textContent='The oracle momentarily meditates. Please try again — your destiny is written and waiting.';}
@@ -6735,6 +6767,9 @@ const GEM_DATA=[
 /* ══ GEMSTONE ENGINE ══ */
 function runGemEngine(){
   const d=v('gem-d'),t=v('gem-t'),h=v('gem-h');
+  // Gemstone recommendations depend on the birth chart, so date of birth is required —
+  // otherwise the result would fall back to generic defaults, which isn't a real reading.
+  if(!d){toast('⚠️ Please enter your date of birth for an accurate gemstone recommendation.','');return;}
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
   const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t):curKundliForGuru;
   const lagna=kd?kd.lagnaSign:'Aries',moon=kd?kd.moonSign:'Cancer',nak=kd?kd.nakshatra:'Rohini',rp=kd?kd.rulingPlanet:'Jupiter',seed=kd?(kd.seed||42):42;
@@ -6757,6 +6792,8 @@ function runGemEngine(){
 /* ══ REMEDIES ENGINE ══ */
 function runRemedies(){
   const d=v('rem-d'),t=v('rem-t'),c=v('rem-c');
+  // Remedies are derived from the birth chart, so date of birth is required.
+  if(!d){toast('⚠️ Please enter your date of birth for personalized remedies.','');return;}
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
   const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t):curKundliForGuru;
   const lagna=kd?kd.lagnaSign:'Aries',moon=kd?kd.moonSign:'Cancer',nak=kd?kd.nakshatra:'Rohini',rp=kd?kd.rulingPlanet:'Jupiter';
