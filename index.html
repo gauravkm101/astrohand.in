@@ -1755,6 +1755,21 @@ This single script enables ALL ad units on the page, including every
           <button onclick="exportNewbornPDF()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid rgba(124,58,237,.3);border-radius:12px;color:#c4b5fd;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">📄 Download PDF</button>
           <button onclick="shareNewbornWA()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid rgba(16,185,129,.28);border-radius:12px;color:#6ee7b7;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">💬 WhatsApp</button>
         </div>
+        <!-- Quick facts grid -->
+        <div id="nb-facts" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;"></div>
+        <!-- Charts: Lagna (Janam) + Navamsa D9 -->
+        <div id="nb-charts" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px;text-align:center;">
+            <div style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--g2c);margin-bottom:10px;">🔯 Janam Kundli (Lagna Chart)</div>
+            <div class="kundli-chart-wrap" id="nb-chart-wrap"></div>
+          </div>
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px;text-align:center;">
+            <div style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--g2c);margin-bottom:10px;">✨ Navamsa Chart (D9)</div>
+            <div class="kundli-chart-wrap" id="nb-navamsa-wrap"></div>
+          </div>
+        </div>
+        <!-- Planet positions table -->
+        <div id="nb-planets" style="margin-bottom:18px;"></div>
         <div id="nb-tr-bar"></div>
         <div id="nb-txt" style="font-size:.86rem;line-height:1.85;color:var(--text);white-space:pre-wrap;"></div>
       </div>
@@ -5625,6 +5640,50 @@ async function genNewborn(){
     document.getElementById('nb-rname').textContent=(name?name+' — ':'')+'Baby\'s Cosmic Blueprint';
     document.getElementById('nb-rdob').textContent=`${rashiName} Moon · ${nakName} Nakshatra`;
 
+    // ── Build REAL planet positions (same engine as main Kundli) ──
+    const li=(ri+Math.floor((th*60+tm)/120))%12; // Lagna: equal-house approximation
+    const sunSignIdx=Math.floor(realPos.positions.Sun/30);
+    const pada=Math.floor((realPos.positions.Moon%(360/27))/((360/27)/4))+1;
+    const NB_PLANETS=[
+      {s:'☀️',n:'Sun',lon:realPos.positions.Sun},{s:'🌙',n:'Moon',lon:realPos.positions.Moon},
+      {s:'♂',n:'Mars',lon:realPos.positions.Mars},{s:'☿',n:'Mercury',lon:realPos.positions.Mercury},
+      {s:'♃',n:'Jupiter',lon:realPos.positions.Jupiter},{s:'♀',n:'Venus',lon:realPos.positions.Venus},
+      {s:'♄',n:'Saturn',lon:realPos.positions.Saturn},{s:'☊',n:'Rahu',lon:realPos.positions.Rahu},
+      {s:'☋',n:'Ketu',lon:realPos.positions.Ketu}
+    ].map(p=>({...p, sg:RASHIS[Math.floor(p.lon/30)], dg:(Math.floor(p.lon%30))+"°"+Math.round((p.lon%1)*60)+"'"}));
+
+    // Render Janam (Lagna) chart
+    const nbc=document.getElementById('nb-chart-wrap');
+    if(nbc){
+      const ps=NB_PLANETS.map(p=>({glyph:p.s,signIdx:RASHIS.indexOf(p.sg)})).filter(p=>p.signIdx>=0);
+      nbc.innerHTML=northIndianChartSVG(li,ri,ps);
+    }
+    // Render Navamsa (D9) chart
+    const nbn=document.getElementById('nb-navamsa-wrap');
+    if(nbn){
+      const d9=NB_PLANETS.map(p=>({glyph:p.s,signIdx:navamsaSignIndex(p.lon)}));
+      nbn.innerHTML=northIndianChartSVG(li,ri,d9);
+    }
+    // Quick facts grid
+    const RSYM_L=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+    const COLS_L=['Red','Green','Yellow','White','Golden','Emerald Green','Pink','Deep Red','Yellow','Blue','Blue','Sea Green'];
+    const ELEM=['Fire','Earth','Air','Water'][ri%4];
+    const nbFacts=[
+      ['⭐','Nakshatra',nakName+' · '+pada+' Pada'],
+      ['🌙','Moon Sign',rashiName],
+      ['☀️','Sun Sign',RASHIS[sunSignIdx]+' '+RSYM_L[sunSignIdx]],
+      ['🔠','Naming Letters',syllables],
+      ['🎨','Lucky Color',COLS_L[ri]],
+      ['🔥','Element',ELEM]
+    ];
+    const nbFactsEl=document.getElementById('nb-facts');
+    if(nbFactsEl)nbFactsEl.innerHTML=nbFacts.map(([ic,k,val])=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:12px 14px;"><div style="font-size:.6rem;letter-spacing:.08em;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">${ic} ${k}</div><div style="font-family:'Cinzel',serif;font-size:.82rem;color:var(--g2c);line-height:1.4;">${esc(val)}</div></div>`).join('');
+    // Planet positions table
+    const nbPlEl=document.getElementById('nb-planets');
+    if(nbPlEl)nbPlEl.innerHTML=`<div style="font-family:'Cinzel',serif;font-size:.85rem;color:var(--g2c);margin-bottom:10px;">🪐 Planetary Positions at Birth</div><div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:6px 14px;">`+NB_PLANETS.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;"><span style="color:var(--text);">${p.s} ${p.n}</span><span style="color:var(--g2c);font-family:'Cinzel',serif;">${p.sg} ${p.dg}</span></div>`).join('')+`</div>`;
+    // Stash for PDF
+    window._nbChartData={facts:nbFacts,planets:NB_PLANETS,lagnaChart:nbc?nbc.innerHTML:'',navamsaChart:nbn?nbn.innerHTML:'',nak:nakName,pada:pada,rashi:rashiName};
+
     const sys=`You are AstroHand's gentle Vedic astrologer specializing in newborn (Janma) kundli for babies. Write warmly for new parents. Reply ENTIRELY in ${lang}. Structure the reading with these clear sections:
 
 1. BIRTH STAR (Nakshatra: ${nakName}) — its meaning, the ruling deity and planet, and the beautiful qualities this star gives the child.
@@ -5662,19 +5721,82 @@ function shareNewbornWA(){
 function exportNewbornPDF(){
   const nb=window._lastNewborn;
   if(!nb){toast('Generate the baby\'s kundli first.','');return;}
+  const cd=window._nbChartData||{};
   const w=window.open('','_blank');
   if(!w){toast('Please allow pop-ups to download the PDF.','');return;}
+  const gender=(v('nb-g')||'').toLowerCase();
+  // Soft baby-theme palette: gentle for girl (rose/gold), gentle for boy (sky/gold), neutral otherwise.
+  const theme=gender==='girl'?{a:'#e89ab5',b:'#f9d5e0',c:'#fdf0f5',accent:'#d16d92'}:gender==='boy'?{a:'#7fb0d9',b:'#d5e6f5',c:'#f0f6fd',accent:'#4a86c5'}:{a:'#c8a96b',b:'#f0e4cd',c:'#fdfaf3',accent:'#b08d4a'};
+  // Facts grid HTML
+  const factsHTML=(cd.facts||[]).map(f=>`<div class="fact"><div class="fk">${f[0]} ${esc(f[1])}</div><div class="fv">${esc(f[2])}</div></div>`).join('');
+  // Planet table
+  const planetHTML=(cd.planets||[]).map(p=>`<tr><td>${p.s} ${esc(p.n)}</td><td>${esc(p.sg)}</td><td>${esc(p.dg)}</td></tr>`).join('');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(nb.name)} — Newborn Kundli</title>
-  <style>body{font-family:Georgia,serif;max-width:800px;margin:40px auto;padding:0 30px;color:#2d2d2d;line-height:1.7;}
-  h1{color:#7c3aed;text-align:center;border-bottom:2px solid #c8963c;padding-bottom:14px;}
-  .meta{text-align:center;color:#666;margin-bottom:24px;}.meta b{color:#c8963c;}
-  .body{white-space:pre-wrap;font-size:14px;}
-  .foot{margin-top:30px;text-align:center;color:#999;font-size:11px;border-top:1px solid #ddd;padding-top:14px;}</style></head>
-  <body><h1>👶 ${esc(nb.name)}'s Newborn Kundli</h1>
-  <div class="meta"><b>${esc(nb.nak)}</b> Nakshatra &nbsp;·&nbsp; <b>${esc(nb.rashi)}</b> Moon &nbsp;·&nbsp; Born ${esc(nb.dob)} ${esc(nb.tob)}</div>
-  <div class="body">${esc(nb.txt)}</div>
-  <div class="foot">Generated by AstroHand · astrohand.in · Astrology offers loving guidance, not fixed destiny.</div>
-  <script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    @page{margin:0;size:A4;}
+    body{font-family:'Quicksand',sans-serif;color:#3a3a4a;background:${theme.c};-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .page{max-width:800px;margin:0 auto;background:${theme.c};padding:0 0 40px;}
+    /* Decorative header band */
+    .hero{background:linear-gradient(135deg,${theme.a},${theme.accent});padding:48px 40px 40px;text-align:center;position:relative;overflow:hidden;color:#fff;}
+    .hero::before{content:'✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦';position:absolute;top:12px;left:0;right:0;font-size:11px;opacity:.35;letter-spacing:8px;}
+    .hero::after{content:'☾ ✦ ★ ✦ ☾ ✦ ★ ✦ ☾ ✦ ★ ✦ ☾';position:absolute;bottom:10px;left:0;right:0;font-size:11px;opacity:.3;letter-spacing:8px;}
+    .baby-icon{font-size:52px;margin-bottom:8px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.15));}
+    .hero h1{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;letter-spacing:.5px;margin-bottom:4px;text-shadow:0 2px 8px rgba(0,0,0,.12);}
+    .hero .sub{font-size:13px;opacity:.95;font-weight:500;letter-spacing:2px;text-transform:uppercase;}
+    .hero .born{margin-top:14px;display:inline-block;background:rgba(255,255,255,.22);padding:7px 20px;border-radius:100px;font-size:12.5px;font-weight:600;backdrop-filter:blur(4px);}
+    /* Content padding */
+    .content{padding:34px 40px 0;}
+    .section-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:${theme.accent};margin:28px 0 14px;padding-bottom:8px;border-bottom:2px solid ${theme.b};display:flex;align-items:center;gap:8px;}
+    /* Facts grid */
+    .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;}
+    .fact{background:#fff;border:1.5px solid ${theme.b};border-radius:14px;padding:13px 15px;box-shadow:0 3px 10px rgba(0,0,0,.03);}
+    .fact .fk{font-size:9.5px;letter-spacing:.5px;color:#9a9aa8;text-transform:uppercase;margin-bottom:5px;font-weight:600;}
+    .fact .fv{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:${theme.accent};line-height:1.3;}
+    /* Charts */
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:6px 0;}
+    .chart-box{background:#fff;border:1.5px solid ${theme.b};border-radius:16px;padding:16px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.04);}
+    .chart-box h3{font-family:'Cormorant Garamond',serif;font-size:15px;color:${theme.accent};margin-bottom:10px;font-weight:600;}
+    .chart-box svg{max-width:100%;height:auto;}
+    /* Planet table */
+    table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,.04);border:1.5px solid ${theme.b};}
+    th{background:${theme.b};color:${theme.accent};padding:11px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+    td{padding:10px 16px;font-size:13px;border-bottom:1px solid ${theme.c};font-family:'Cormorant Garamond',serif;font-size:15px;}
+    tr:last-child td{border-bottom:none;}
+    /* Reading text */
+    .reading{background:#fff;border:1.5px solid ${theme.b};border-radius:16px;padding:24px 28px;margin-top:8px;white-space:pre-wrap;font-size:13.5px;line-height:1.9;color:#4a4a5a;box-shadow:0 4px 14px rgba(0,0,0,.04);}
+    /* Blessing footer */
+    .blessing{margin:30px 40px 0;text-align:center;background:linear-gradient(135deg,${theme.b},${theme.c});border-radius:16px;padding:24px;border:1.5px dashed ${theme.a};}
+    .blessing .b-icon{font-size:26px;margin-bottom:6px;}
+    .blessing .b-text{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:${theme.accent};font-weight:500;}
+    .foot{margin:24px 40px 0;text-align:center;color:#b0b0bc;font-size:10.5px;padding-top:16px;border-top:1px solid ${theme.b};line-height:1.6;}
+    .foot b{color:${theme.accent};}
+  </style></head>
+  <body><div class="page">
+    <div class="hero">
+      <div class="baby-icon">👶</div>
+      <h1>${esc(nb.name)}</h1>
+      <div class="sub">Newborn Vedic Kundli</div>
+      <div class="born">✨ Born ${esc(nb.dob)} at ${esc(nb.tob)} ${v('nb-p')?'· '+esc(v('nb-p')):''}</div>
+    </div>
+    <div class="content">
+      ${factsHTML?`<div class="section-title">🌟 Birth Star & Cosmic Snapshot</div><div class="facts">${factsHTML}</div>`:''}
+      ${(cd.lagnaChart||cd.navamsaChart)?`<div class="section-title">🔯 Sacred Birth Charts</div><div class="charts">
+        ${cd.lagnaChart?`<div class="chart-box"><h3>Janam Kundli (Lagna)</h3>${cd.lagnaChart}</div>`:''}
+        ${cd.navamsaChart?`<div class="chart-box"><h3>Navamsa (D9)</h3>${cd.navamsaChart}</div>`:''}
+      </div>`:''}
+      ${planetHTML?`<div class="section-title">🪐 Planetary Positions at Birth</div><table><tr><th>Planet</th><th>Sign (Rashi)</th><th>Degree</th></tr>${planetHTML}</table>`:''}
+      <div class="section-title">📖 Baby's Cosmic Reading</div>
+      <div class="reading">${esc(nb.txt)}</div>
+    </div>
+    <div class="blessing">
+      <div class="b-icon">🙏</div>
+      <div class="b-text">May the stars bless ${esc(nb.name)} with health, wisdom, and a radiant life ahead</div>
+    </div>
+    <div class="foot">Generated with love by <b>AstroHand</b> · astrohand.in<br>Astrology offers loving guidance, not fixed destiny. A blessing for your little one's journey. 💫</div>
+  </div>
+  <script>window.onload=()=>{setTimeout(()=>window.print(),400);}<\/script></body></html>`);
   w.document.close();
 }
 
