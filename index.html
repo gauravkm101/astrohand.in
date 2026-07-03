@@ -6642,31 +6642,45 @@ function analyzePalmImage(imgEl){
       try{ data=ctx.getImageData(0,0,W,H).data; }
       catch(e){ resolve({ok:true,reason:'cannot-analyze',skinPct:null}); return; } // if blocked, don't hard-fail
       let skin=0, total=0, veryDark=0, veryLight=0;
-      for(let i=0;i<data.length;i+=4){
-        const r=data[i], g=data[i+1], b=data[i+2], a=data[i+3];
-        if(a<125){continue;} // skip transparent
-        total++;
-        const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
-        // Broad skin-tone test (covers many skin tones):
-        // red is the strongest channel, red>green>blue ordering, and not grey.
-        const isSkin = r>60 && g>35 && b>20 &&
-                       r>g && g>=b &&
-                       (r-b)>12 &&
-                       (mx-mn)>10 &&
-                       r<250; // avoid pure white blowout
-        if(isSkin)skin++;
-        if(mx<45)veryDark++;
-        if(mn>225)veryLight++;
+      const lum=[]; // luminance grid, to measure detail/variation (palm lines)
+      for(let y=0;y<H;y++){
+        lum[y]=[];
+        for(let x=0;x<W;x++){
+          const i=(y*W+x)*4;
+          const r=data[i], g=data[i+1], b=data[i+2], a=data[i+3];
+          lum[y][x]=(a<125)?-1:(0.299*r+0.587*g+0.114*b);
+          if(a<125){continue;}
+          total++;
+          const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+          const isSkin = r>60 && g>35 && b>20 && r>g && g>=b && (r-b)>12 && (mx-mn)>10 && r<250;
+          if(isSkin)skin++;
+          if(mx<45)veryDark++;
+          if(mn>225)veryLight++;
+        }
       }
       if(total===0){resolve({ok:true,reason:'empty',skinPct:null});return;}
       const skinPct=skin/total;
       const darkPct=veryDark/total;
       const lightPct=veryLight/total;
-      // A hand filling the frame typically has a high skin fraction.
-      // Require a reasonable amount of skin-tone, and not a frame that's mostly
-      // black or mostly white (which suggests it isn't a well-lit palm).
-      const looksLikeHand = skinPct>=0.30 && darkPct<0.6 && lightPct<0.7;
-      resolve({ok:looksLikeHand, skinPct:Math.round(skinPct*100), reason: looksLikeHand?'ok':'low-skin'});
+      // Measure local detail: average brightness change between neighbouring pixels.
+      // A real palm has many creases/lines → higher variation. A plain single finger or a
+      // flat skin patch is mostly uniform → low variation, which we reject.
+      let diffSum=0, diffCount=0;
+      for(let y=0;y<H;y++){
+        for(let x=1;x<W;x++){
+          if(lum[y][x]<0||lum[y][x-1]<0)continue;
+          diffSum+=Math.abs(lum[y][x]-lum[y][x-1]); diffCount++;
+        }
+      }
+      const detail = diffCount? diffSum/diffCount : 0; // avg neighbour luminance diff
+      // A hand filling the frame: enough skin, not mostly black/white, AND enough line detail.
+      const enoughSkin = skinPct>=0.30 && darkPct<0.6 && lightPct<0.7;
+      const enoughDetail = detail>=3; // real photos have texture/lighting variation; flat single-color (~0) fails
+      const looksLikeHand = enoughSkin && enoughDetail;
+      let reason='ok';
+      if(!enoughSkin)reason='low-skin';
+      else if(!enoughDetail)reason='low-detail';
+      resolve({ok:looksLikeHand, skinPct:Math.round(skinPct*100), detail:Math.round(detail*10)/10, reason:reason});
     }catch(e){
       resolve({ok:true,reason:'error',skinPct:null}); // fail open on unexpected errors
     }
@@ -6681,6 +6695,11 @@ async function doPalm(){
     toast('📷 Please upload a clear photo of your palm first — a palm reading needs your actual hand.','');
     return;
   }
+  // Date of birth is also required — it anchors the reading to the person.
+  if(!dob){
+    toast('⚠️ Please enter your date of birth as well for an accurate palm reading.','');
+    return;
+  }
   // Check the uploaded image actually looks like a palm (skin-tone analysis, browser-only).
   // This stops obvious non-hand photos (animals, objects, scenery) from getting a reading.
   const imgEl=document.getElementById('p-img');
@@ -6689,7 +6708,10 @@ async function doPalm(){
   const check=await analyzePalmImage(imgEl);
   if(!check.ok){
     btn.disabled=false;btn.textContent='✨ Reveal My Palm Reading';
-    toast('🤚 This doesn\'t look like a clear palm photo. Please upload a well-lit picture of your open hand (palm facing the camera).','');
+    const msg=check.reason==='low-detail'
+      ? '🤚 Please upload a photo of your full open palm — not a single finger or a close-up. Show the whole hand with palm lines visible.'
+      : '🤚 This doesn\'t look like a clear palm photo. Please upload a well-lit picture of your open hand (palm facing the camera).';
+    toast(msg,'');
     return;
   }
   btn.textContent='✨ Reading your palm…';
