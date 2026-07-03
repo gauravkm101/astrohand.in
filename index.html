@@ -814,6 +814,7 @@ This single script enables ALL ad units on the page, including every
   </div>
   <ul style="display:flex;align-items:center;gap:4px;list-style:none;" class="nav-links-d">
     <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="openTool('mKundli')">Free Kundli</a></li>
+    <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="router('blog')">Articles</a></li>
     <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="openTool('mAI')">AI Astrologers</a></li>
     <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="closeMnav();router('home');setTimeout(()=>document.getElementById('pricing-section').scrollIntoView({behavior:'smooth'}),50)">Pricing</a></li>
     <li><a style="color:var(--muted);text-decoration:none;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='#e8c46a'" onmouseout="this.style.color='#8b86b0'" onclick="openTool('mHoro')">Horoscope</a></li>
@@ -869,6 +870,7 @@ This single script enables ALL ad units on the page, including every
 <!-- MOBILE NAV -->
 <div class="mnav z" id="mnav">
   <a onclick="closeMnav();openTool('mKundli')">📜 Free Kundli</a>
+  <a onclick="closeMnav();router('blog')">📚 Articles &amp; Guides</a>
   <a onclick="closeMnav();openTool('mAI')">🤖 AI Astrologers</a>
   <a onclick="closeMnav();router('home');setTimeout(()=>document.getElementById('pricing-section').scrollIntoView({behavior:'smooth'}),50)">💎 Pricing</a>
   <a onclick="closeMnav();openTool('mHoro')">♈ Horoscope</a>
@@ -1207,6 +1209,26 @@ This single script enables ALL ad units on the page, including every
   </div>
 </div>
 
+<!-- BLOG LIST PAGE -->
+<div class="page z" id="pg-blog">
+  <section style="max-width:1100px;margin:0 auto;padding:100px 20px 60px;">
+    <div style="text-align:center;margin-bottom:44px;">
+      <div style="display:inline-block;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--g2c);margin-bottom:12px;">📚 AstroHand Learn</div>
+      <h1 style="font-family:'Cinzel',serif;font-size:2rem;color:var(--g2c);margin-bottom:12px;">Vedic Astrology Articles &amp; Guides</h1>
+      <p style="color:var(--muted);font-size:.92rem;max-width:600px;margin:0 auto;line-height:1.7;">Learn the foundations of Jyotish — from zodiac signs and birth charts to Nakshatras, doshas, and remedies. Written to help you understand the wisdom behind the stars.</p>
+    </div>
+    <div id="blog-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;"></div>
+  </section>
+</div>
+
+<!-- SINGLE ARTICLE PAGE -->
+<div class="page z" id="pg-article">
+  <section style="max-width:760px;margin:0 auto;padding:100px 22px 60px;">
+    <div style="margin-bottom:20px;"><button onclick="router('blog')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;font-family:Inter,sans-serif;">← All articles</button></div>
+    <div id="article-body"></div>
+  </section>
+</div>
+
 <!-- ═══ AUTH PAGES ═══ -->
 <div class="page z" id="pg-login">
   <div class="auth-wrap">
@@ -1501,6 +1523,7 @@ This single script enables ALL ad units on the page, including every
       <h4>Company</h4>
       <ul>
         <li><a onclick="polPage('about')">About Us</a></li>
+        <li><a onclick="router('blog')">Articles & Guides</a></li>
         <li><a onclick="closeAcctMenu();router('home');setTimeout(()=>document.getElementById('pricing-section').scrollIntoView({behavior:'smooth'}),50)">Pricing</a></li>
         <li><a onclick="polPage('contact')">Contact Us</a></li>
         <li><a href="mailto:support@astrohand.ai">support@astrohand.ai</a></li>
@@ -3138,6 +3161,176 @@ function translateVaastuActive(lang,selectEl){
   translateContainer(vaastuActiveTabId(),lang,selectEl);
 }
 
+/* ═══════════════════════════════════════════════════
+   BLOG / LEARN — original educational articles
+   Written to be genuinely useful and original (not scraped),
+   which is what AdSense reviewers look for. Each article is a
+   self-contained guide. Content is general Vedic-astrology
+   education, cross-checked against standard classical concepts.
+═══════════════════════════════════════════════════ */
+const BLOG_ARTICLES=[
+{
+  id:'what-is-vedic-astrology',
+  cat:'Basics',
+  icon:'🕉️',
+  title:'What is Vedic Astrology? A Beginner\u2019s Guide to Jyotish',
+  desc:'Understand the roots, logic, and core ideas behind Vedic astrology — and how it differs from Western astrology.',
+  read:'6 min read',
+  body:`Vedic astrology, known in Sanskrit as Jyotish or "the science of light," is one of the oldest systems of astrology in the world, with roots stretching back thousands of years into the Vedic traditions of ancient India. Unlike casual sun-sign horoscopes, Jyotish is a detailed system that studies the positions of the planets, the Moon, and the stars at the exact moment of a person\u2019s birth to understand their life patterns, tendencies, and possibilities.
+
+## The Core Idea
+
+At the heart of Vedic astrology is a simple but profound belief: the cosmos and the individual are deeply connected. The positions of celestial bodies at your birth are seen as a map — not a fixed script, but a blueprint of energies and tendencies you carry through life. This map is called the birth chart, or Kundli.
+
+The birth chart is a snapshot of the sky at the moment you were born, drawn from your date, time, and place of birth. Because the sky is constantly moving, even two babies born minutes apart in the same city can have meaningfully different charts.
+
+## Sidereal vs Tropical: The Key Difference
+
+The most important technical difference between Vedic and Western astrology is the zodiac each uses. Western astrology uses the tropical zodiac, which is tied to the seasons and the position of the Sun relative to the Earth. Vedic astrology uses the sidereal zodiac, which is tied to the actual, observable positions of the constellations in the sky.
+
+Because of a slow wobble in the Earth\u2019s axis (known as the precession of the equinoxes), these two zodiacs have drifted apart over the centuries by roughly 24 degrees. This is why your "sign" in Vedic astrology is often different from your Western sign. The gap is corrected using a value called the Ayanamsa, with the Lahiri Ayanamsa being the most widely used standard in India.
+
+## The Building Blocks
+
+Vedic astrology rests on a few key elements working together. The nine planets (Navagraha) include the Sun, Moon, Mars, Mercury, Jupiter, Venus, and Saturn, plus two mathematical points called Rahu and Ketu (the lunar nodes). The twelve signs (Rashis) each carry distinct qualities. The twelve houses (Bhavas) represent different areas of life, from wealth and family to career and relationships. And the twenty-seven lunar mansions (Nakshatras) add a finer layer of detail.
+
+When an astrologer reads a chart, they look at how these elements combine — which planet sits in which sign and house, and what that pattern suggests about a person\u2019s strengths, challenges, and timing of life events.
+
+## What Jyotish Is — and Isn\u2019t
+
+It is important to approach Vedic astrology with a balanced mind. At its best, it is a tool for reflection, self-understanding, and gentle guidance. It offers a language for thinking about life\u2019s seasons and choices. What it is not is a guarantee of fixed outcomes. The classical texts themselves emphasize free will: the stars may incline, but they do not compel. A birth chart shows tendencies and possibilities, and your choices, effort, and awareness shape how those tendencies unfold.
+
+Whether you are simply curious or seeking deeper insight, Vedic astrology offers a rich, symbolic framework that has fascinated seekers for millennia. The best way to begin is with your own birth chart — a personal map waiting to be explored.`
+},
+{
+  id:'12-rashis-guide',
+  cat:'Zodiac',
+  icon:'\u264A',
+  title:'The 12 Rashis Explained: Your Complete Zodiac Sign Guide',
+  desc:'A clear guide to all twelve Vedic zodiac signs (Rashis) — their ruling planets, elements, and core personality traits.',
+  read:'8 min read',
+  body:`In Vedic astrology, the zodiac is divided into twelve signs called Rashis. Each Rashi spans 30 degrees of the sky and carries its own personality, ruling planet, and elemental nature. While your Moon sign (the Rashi where the Moon sat at your birth) is considered especially important in Jyotish, understanding all twelve signs helps you read any chart with more depth.
+
+## The Four Elements
+
+Every Rashi belongs to one of four elements, which shape its basic temperament. Fire signs (Aries, Leo, Sagittarius) are energetic, passionate, and driven. Earth signs (Taurus, Virgo, Capricorn) are practical, grounded, and reliable. Air signs (Gemini, Libra, Aquarius) are intellectual, communicative, and social. Water signs (Cancer, Scorpio, Pisces) are emotional, intuitive, and sensitive.
+
+## The Twelve Signs
+
+**Aries (Mesha)** — Ruled by Mars, this fire sign is bold, energetic, and pioneering. Aries natives are natural initiators who love a challenge and dislike waiting.
+
+**Taurus (Vrishabha)** — Ruled by Venus, this earth sign values stability, comfort, and beauty. Taurus natives are patient, dependable, and deeply loyal, though they can be stubborn.
+
+**Gemini (Mithuna)** — Ruled by Mercury, this air sign is curious, quick-witted, and communicative. Gemini natives love learning, talking, and variety.
+
+**Cancer (Karka)** — Ruled by the Moon, this water sign is nurturing, emotional, and protective. Cancer natives are deeply connected to home and family.
+
+**Leo (Simha)** — Ruled by the Sun, this fire sign is confident, warm, and generous. Leo natives have natural leadership and a flair for the dramatic.
+
+**Virgo (Kanya)** — Ruled by Mercury, this earth sign is analytical, precise, and service-minded. Virgo natives notice details others miss and strive for improvement.
+
+**Libra (Tula)** — Ruled by Venus, this air sign seeks balance, harmony, and fairness. Libra natives are diplomatic, charming, and relationship-oriented.
+
+**Scorpio (Vrishchika)** — Ruled by Mars, this water sign is intense, passionate, and deeply perceptive. Scorpio natives feel things profoundly and value loyalty.
+
+**Sagittarius (Dhanu)** — Ruled by Jupiter, this fire sign is optimistic, adventurous, and philosophical. Sagittarius natives love freedom, travel, and big ideas.
+
+**Capricorn (Makara)** — Ruled by Saturn, this earth sign is disciplined, ambitious, and responsible. Capricorn natives are patient climbers who build lasting success.
+
+**Aquarius (Kumbha)** — Ruled by Saturn, this air sign is original, humanitarian, and independent. Aquarius natives think ahead of their time and value freedom.
+
+**Pisces (Meena)** — Ruled by Jupiter, this water sign is compassionate, imaginative, and spiritual. Pisces natives are gentle dreamers with deep empathy.
+
+## How to Use This
+
+Remember that no one is defined by a single sign. Your full chart weaves together your Moon sign, rising sign (Lagna), Sun sign, and the placements of all nine planets. A Taurus Moon with an Aries rising and a Gemini Sun will feel quite different from a "pure" Taurus. Reading a chart is about seeing how all these energies blend together into a unique individual.`
+},
+
+  {
+    "id": "nakshatras-guide",
+    "cat": "Nakshatras",
+    "icon": "⭐",
+    "title": "The 27 Nakshatras: Understanding Your Birth Star",
+    "desc": "Discover the 27 lunar mansions of Vedic astrology and why your Nakshatra reveals more than your zodiac sign.",
+    "read": "7 min read",
+    "body": "While the twelve Rashis (zodiac signs) form the backbone of Vedic astrology, there is a finer and often more revealing layer: the twenty-seven Nakshatras, or lunar mansions. Your Nakshatra — sometimes called your birth star or Janma Nakshatra — is the specific lunar mansion the Moon occupied at the moment of your birth. For many Vedic astrologers, it says more about your true nature than your zodiac sign alone.\n\n## What Are Nakshatras?\n\nThe Moon takes about 27.3 days to travel through the entire zodiac. Ancient Vedic astronomers divided this path into 27 equal segments, each spanning 13 degrees and 20 minutes of the sky. Each segment is a Nakshatra, associated with a specific group of stars, a ruling planet, a presiding deity, and a distinct set of qualities.\n\nThese lunar mansions are far older than you might expect and are woven throughout Vedic literature, festivals, and even the traditional naming of children.\n\n## Why Your Nakshatra Matters\n\nBecause the Moon governs the mind and emotions in Vedic astrology, the Nakshatra of your Moon is thought to describe your instinctive nature, emotional patterns, and inner self. Two people with the same Moon sign but different Nakshatras can have noticeably different temperaments.\n\nNakshatras play a central role in several practical areas of Jyotish. They form the basis of the Vimshottari Dasha system, which maps out the timing of life events. They are essential in matchmaking, where the compatibility of two people’s Nakshatras is carefully studied. And traditionally, the first syllable of a baby’s name is chosen based on their birth Nakshatra.\n\n## The Four Padas\n\nEach Nakshatra is further divided into four quarters called Padas, each spanning 3 degrees and 20 minutes. These Padas add even more precision, connecting each part of the Nakshatra to a specific sign in the Navamsa (the important divisional chart used for deeper analysis). This is why an astrologer will often ask for your exact birth time — even a small difference can change your Pada and refine the reading.\n\n## A Few Examples\n\nTo give a flavor of their variety: Ashwini, the first Nakshatra, is associated with healing, speed, and new beginnings, ruled by the celestial physicians. Rohini is linked with beauty, growth, and creativity, and is considered one of the Moon’s favorite places. Pushya is regarded as one of the most auspicious and nourishing Nakshatras. Jyeshtha carries themes of seniority, protectiveness, and depth. Each of the 27 has its own rich symbolism.\n\n## Finding Your Nakshatra\n\nYour birth Nakshatra is determined by the Moon’s exact position at your birth, so you need your date, time, and place of birth to calculate it accurately. Once you know it, exploring your Nakshatra’s qualities, ruling planet, and symbolism can be a surprisingly personal window into your inner world — often resonating more closely than a broad zodiac sign ever could."
+  },
+  {
+    "id": "how-to-read-kundli",
+    "cat": "Basics",
+    "icon": "📜",
+    "title": "How to Read a Kundli: Houses, Planets, and Signs",
+    "desc": "A beginner-friendly walkthrough of the birth chart — what the houses mean, and how planets and signs come together.",
+    "read": "8 min read",
+    "body": "A Kundli, or Vedic birth chart, can look intimidating at first — a diagram full of numbers, symbols, and lines. But once you understand its three basic building blocks, the chart starts to tell a coherent story. Those three blocks are the houses, the signs, and the planets.\n\n## The Twelve Houses (Bhavas)\n\nThe birth chart is divided into twelve sections called houses, and each governs a specific area of life. Think of the houses as the \"stage\" on which the drama of your life unfolds.\n\nThe first house represents the self — your personality, appearance, and how you approach life. The second house governs wealth, family, and speech. The third house rules courage, siblings, and communication. The fourth house relates to home, mother, and inner happiness. The fifth house covers creativity, children, and intelligence. The sixth house deals with health, enemies, and daily work.\n\nThe seventh house governs marriage and partnerships. The eighth house relates to transformation, longevity, and hidden matters. The ninth house rules fortune, higher learning, and spirituality. The tenth house covers career, status, and public life. The eleventh house governs gains, income, and friendships. And the twelfth house relates to loss, expenses, spirituality, and liberation.\n\n## The Signs and Planets\n\nEach house is occupied by one of the twelve zodiac signs (Rashis), which colors how that area of life is expressed. And within the houses sit the planets, each carrying its own energy.\n\nThe Sun represents the soul, ego, and vitality. The Moon governs the mind and emotions. Mars rules energy, courage, and drive. Mercury governs intellect and communication. Jupiter represents wisdom, growth, and fortune. Venus rules love, beauty, and comfort. Saturn governs discipline, patience, and hard lessons. Rahu and Ketu, the lunar nodes, relate to worldly desires and spiritual detachment respectively.\n\n## Putting It Together\n\nReading a chart is about combining these three layers. You ask: which planet is in which sign, sitting in which house? For example, Jupiter (wisdom and fortune) in the tenth house (career) suggests a person who may find growth and respect through their profession, perhaps in teaching, advising, or guidance roles. The sign Jupiter sits in then refines how that plays out.\n\n## The Ascendant (Lagna)\n\nOne of the most important points in the chart is the Ascendant, or Lagna — the sign that was rising on the eastern horizon at your birth. The Lagna sets the entire framework of the chart, determining which sign rules your first house and how all the other houses are arranged. Because the Ascendant changes roughly every two hours, your exact birth time is essential for an accurate chart.\n\n## Start Simple\n\nYou do not need to master everything at once. Begin by finding your Ascendant, your Moon sign, and your Sun sign. Notice which houses your key planets fall in. Even this basic reading can reveal meaningful themes. Deeper analysis — divisional charts, planetary strengths, and dashas — can come later as your understanding grows."
+  },
+  {
+    "id": "manglik-dosha",
+    "cat": "Doshas",
+    "icon": "♂",
+    "title": "Manglik Dosha: What It Is and Common Remedies",
+    "desc": "A calm, balanced explanation of Manglik Dosha (Mars affliction) — what it means, and traditional remedies.",
+    "read": "6 min read",
+    "body": "Few terms in Vedic astrology cause as much worry as \"Manglik Dosha.\" For many families, especially around the time of marriage, it can be a source of real anxiety. But when understood calmly and in context, Manglik Dosha is far less frightening than its reputation suggests. This article explains what it is, why it matters, and the traditional remedies associated with it.\n\n## What Is Manglik Dosha?\n\nManglik Dosha, also called Mangal Dosha or Kuja Dosha, is an astrological condition said to occur when the planet Mars (Mangal) is placed in certain houses of a person’s birth chart — traditionally the first, second, fourth, seventh, eighth, or twelfth house from the Ascendant. A person with this placement is called a Manglik.\n\nMars is a fiery, energetic planet associated with passion, drive, and aggression. The concern in these particular house placements is that Mars’s intense energy may create friction in marriage and partnership matters, which is why the dosha is most discussed in the context of marriage compatibility.\n\n## Keeping It in Perspective\n\nHere is the balanced truth that experienced astrologers emphasize: Manglik Dosha is very common, and its effects are often mild or fully neutralized by other factors in the chart. A single placement rarely tells the whole story.\n\nThere are several important nuances. The dosha can be cancelled or reduced by many chart combinations — this is called Manglik Dosha Bhanga (cancellation). If both partners are Manglik, the effect is traditionally considered to cancel out. The strength and sign of Mars matters greatly; a well-placed Mars behaves very differently from a poorly-placed one. And Mars often naturally reduces in influence as a person grows older.\n\nIn short, being Manglik is not a curse, and it certainly does not doom a marriage. It is one factor among many, and it deserves a measured, informed look rather than fear.\n\n## Traditional Remedies\n\nFor those who wish to follow tradition, several remedies are commonly recommended. These are cultural and devotional practices, offered here for information rather than as guarantees.\n\nCommon remedies include reciting the Hanuman Chalisa and worshipping Lord Hanuman, who is associated with Mars. Fasting on Tuesdays, the day ruled by Mars, is another traditional practice. Some families perform specific pujas before marriage. The Kumbh Vivah, a symbolic ritual, is sometimes recommended in stronger cases. Wearing a red coral (Moonga) gemstone is also traditionally associated with balancing Mars, though gemstones should only be worn after proper astrological consultation.\n\n## A Balanced Final Word\n\nIf you or a loved one is told they are Manglik, the best response is calm and information, not panic. Consult a knowledgeable astrologer who can look at the complete chart, including whether the dosha is cancelled and how strong Mars actually is. Marriage success depends far more on understanding, effort, communication, and compatibility of values than on any single astrological factor."
+  },
+  {
+    "id": "gemstones-and-rashi",
+    "cat": "Remedies",
+    "icon": "💎",
+    "title": "Gemstones and Your Rashi: A Practical Guide",
+    "desc": "Which gemstone is traditionally linked to each planet and sign — and how to approach wearing them wisely.",
+    "read": "6 min read",
+    "body": "Gemstones have been part of Vedic tradition for centuries, believed to channel and strengthen the energy of specific planets. In Jyotish, wearing the right gemstone is considered a remedy — a way to support a beneficial planet or strengthen a weak one in your birth chart. This guide explains the traditional associations and, importantly, how to approach gemstones with a wise and cautious mindset.\n\n## The Nine Planetary Gemstones\n\nEach of the nine planets in Vedic astrology is associated with a primary gemstone, known collectively as the Navaratna (nine gems).\n\nRuby (Manik) is linked to the Sun, associated with vitality, confidence, and leadership. Pearl (Moti) is linked to the Moon, associated with emotional calm and mental peace. Red Coral (Moonga) is linked to Mars, associated with energy and courage. Emerald (Panna) is linked to Mercury, associated with intelligence and communication. Yellow Sapphire (Pukhraj) is linked to Jupiter, associated with wisdom, fortune, and growth. Diamond (Heera) is linked to Venus, associated with love, luxury, and beauty. Blue Sapphire (Neelam) is linked to Saturn, associated with discipline and focus. Hessonite (Gomed) is linked to Rahu, and Cat’s Eye (Lehsunia) is linked to Ketu.\n\n## Gemstones by Sign\n\nBecause each Rashi is ruled by a planet, a sign’s traditional gemstone often follows its ruler. For example, Aries and Scorpio (ruled by Mars) are linked to red coral. Taurus and Libra (ruled by Venus) are linked to diamond. Cancer (ruled by the Moon) is linked to pearl. Leo (ruled by the Sun) is linked to ruby. Sagittarius and Pisces (ruled by Jupiter) are linked to yellow sapphire. Capricorn and Aquarius (ruled by Saturn) are linked to blue sapphire.\n\nHowever, choosing a gemstone based only on your sign is a simplification. A proper recommendation looks at your entire chart.\n\n## The Most Important Advice: Be Cautious\n\nThis is the part that responsible astrologers stress the most. Gemstones are considered powerful, and the wrong stone can be unhelpful. Blue Sapphire (Neelam), in particular, is traditionally said to act quickly and is approached with special care.\n\nNever choose a powerful gemstone casually or based on a single online quiz. A gemstone should be selected only after a qualified astrologer studies your complete birth chart — looking at which planets are beneficial for your specific Ascendant, which are weak, and which need support. What helps one person may not suit another, even with the same sun sign.\n\n## A Wise Approach\n\nIf you are drawn to gemstones, treat them as a meaningful tradition to be approached thoughtfully. Get a proper chart analysis first. Buy from a reputable source, since quality and authenticity matter. And remember that gemstones, like all remedies in Vedic astrology, are meant to support your own efforts and awareness — not replace them."
+  }
+
+];
+// Render markdown-ish article body (##, **bold**, paragraphs) to safe HTML.
+function renderArticleBody(body){
+  const esc2=(s)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return body.split('\n\n').map(block=>{
+    block=block.trim();
+    if(!block)return '';
+    if(block.startsWith('## ')){
+      return '<h2 style="font-family:\'Cinzel\',serif;font-size:1.15rem;color:var(--g2c);margin:26px 0 12px;">'+esc2(block.slice(3))+'</h2>';
+    }
+    // bold inline
+    let html=esc2(block).replace(/\*\*([^*]+)\*\*/g,'<strong style="color:var(--g2c);">$1</strong>');
+    return '<p style="margin:0 0 14px;line-height:1.85;color:var(--text);font-size:.92rem;">'+html+'</p>';
+  }).join('');
+}
+
+// Blog list page: render cards for each article.
+function renderBlogList(){
+  const el=document.getElementById('blog-list');
+  if(!el)return;
+  el.innerHTML=BLOG_ARTICLES.map(a=>`<div onclick="openArticle('${a.id}')" style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:22px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(200,150,60,.4)';this.style.transform='translateY(-3px)'" onmouseout="this.style.borderColor='var(--bdr2)';this.style.transform='none'">
+    <div style="font-size:2rem;margin-bottom:12px;">${a.icon}</div>
+    <div style="display:inline-block;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--g2c);background:rgba(200,150,60,.1);padding:3px 10px;border-radius:100px;margin-bottom:10px;">${esc(a.cat)}</div>
+    <h3 style="font-family:'Cinzel',serif;font-size:1.02rem;color:var(--text);line-height:1.4;margin-bottom:8px;">${esc(a.title)}</h3>
+    <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:12px;">${esc(a.desc)}</p>
+    <div style="font-size:.72rem;color:var(--sub);">${esc(a.read)} · Read article →</div>
+  </div>`).join('');
+}
+
+// Open a single article in the article page.
+function openArticle(id){
+  const a=BLOG_ARTICLES.find(x=>x.id===id);
+  if(!a)return;
+  const el=document.getElementById('article-body');
+  if(el){
+    el.innerHTML=`<div style="font-size:2.4rem;margin-bottom:14px;">${a.icon}</div>
+      <div style="display:inline-block;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--g2c);background:rgba(200,150,60,.1);padding:4px 12px;border-radius:100px;margin-bottom:14px;">${esc(a.cat)}</div>
+      <h1 style="font-family:'Cinzel',serif;font-size:1.6rem;color:var(--g2c);line-height:1.35;margin-bottom:8px;">${esc(a.title)}</h1>
+      <div style="font-size:.76rem;color:var(--sub);margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--bdr2);">${esc(a.read)} · AstroHand</div>
+      ${renderArticleBody(a.body)}
+      <div style="margin-top:34px;padding-top:22px;border-top:1px solid var(--bdr2);text-align:center;">
+        <button onclick="router('blog')" style="background:rgba(200,150,60,.1);border:1px solid rgba(200,150,60,.3);color:var(--g2c);padding:11px 22px;border-radius:12px;cursor:pointer;font-family:Inter,sans-serif;font-size:.82rem;">← Back to all articles</button>
+      </div>
+      <p style="margin-top:24px;font-size:.68rem;color:var(--sub);text-align:center;line-height:1.6;">This article is for educational purposes. Vedic astrology offers guidance for reflection, not guaranteed outcomes.</p>`;
+  }
+  router('article');
+}
+
 const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mVaastu'];
 let _adInterstitialTimer=null;
 
@@ -4011,6 +4204,7 @@ window.addEventListener('DOMContentLoaded',async function(){
   // (previously, an early error here could silently break the currency menu, etc.)
   const safe=(fn,label)=>{try{fn();}catch(e){console.warn('Init "'+label+'" failed:',e);}};
   safe(initFAQ,'FAQ');
+  safe(renderBlogList,'BlogList');
   safe(initZodiac,'Zodiac');
   safe(initAList,'AstrologerList');
   safe(loadPanch,'Panchang');
