@@ -6630,6 +6630,31 @@ function setPalm(e){const f=e.target.files[0];if(!f)return;document.getElementBy
    confirmation checkbox. Together they stop the obvious fakes
    (animals, objects, scenery) without any external service.
 ═══════════════════════════════════════════════════ */
+// Ask the backend vision AI whether the uploaded image is really a palm.
+// Returns {done:true, isPalm:bool} if the AI answered, or {done:false} if the
+// vision service is unavailable (so we can fall back to the local skin+detail check).
+const VISION_URL='https://astrohand-backend.vercel.app/api/vision';
+async function verifyPalmWithAI(file){
+  try{
+    const b64=await toB64(file);
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),40000);
+    const r=await fetch(VISION_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({imageBase64:b64}),
+      signal:controller.signal
+    });
+    clearTimeout(timeout);
+    if(!r.ok)return {done:false};           // backend not deployed yet / error → fall back
+    const data=await r.json();
+    if(typeof data.isPalm!=='boolean')return {done:false};
+    return {done:true, isPalm:data.isPalm};
+  }catch(e){
+    return {done:false};                     // network/timeout → fall back
+  }
+}
+
 function analyzePalmImage(imgEl){
   return new Promise((resolve)=>{
     try{
@@ -6704,15 +6729,27 @@ async function doPalm(){
   // This stops obvious non-hand photos (animals, objects, scenery) from getting a reading.
   const imgEl=document.getElementById('p-img');
   const btn=document.getElementById('p-btn');
-  btn.disabled=true;btn.textContent='🔍 Checking your photo…';
-  const check=await analyzePalmImage(imgEl);
-  if(!check.ok){
-    btn.disabled=false;btn.textContent='✨ Reveal My Palm Reading';
-    const msg=check.reason==='low-detail'
-      ? '🤚 Please upload a photo of your full open palm — not a single finger or a close-up. Show the whole hand with palm lines visible.'
-      : '🤚 This doesn\'t look like a clear palm photo. Please upload a well-lit picture of your open hand (palm facing the camera).';
-    toast(msg,'');
-    return;
+  btn.disabled=true;btn.textContent='🔍 Verifying your palm…';
+  // First, ask the real AI vision service (accurate — knows palm vs back-of-hand vs finger vs object).
+  const aiCheck=await verifyPalmWithAI(fi.files[0]);
+  if(aiCheck.done){
+    if(!aiCheck.isPalm){
+      btn.disabled=false;btn.textContent='✨ Reveal My Palm Reading';
+      toast('🤚 That doesn\'t look like your palm. Please upload a clear photo of the INSIDE of your open hand (palm side, with the lines facing the camera).','');
+      return;
+    }
+    // AI confirmed it's a palm → proceed.
+  }else{
+    // Vision service unavailable → fall back to the local skin + detail check.
+    const check=await analyzePalmImage(imgEl);
+    if(!check.ok){
+      btn.disabled=false;btn.textContent='✨ Reveal My Palm Reading';
+      const msg=check.reason==='low-detail'
+        ? '🤚 Please upload a photo of your full open palm — not a single finger or a close-up. Show the whole hand with palm lines visible.'
+        : '🤚 This doesn\'t look like a clear palm photo. Please upload a well-lit picture of your open hand (palm facing the camera).';
+      toast(msg,'');
+      return;
+    }
   }
   btn.textContent='✨ Reading your palm…';
   document.getElementById('p-res').style.display='block';document.getElementById('p-ldr').style.display='block';document.getElementById('p-cnt').style.display='none';
