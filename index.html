@@ -3142,8 +3142,8 @@ const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mHoro','mMatch','mNum','mPalm','m
 let _adInterstitialTimer=null;
 
 function shouldShowAd(){
-  if(isPaid())return false; // paid users never see ads
-  return true; // free users: show ad every time a tool is opened
+  if(isGoldOrVip())return false; // Gold & VIP are ad-free; Silver and free users see ads
+  return true; // free + Silver: show ad when a tool is opened
 }
 
 function openTool(id){
@@ -3196,7 +3196,7 @@ function dismissAdInterstitial(){
 function closeOv(id){
   const el=document.getElementById(id);
   if(el){el.classList.remove('open');document.body.style.overflow='';}
-  if(AD_TOOL_IDS.includes(id)&&!isPaid()){
+  if(AD_TOOL_IDS.includes(id)&&!isGoldOrVip()){
     showAdClosePopup();
   }
 }
