@@ -523,6 +523,7 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
 .pg2{background:rgba(200,150,60,.14);color:var(--g2c);border:1px solid rgba(200,150,60,.28);}
 .pv{background:rgba(124,58,237,.14);color:#a78bfa;border:1px solid rgba(124,58,237,.28);}
 .ps{background:rgba(148,163,184,.16);color:#cbd5e1;border:1px solid rgba(148,163,184,.32);}
+.vip-crown{background:linear-gradient(135deg,rgba(200,150,60,.25),rgba(124,58,237,.22))!important;color:#f0d98c!important;border:1px solid rgba(200,150,60,.5)!important;box-shadow:0 0 14px rgba(200,150,60,.35),inset 0 0 8px rgba(200,150,60,.12);font-weight:800!important;letter-spacing:.08em!important;text-shadow:0 0 8px rgba(240,217,140,.4);}
 .d-minis{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px;}
 .dmin{background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r);padding:9px;text-align:center;}
 .dmin-n{font-family:'Cinzel',serif;font-size:1.15rem;color:var(--g2c);line-height:1;}
@@ -1045,6 +1046,7 @@ This single script enables ALL ad units on the page, including every
   <div class="tgrid">
     <div class="tool" onclick="openTool('mKundli')"><span class="ticon">📜</span><span class="tlbl">Free Kundli</span><span class="tbdg">FREE</span></div>
     <div class="tool" onclick="openTool('mNewborn')"><span class="ticon">👶</span><span class="tlbl">Newborn Kundli</span><span class="tbdg">NEW</span></div>
+    <div class="tool" onclick="openForecast()" style="border-color:rgba(200,150,60,.3);"><span class="ticon">👑</span><span class="tlbl">Annual Forecast</span><span class="tbdg" style="background:linear-gradient(135deg,#c8963c,#7c3aed);color:#fff;">VIP</span></div>
     <div class="tool" onclick="openTool('mAI')"><span class="ticon">🤖</span><span class="tlbl">AI Astrologers</span><span class="tbdg">LIVE</span></div>
     <div class="tool" onclick="openTool('mAILang');initALangList();"><span class="ticon">🌐</span><span class="tlbl">Language AI</span><span class="tbdg">12 LANG</span></div>
     <div class="tool" onclick="openTool('mHoro')"><span class="ticon">♈</span><span class="tlbl">Horoscope</span><span class="tbdg">FREE</span></div>
@@ -1097,13 +1099,13 @@ This single script enables ALL ad units on the page, including every
     <p class="sdesc">Explore free when you arrive. Unlock your full cosmic blueprint with a plan.</p>
     <div class="pg3">
       <div class="pc"><div class="ptier">Silver</div><div class="ppr"><span data-inr="499">₹499</span><span class="pper">/mo</span></div><p class="pdsc">Your first real step in.</p>
-      <ul class="pfl"><li><span class="pck">✦</span>Unlimited Kundli reports</li><li><span class="pck">✦</span>Daily Panchang & Horoscope</li><li><span class="pck">✦</span>AI Astrologer chat (15/day)</li><li><span class="pck">✦</span>Numerology & basic remedies</li><li><span class="px">○</span><span style="color:var(--sub)">Matchmaking & Muhurat</span></li><li><span class="px">○</span><span style="color:var(--sub)">PDF export & 12-language AI</span></li></ul>
+      <ul class="pfl"><li><span class="pck">✦</span>AI-personalized Kundli readings</li><li><span class="pck">✦</span>AI Matchmaking compatibility</li><li><span class="pck">✦</span>Newborn Baby Kundli (full)</li><li><span class="pck">✦</span>AI-personalized remedies</li><li><span class="px">○</span><span style="color:var(--sub)">PDF export (Gold & VIP)</span></li><li><span class="px">○</span><span style="color:var(--sub)">Annual Forecast (VIP only)</span></li></ul>
       <button class="pbtn pb-o" onclick="CU?procPay('silver',499):router('signup')">Get Silver</button></div>
       <div class="pc"><div class="ptier">Gold</div><div class="ppr"><span data-inr="999">₹999</span><span class="pper">/mo</span></div><p class="pdsc">For the committed seeker.</p>
-      <ul class="pfl"><li><span class="pck">✦</span>Everything in Silver</li><li><span class="pck">✦</span>Unlimited AI Astrologer chat</li><li><span class="pck">✦</span>Kundli Matchmaking</li><li><span class="pck">✦</span>Muhurat & Puja planning</li><li><span class="pck">✦</span>PDF export & WhatsApp share</li><li><span class="px">○</span><span style="color:var(--sub)">12-language AI & VIP extras</span></li></ul>
+      <ul class="pfl"><li><span class="pck">✦</span>Everything in Silver</li><li><span class="pck">✦</span>📄 PDF export & downloads</li><li><span class="pck">✦</span>WhatsApp share readings</li><li><span class="pck">✦</span>Priority AI responses</li><li><span class="px">○</span><span style="color:var(--sub)">Annual Forecast (VIP only)</span></li></ul>
       <button class="pbtn pb-g" onclick="CU?procPay('gold',999):router('signup')">Get Gold ✦</button></div>
       <div class="pc pop"><div class="pbdg">★ Best Value</div><div class="ptier">VIP Oracle</div><div class="ppr"><span data-inr="1999">₹1999</span><span class="pper">/mo</span></div><p class="pdsc">The complete cosmic arsenal — nothing held back.</p>
-      <ul class="pfl"><li><span class="pck">✦</span><b>Everything in Gold</b></li><li><span class="pck">✦</span>12-Language AI Astrologers</li><li><span class="pck">✦</span>Full Vaastu & Gemstone consult</li><li><span class="pck">✦</span>Advanced remedies & Rudraksha</li><li><span class="pck">✦</span>Priority support & early features</li><li><span class="pck">✦</span>Everything unlimited, forever</li></ul>
+      <ul class="pfl"><li><span class="pck">✦</span><b>Everything in Gold</b></li><li><span class="pck">✦</span>👑 Annual Life Forecast (exclusive)</li><li><span class="pck">✦</span>VIP crown & prestige badge</li><li><span class="pck">✦</span>Advanced remedies & Rudraksha</li><li><span class="pck">✦</span>Priority support & early features</li><li><span class="pck">✦</span>Everything unlimited, forever</li></ul>
       <button class="pbtn pb-g" onclick="CU?procPay('vip',1999):router('signup')">Unlock VIP ★</button></div>
     </div>
   </div>
@@ -1777,6 +1779,38 @@ This single script enables ALL ad units on the page, including every
   </div>
 </div>
 
+<!-- VIP: ANNUAL LIFE FORECAST -->
+<div class="ov" id="mForecast" onclick="cov(event,'mForecast')">
+  <div class="mbox">
+    <button class="mc" onclick="closeOv('mForecast')">✕</button>
+    <div class="mt">👑 Annual Life Forecast <span style="font-size:.6rem;background:linear-gradient(135deg,#c8963c,#7c3aed);color:#fff;padding:3px 10px;border-radius:100px;vertical-align:middle;margin-left:6px;letter-spacing:.08em;">VIP EXCLUSIVE</span></div>
+    <div class="ms">Your complete year-ahead prediction (Varshphal) — month-by-month guidance on career, love, health, wealth, and the cosmic opportunities awaiting you.</div>
+    <div class="fgrid">
+      <div class="fg"><label class="fl">Your Name *</label><input class="fi" id="fc-n" placeholder="Full name"></div>
+      <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="fc-d"></div>
+      <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="fc-t"></div>
+      <div class="fg"><label class="fl">Birth Place</label><input class="fi" id="fc-p" placeholder="City, State"></div>
+      <div class="fg"><label class="fl">Forecast Year</label><select class="fi" id="fc-y"></select></div>
+      <div class="fg"><label class="fl">Language</label><select class="fi" id="fc-l"><option>English</option><option>Hindi</option><option>Marathi</option><option>Bengali</option><option>Tamil</option><option>Telugu</option><option>Kannada</option><option>Gujarati</option></select></div>
+      <div class="full"><button class="gbtn" id="fc-btn" onclick="genForecast()">👑 Reveal My Year Ahead</button></div>
+    </div>
+    <div id="fc-res" style="display:none;margin-top:24px;">
+      <div id="fc-ldr" class="ldg"><div class="lr"></div><p style="color:var(--muted);margin-top:10px;font-size:.8rem;">Reading the cosmic currents of your year…</p></div>
+      <div id="fc-cnt" style="display:none;">
+        <div style="display:flex;align-items:center;gap:14px;padding:18px 22px;background:linear-gradient(135deg,rgba(200,150,60,.14),rgba(124,58,237,.1));border-radius:var(--r2);margin-bottom:18px;border:1px solid rgba(200,150,60,.3);">
+          <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1.7rem;flex-shrink:0;">👑</div>
+          <div><h3 style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g2c);" id="fc-rname">Your Annual Forecast</h3><p style="color:var(--muted);font-size:.77rem;margin-top:2px;" id="fc-rsub">—</p></div>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;">
+          <button onclick="shareForecastWA()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid rgba(16,185,129,.28);border-radius:12px;color:#6ee7b7;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">💬 WhatsApp</button>
+        </div>
+        <div id="fc-tr-bar"></div>
+        <div id="fc-txt" style="font-size:.86rem;line-height:1.85;color:var(--text);white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- AI ASTROLOGER -->
 <div class="ov" id="mAI" onclick="cov(event,'mAI')">
   <div class="mbox">
@@ -2305,6 +2339,23 @@ function isPaid(){
   // Silver, Gold, and VIP are all paid tiers. Only 'free' (the arrival taste) is unpaid.
   return !!(CU&&(CU.plan==='silver'||CU.plan==='gold'||CU.plan==='vip'));
 }
+function isGoldOrVip(){
+  // Gold and VIP only — used for features above the Silver tier (e.g. PDF export).
+  return !!(CU&&(CU.plan==='gold'||CU.plan==='vip'));
+}
+function isVip(){
+  // VIP exclusive — the very top tier.
+  return !!(CU&&CU.plan==='vip');
+}
+// Prompt tuned for the tier a feature needs (so the unlock card points at the right plan).
+function upgradePromptGold(){
+  if(!CU){router('login');toast('Sign in to unlock this feature.','');return;}
+  openPay('gold','Gold','₹999','/mo');
+}
+function upgradePromptVip(){
+  if(!CU){router('login');toast('Sign in to unlock VIP.','');return;}
+  openPay('vip','VIP Oracle','₹1999','/mo');
+}
 function upgradePrompt(){
   if(!CU){router('login');toast('Sign in to unlock personalized AI readings.','');return;}
   openPay('silver','Silver','₹499','/mo');
@@ -2427,7 +2478,7 @@ function updNav(){
     li.style.display='block';lo.style.display='none';
     const init=((CU.fn||'U')[0]+((CU.ln||'')[0]||'')).toUpperCase();
     const fullName=(CU.fn+' '+(CU.ln||'')).trim()||'User';
-    const planTxt=cap(CU.plan||'free')+' Plan';
+    const planTxt=(CU.plan==='vip'?'👑 VIP':cap(CU.plan||'free')+' Plan');
 
     const ai=document.getElementById('nav-av-init');if(ai)ai.textContent=init;
     const un=document.getElementById('nav-uname');if(un)un.textContent=fullName;
@@ -2649,8 +2700,9 @@ function enterDash(){
   const dem=document.getElementById('d-em');if(dem)dem.textContent=CU.em||'';
   const dpl=document.getElementById('d-plan');
   if(dpl){
-    dpl.textContent=cap(CU.plan||'free')+' Plan';
-    dpl.className='planbdg '+(CU.plan==='silver'?'ps':CU.plan==='gold'?'pg2':CU.plan==='vip'?'pv':'pf');
+    // VIP gets a crown + prestige styling; other tiers show the plain plan name.
+    dpl.innerHTML=(CU.plan==='vip'?'👑 VIP ORACLE':cap(CU.plan||'free')+' Plan');
+    dpl.className='planbdg '+(CU.plan==='silver'?'ps':CU.plan==='gold'?'pg2':CU.plan==='vip'?'pv vip-crown':'pf');
   }
   if(CU.avatar){
     const avWrap=dav?dav.parentElement:null;
@@ -2676,9 +2728,9 @@ function enterDash(){
 
 /* ── Subscription plan data (matches home page Silver/Gold/VIP Oracle pricing) ── */
 const PLANS_D=[
-  {id:'silver',n:'Silver',pr:'₹499',per:'/mo',f:['Unlimited Kundli reports','Daily Panchang & Horoscope','AI Astrologer chat (15/day)','Numerology & basic remedies'],x:['Matchmaking & Muhurat','PDF export & 12-language AI']},
-  {id:'gold',n:'Gold',pr:'₹999',per:'/mo',f:['Everything in Silver','Unlimited AI Astrologer chat','Kundli Matchmaking','Muhurat & Puja planning','PDF export & WhatsApp share'],x:['12-language AI & VIP extras']},
-  {id:'vip',n:'VIP Oracle',pr:'₹1999',per:'/mo',f:['Everything in Gold','12-Language AI Astrologers','Full Vaastu & Gemstone consult','Advanced remedies & Rudraksha','Priority support & early features','Everything unlimited, forever'],x:[]}
+  {id:'silver',n:'Silver',pr:'₹499',per:'/mo',f:['AI-personalized Kundli readings','AI Matchmaking compatibility','Newborn Baby Kundli (full)','AI-personalized remedies'],x:['PDF export (Gold & VIP)','Annual Life Forecast (VIP)']},
+  {id:'gold',n:'Gold',pr:'₹999',per:'/mo',f:['Everything in Silver','📄 PDF export & downloads','WhatsApp share readings','Priority AI responses'],x:['Annual Life Forecast (VIP)']},
+  {id:'vip',n:'VIP Oracle',pr:'₹1999',per:'/mo',f:['Everything in Gold','👑 Annual Life Forecast (exclusive)','VIP crown & prestige badge','Advanced remedies & Rudraksha','Priority support & early features','Everything unlimited, forever'],x:[]}
 ];
 
 /* ── Sign Out confirm shortcut used by header button ── */
@@ -2965,7 +3017,7 @@ function attachCityAutocomplete(inputId){
 
 // Wire all known place inputs. Safe to call repeatedly (guards against double-wiring).
 function initCityAutocomplete(){
-  ['kp','nb-p','g-p','b-p','panch-city','gem-p','rem-p'].forEach(attachCityAutocomplete);
+  ['kp','nb-p','fc-p','g-p','b-p','panch-city','gem-p','rem-p'].forEach(attachCityAutocomplete);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -3086,7 +3138,7 @@ function translateVaastuActive(lang,selectEl){
   translateContainer(vaastuActiveTabId(),lang,selectEl);
 }
 
-const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mAILang','mVaastu'];
+const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mVaastu'];
 let _adInterstitialTimer=null;
 
 function shouldShowAd(){
@@ -5672,6 +5724,88 @@ const NAKSHATRA_NAMESYLLABLES={
   'Purva Bhadrapada':'Se, So, Da, Di','Uttara Bhadrapada':'Du, Tha, Jha, Da/Tra','Revati':'De, Do, Cha, Chi'
 };
 
+/* ═══════════════════════════════════════════════════
+   VIP EXCLUSIVE — Annual Life Forecast (Varshphal)
+   Only VIP members can open this. Others see an upgrade prompt.
+   Uses the same real ephemeris + AI as the rest of the app to
+   produce a personalised month-by-month year-ahead reading.
+═══════════════════════════════════════════════════ */
+function openForecast(){
+  if(!isVip()){
+    // Not VIP — invite them to upgrade rather than opening the tool.
+    if(!CU){router('login');toast('Sign in, then unlock the VIP Annual Forecast.','');return;}
+    toast('👑 Annual Life Forecast is a VIP-exclusive feature.','');
+    upgradePromptVip();
+    return;
+  }
+  // Populate the year selector (this year + next two) on first open
+  const ySel=document.getElementById('fc-y');
+  if(ySel&&!ySel.options.length){
+    const thisYear=new Date().getFullYear();
+    for(let y=thisYear;y<=thisYear+2;y++){const o=document.createElement('option');o.value=y;o.textContent=y;ySel.appendChild(o);}
+  }
+  openTool('mForecast');
+}
+
+async function genForecast(){
+  if(!isVip()){upgradePromptVip();return;}
+  const name=v('fc-n'),d=v('fc-d'),t=v('fc-t'),city=v('fc-p'),year=v('fc-y')||new Date().getFullYear(),lang=v('fc-l')||'English';
+  if(!name||!d){toast('⚠️ Please enter your name and date of birth.','');return;}
+  const btn=document.getElementById('fc-btn');
+  if(btn.dataset.busy==='1')return;
+  btn.dataset.busy='1';btn.disabled=true;btn.textContent='⏳ Consulting the stars…';
+  document.getElementById('fc-res').style.display='block';
+  document.getElementById('fc-ldr').style.display='block';document.getElementById('fc-cnt').style.display='none';
+  resetTranslation('fc-txt');
+  try{
+    const dt=new Date(d);
+    if(isNaN(dt.getTime()))throw new Error('Invalid date of birth.');
+    const yr=dt.getFullYear(),mo=dt.getMonth(),dy=dt.getDate();
+    let th=6,tm=0;
+    if(t&&t.indexOf(':')>-1){const pp=t.split(':');const ph=parseInt(pp[0],10),pm=parseInt(pp[1],10);th=isNaN(ph)?6:Math.min(23,Math.max(0,ph));tm=isNaN(pm)?0:Math.min(59,Math.max(0,pm));}
+    const realPos=computeRealPositions(yr,mo+1,dy,th,tm,5.5);
+    const ri=Math.floor(realPos.positions.Moon/30);
+    const ni=Math.floor(realPos.positions.Moon/(360/27));
+    const rashiName=RASHIS[ri]||'—';
+    const nakName=(typeof NAK!=='undefined'&&NAK[ni])?NAK[ni]:'—';
+
+    document.getElementById('fc-rname').textContent=name+' — '+year+' Forecast';
+    document.getElementById('fc-rsub').textContent=`${rashiName} Moon · ${nakName} Nakshatra`;
+
+    const sys=`You are AstroHand's most senior Vedic astrologer, preparing an exclusive VIP Annual Life Forecast (Varshphal) for ${year}. Reply ENTIRELY in ${lang}. Write a premium, detailed year-ahead reading with these sections:
+
+1. YEAR OVERVIEW — the overall theme and energy of ${year} for this person.
+2. CAREER & FINANCE — opportunities, best months for growth, cautions.
+3. LOVE & RELATIONSHIPS — how the year unfolds for the heart and family.
+4. HEALTH & WELLBEING — what to nurture, when to rest.
+5. MONTH-BY-MONTH HIGHLIGHTS — a short line for each of the 12 months (Jan–Dec) noting the key focus or opportunity.
+6. LUCKY PERIODS & REMEDIES — the most auspicious windows of the year and 2-3 specific remedies to maximise fortune.
+
+Make it feel premium, personal, and hopeful — this is the flagship VIP feature. Around 500-550 words. End with an empowering note that the stars guide but free will decides.`;
+
+    const userPrompt=`Name: ${name}. Moon sign: ${rashiName}. Nakshatra: ${nakName}. ${city?`Birth place: ${city}. `:''}Born: ${d}. Forecast for the year ${year}. Provide the full annual forecast.`;
+
+    let txt;
+    try{txt=await callAI(sys,[{role:'user',content:userPrompt}],1600);}catch(aiErr){txt=null;}
+    if(!txt)txt=`✨ ${name}, your ${year} unfolds under the ${rashiName} Moon and ${nakName} Nakshatra — a year of meaningful growth. The cosmic currents favour steady progress in career, deepening bonds in relationships, and renewed vitality. Trust your timing, honour your health, and the year will reward your patience.`;
+    document.getElementById('fc-ldr').style.display='none';document.getElementById('fc-cnt').style.display='block';
+    document.getElementById('fc-txt').textContent=txt;
+    if(typeof mountTranslateBar==='function'){mountTranslateBar('fc-tr-bar','fc-txt');resetTranslation('fc-txt');}
+    if(CU)addRd({type:'kundli',icon:'👑',title:'Annual Forecast '+year+' — '+name,sub:rashiName+' · '+year,preview:txt.substring(0,200)+'…',text:txt});
+    window._lastForecast={name:name,year:year,rashi:rashiName,txt:txt};
+  }catch(e){
+    document.getElementById('fc-ldr').style.display='none';document.getElementById('fc-cnt').style.display='block';
+    document.getElementById('fc-txt').textContent='The cosmic currents are momentarily unclear. Please check your birth details and try again.';
+  }
+  btn.dataset.busy='0';btn.disabled=false;btn.textContent='👑 Reveal My Year Ahead';
+}
+
+function shareForecastWA(){
+  const fc=window._lastForecast;
+  const txt=fc?`👑 ${fc.name}'s ${fc.year} Life Forecast 👑\n\n${fc.txt.substring(0,600)}...\n\n— via AstroHand VIP`:'Check out AstroHand VIP Annual Forecast!';
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+
 async function genNewborn(){
   const name=v('nb-n'),d=v('nb-d'),t=v('nb-t'),city=v('nb-p'),lang=v('nb-l')||'English';
   if(!d||!t){toast('⚠️ Please enter date and time of birth (both needed for a baby chart).','');return;}
@@ -5798,7 +5932,7 @@ function shareNewbornWA(){
 function exportNewbornPDF(){
   const nb=window._lastNewborn;
   if(!nb){toast('Generate the baby\'s kundli first.','');return;}
-  if(!isPaid()){upgradePrompt();return;}
+  if(!isGoldOrVip()){toast('📄 PDF export is a Gold & VIP feature.','');upgradePromptGold();return;}
   const cd=window._nbChartData||{};
   const w=window.open('','_blank');
   if(!w){toast('Please allow pop-ups to download the PDF.','');return;}
@@ -6491,6 +6625,7 @@ const RPT_LABELS={
 function exportKundliPDF(){
   const name=(document.getElementById('k-rname')||{}).textContent||'';
   if(!name||name==='—'||!name.trim()){toast('Please generate your Kundli first!','');return;}
+  if(!isGoldOrVip()){toast('📄 PDF export is a Gold & VIP feature.','');upgradePromptGold();return;}
   const dob=(document.getElementById('kd')||{}).value||'';
   const place=(document.getElementById('kp')||{}).value||'';
   const gender=(document.getElementById('kg')||{}).value||'';
