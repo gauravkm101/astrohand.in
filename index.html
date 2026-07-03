@@ -35,7 +35,7 @@
   --glass-border:1px solid rgba(232,118,44,.16);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+html{scroll-behavior:smooth;overflow-x:hidden;max-width:100%;}
 body{font-family:'Inter','Noto Sans Devanagari','Noto Sans Bengali','Noto Sans Tamil','Noto Sans Telugu',sans-serif;background:var(--ink);color:var(--text);overflow-x:hidden;min-height:100vh;}
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-thumb{background:rgba(200,150,60,.25);border-radius:2px;}
@@ -409,7 +409,7 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
 .curr-trigger:hover{background:rgba(200,150,60,.07);border-color:rgba(200,150,60,.3);color:var(--g2c);}
 .curr-chev{transition:transform .2s;flex-shrink:0;}
 .curr-wrap.open .curr-chev{transform:rotate(180deg);}
-.curr-menu{position:absolute;top:calc(100% + 10px);left:0;width:190px;max-height:320px;overflow-y:auto;background:var(--card,#0d0b27);border:1px solid var(--bdr);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.45);padding:6px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .18s ease;z-index:1000;}
+.curr-menu{position:absolute;top:calc(100% + 10px);right:0;left:auto;width:190px;max-width:calc(100vw - 30px);max-height:320px;overflow-y:auto;background:var(--card,#0d0b27);border:1px solid var(--bdr);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.45);padding:6px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .18s ease;z-index:1000;}
 .curr-wrap.open .curr-menu{opacity:1;visibility:visible;transform:translateY(0);}
 .curr-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;font-size:.78rem;color:var(--text);cursor:pointer;transition:background .15s;}
 .curr-item:hover{background:rgba(200,150,60,.08);}
@@ -522,6 +522,7 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
 .ps{background:rgba(148,163,184,.14);color:#94a3b8;border:1px solid rgba(148,163,184,.24);}
 .pg2{background:rgba(200,150,60,.14);color:var(--g2c);border:1px solid rgba(200,150,60,.28);}
 .pv{background:rgba(124,58,237,.14);color:#a78bfa;border:1px solid rgba(124,58,237,.28);}
+.ps{background:rgba(148,163,184,.16);color:#cbd5e1;border:1px solid rgba(148,163,184,.32);}
 .d-minis{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px;}
 .dmin{background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r);padding:9px;text-align:center;}
 .dmin-n{font-family:'Cinzel',serif;font-size:1.15rem;color:var(--g2c);line-height:1;}
@@ -682,6 +683,7 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
 
 /* ── RESPONSIVE ── */
 @media(max-width:960px){.dash-layout{grid-template-columns:1fr;}.dash-sb{display:grid;grid-template-columns:1fr 1fr;gap:10px;}.dp-card{display:flex;align-items:center;gap:16px;text-align:left;}.d-minis{margin-top:0;}.fg3,.tg3,.pg3{grid-template-columns:repeat(2,1fr);}.fg4{grid-template-columns:1fr 1fr 1fr;}.sr4{grid-template-columns:repeat(2,1fr);}.qt-g{grid-template-columns:repeat(3,1fr);}.pl-g{grid-template-columns:1fr 1fr;}}
+@media(max-width:820px){.nav-links-d{display:none!important;}.nav-r .btn-si,.nav-r .btn-ku{display:none;}#nav-out{display:none!important;}.acct-trigger-txt{display:none;}.acct-trigger{padding:5px;}.ham{display:flex;}}
 @media(max-width:680px){nav{padding:0 16px;}.nav-links-d{display:none!important;}.nav-r .btn-si,.nav-r .btn-ku{display:none;}.acct-trigger-txt{display:none;}.acct-trigger{padding:5px;}.ham{display:flex;}.fg3,.tg3,.pg3{grid-template-columns:1fr;}.pc.pop{transform:none;}.fgrid,.frm2{grid-template-columns:1fr;}.pfg{grid-template-columns:1fr;}.dash-sb{grid-template-columns:1fr;}.dp-card{flex-direction:column;text-align:center;}.sr4{grid-template-columns:1fr 1fr;}.qt-g{grid-template-columns:repeat(2,1fr);}.pl-g{grid-template-columns:1fr;}.fg4{grid-template-columns:1fr 1fr;}.fbot{flex-direction:column;text-align:center;}.nlf{flex-direction:column;}.acard{padding:28px 20px;}.mbox{padding:24px 18px;}.otp-boxes{gap:7px;}.ob{width:44px;height:50px;font-size:1.2rem;}}
 
 
@@ -1042,6 +1044,7 @@ This single script enables ALL ad units on the page, including every
 <div class="tools-wrap">
   <div class="tgrid">
     <div class="tool" onclick="openTool('mKundli')"><span class="ticon">📜</span><span class="tlbl">Free Kundli</span><span class="tbdg">FREE</span></div>
+    <div class="tool" onclick="openTool('mNewborn')"><span class="ticon">👶</span><span class="tlbl">Newborn Kundli</span><span class="tbdg">NEW</span></div>
     <div class="tool" onclick="openTool('mAI')"><span class="ticon">🤖</span><span class="tlbl">AI Astrologers</span><span class="tbdg">LIVE</span></div>
     <div class="tool" onclick="openTool('mAILang');initALangList();"><span class="ticon">🌐</span><span class="tlbl">Language AI</span><span class="tbdg">12 LANG</span></div>
     <div class="tool" onclick="openTool('mHoro')"><span class="ticon">♈</span><span class="tlbl">Horoscope</span><span class="tbdg">FREE</span></div>
@@ -1091,17 +1094,17 @@ This single script enables ALL ad units on the page, including every
   <div class="con">
     <p class="eye">✦ Subscription Plans ✦</p>
     <h2 class="h2">Choose Your <span>Cosmic Journey</span></h2>
-    <p class="sdesc">Start free. Upgrade when ready. Cancel anytime.</p>
+    <p class="sdesc">Explore free when you arrive. Unlock your full cosmic blueprint with a plan.</p>
     <div class="pg3">
-      <div class="pc"><div class="ptier">Seeker</div><div class="ppr"><span data-inr="0">₹0</span><span class="pper"> forever</span></div><p class="pdsc">Begin your cosmic journey.</p>
-      <ul class="pfl"><li><span class="pck">✦</span>1 Free Kundli/month</li><li><span class="pck">✦</span>Daily Horoscope</li><li><span class="pck">✦</span>AI Chat (10/day)</li><li><span class="px">○</span><span style="color:var(--sub)">Premium Reports</span></li></ul>
-      <button class="pbtn pb-o" onclick="router('signup')">Start Free</button></div>
-      <div class="pc pop"><div class="pbdg">✦ Most Popular</div><div class="ptier">Gold</div><div class="ppr"><span data-inr="499">₹499</span><span class="pper">/mo</span></div><p class="pdsc">For the serious seeker.</p>
-      <ul class="pfl"><li><span class="pck">✦</span>Unlimited Kundli</li><li><span class="pck">✦</span>All 8 AI Astrologers</li><li><span class="pck">✦</span>All Premium Reports</li><li><span class="pck">✦</span>PDF Downloads</li></ul>
-      <button class="pbtn pb-g" onclick="CU?procPay('gold',499):router('signup')">Get Gold ✦</button></div>
-      <div class="pc"><div class="ptier">VIP Oracle</div><div class="ppr"><span data-inr="999">₹999</span><span class="pper">/mo</span></div><p class="pdsc">Nothing held back.</p>
-      <ul class="pfl"><li><span class="pck">✦</span>Everything in Gold</li><li><span class="pck">✦</span>Annual Forecast</li><li><span class="pck">✦</span>Muhurat Planning</li><li><span class="pck">✦</span>Dedicated Advisor</li></ul>
-      <button class="pbtn pb-o" onclick="CU?procPay('vip',999):router('signup')">Go VIP</button></div>
+      <div class="pc"><div class="ptier">Silver</div><div class="ppr"><span data-inr="499">₹499</span><span class="pper">/mo</span></div><p class="pdsc">Your first real step in.</p>
+      <ul class="pfl"><li><span class="pck">✦</span>Unlimited Kundli reports</li><li><span class="pck">✦</span>Daily Panchang & Horoscope</li><li><span class="pck">✦</span>AI Astrologer chat (15/day)</li><li><span class="pck">✦</span>Numerology & basic remedies</li><li><span class="px">○</span><span style="color:var(--sub)">Matchmaking & Muhurat</span></li><li><span class="px">○</span><span style="color:var(--sub)">PDF export & 12-language AI</span></li></ul>
+      <button class="pbtn pb-o" onclick="CU?procPay('silver',499):router('signup')">Get Silver</button></div>
+      <div class="pc"><div class="ptier">Gold</div><div class="ppr"><span data-inr="999">₹999</span><span class="pper">/mo</span></div><p class="pdsc">For the committed seeker.</p>
+      <ul class="pfl"><li><span class="pck">✦</span>Everything in Silver</li><li><span class="pck">✦</span>Unlimited AI Astrologer chat</li><li><span class="pck">✦</span>Kundli Matchmaking</li><li><span class="pck">✦</span>Muhurat & Puja planning</li><li><span class="pck">✦</span>PDF export & WhatsApp share</li><li><span class="px">○</span><span style="color:var(--sub)">12-language AI & VIP extras</span></li></ul>
+      <button class="pbtn pb-g" onclick="CU?procPay('gold',999):router('signup')">Get Gold ✦</button></div>
+      <div class="pc pop"><div class="pbdg">★ Best Value</div><div class="ptier">VIP Oracle</div><div class="ppr"><span data-inr="1999">₹1999</span><span class="pper">/mo</span></div><p class="pdsc">The complete cosmic arsenal — nothing held back.</p>
+      <ul class="pfl"><li><span class="pck">✦</span><b>Everything in Gold</b></li><li><span class="pck">✦</span>12-Language AI Astrologers</li><li><span class="pck">✦</span>Full Vaastu & Gemstone consult</li><li><span class="pck">✦</span>Advanced remedies & Rudraksha</li><li><span class="pck">✦</span>Priority support & early features</li><li><span class="pck">✦</span>Everything unlimited, forever</li></ul>
+      <button class="pbtn pb-g" onclick="CU?procPay('vip',1999):router('signup')">Unlock VIP ★</button></div>
     </div>
   </div>
 </section>
@@ -1726,6 +1729,39 @@ This single script enables ALL ad units on the page, including every
   </div>
 </div>
 
+<!-- NEWBORN KUNDLI -->
+<div class="ov" id="mNewborn" onclick="cov(event,'mNewborn')">
+  <div class="mbox">
+    <button class="mc" onclick="closeOv('mNewborn')">✕</button>
+    <div class="mt">👶 Newborn Baby Kundli</div>
+    <div class="ms">A special birth chart for your newborn — Nakshatra, Rashi, auspicious naming letters, and blessings for the little one's journey.</div>
+    <div class="fgrid">
+      <div class="fg"><label class="fl">Baby's Name (if chosen)</label><input class="fi" id="nb-n" placeholder="Leave blank if not yet named"></div>
+      <div class="fg"><label class="fl">Gender</label><select class="fi" id="nb-g"><option value="">Select</option><option>Boy</option><option>Girl</option></select></div>
+      <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="nb-d"></div>
+      <div class="fg"><label class="fl">Time of Birth *</label><input class="fi" type="time" id="nb-t"></div>
+      <div class="fg"><label class="fl">Birth Place *</label><input class="fi" id="nb-p" placeholder="City, State"></div>
+      <div class="fg"><label class="fl">Language</label><select class="fi" id="nb-l"><option>English</option><option>Hindi</option><option>Marathi</option><option>Bengali</option><option>Tamil</option><option>Telugu</option><option>Kannada</option><option>Gujarati</option></select></div>
+      <div class="full"><button class="gbtn" id="nb-btn" onclick="genNewborn()">✨ Reveal Baby's Kundli</button></div>
+    </div>
+    <div id="nb-res" style="display:none;margin-top:24px;">
+      <div id="nb-ldr" class="ldg"><div class="lr"></div><p style="color:var(--muted);margin-top:10px;font-size:.8rem;">Reading the stars for your little one…</p></div>
+      <div id="nb-cnt" style="display:none;">
+        <div style="display:flex;align-items:center;gap:14px;padding:18px 22px;background:linear-gradient(135deg,rgba(200,150,60,.1),rgba(124,58,237,.07));border-radius:var(--r2);margin-bottom:18px;border:1px solid var(--bdr);">
+          <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1.7rem;flex-shrink:0;">👶</div>
+          <div><h3 style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g2c);" id="nb-rname">Baby's Cosmic Blueprint</h3><p style="color:var(--muted);font-size:.77rem;margin-top:2px;" id="nb-rdob">—</p></div>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;">
+          <button onclick="exportNewbornPDF()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid rgba(124,58,237,.3);border-radius:12px;color:#c4b5fd;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">📄 Download PDF</button>
+          <button onclick="shareNewbornWA()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid rgba(16,185,129,.28);border-radius:12px;color:#6ee7b7;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">💬 WhatsApp</button>
+        </div>
+        <div id="nb-tr-bar"></div>
+        <div id="nb-txt" style="font-size:.86rem;line-height:1.85;color:var(--text);white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- AI ASTROLOGER -->
 <div class="ov" id="mAI" onclick="cov(event,'mAI')">
   <div class="mbox">
@@ -2251,11 +2287,12 @@ function setBtnLoading(id,isLoading,loadingText,normalText){
 
 /* ── Premium gating: free vs paid feature access ── */
 function isPaid(){
-  return !!(CU&&(CU.plan==='gold'||CU.plan==='vip'));
+  // Silver, Gold, and VIP are all paid tiers. Only 'free' (the arrival taste) is unpaid.
+  return !!(CU&&(CU.plan==='silver'||CU.plan==='gold'||CU.plan==='vip'));
 }
 function upgradePrompt(){
   if(!CU){router('login');toast('Sign in to unlock personalized AI readings.','');return;}
-  openPay('gold','Gold','₹499','/mo');
+  openPay('silver','Silver','₹499','/mo');
 }
 function lockCardHTML(title,sub){
   return `<div class="lock-card">
@@ -2598,7 +2635,7 @@ function enterDash(){
   const dpl=document.getElementById('d-plan');
   if(dpl){
     dpl.textContent=cap(CU.plan||'free')+' Plan';
-    dpl.className='planbdg '+(CU.plan==='gold'?'pg2':CU.plan==='vip'?'pv':'pf');
+    dpl.className='planbdg '+(CU.plan==='silver'?'ps':CU.plan==='gold'?'pg2':CU.plan==='vip'?'pv':'pf');
   }
   if(CU.avatar){
     const avWrap=dav?dav.parentElement:null;
@@ -2622,11 +2659,11 @@ function enterDash(){
   syncReadingsFromCloud();
 }
 
-/* ── Subscription plan data (matches home page Seeker/Gold/VIP Oracle pricing) ── */
+/* ── Subscription plan data (matches home page Silver/Gold/VIP Oracle pricing) ── */
 const PLANS_D=[
-  {id:'free',n:'Seeker',pr:'₹0',per:' forever',f:['1 Free Kundli/month','Daily Horoscope','AI Chat (10/day)'],x:['Premium Reports']},
-  {id:'gold',n:'Gold',pr:'₹499',per:'/mo',f:['Unlimited Kundli','All 8 AI Astrologers','All Premium Reports','PDF Downloads'],x:[]},
-  {id:'vip',n:'VIP Oracle',pr:'₹999',per:'/mo',f:['Everything in Gold','Annual Forecast','Muhurat Planning','Dedicated Advisor'],x:[]}
+  {id:'silver',n:'Silver',pr:'₹499',per:'/mo',f:['Unlimited Kundli reports','Daily Panchang & Horoscope','AI Astrologer chat (15/day)','Numerology & basic remedies'],x:['Matchmaking & Muhurat','PDF export & 12-language AI']},
+  {id:'gold',n:'Gold',pr:'₹999',per:'/mo',f:['Everything in Silver','Unlimited AI Astrologer chat','Kundli Matchmaking','Muhurat & Puja planning','PDF export & WhatsApp share'],x:['12-language AI & VIP extras']},
+  {id:'vip',n:'VIP Oracle',pr:'₹1999',per:'/mo',f:['Everything in Gold','12-Language AI Astrologers','Full Vaastu & Gemstone consult','Advanced remedies & Rudraksha','Priority support & early features','Everything unlimited, forever'],x:[]}
 ];
 
 /* ── Sign Out confirm shortcut used by header button ── */
@@ -2913,7 +2950,7 @@ function attachCityAutocomplete(inputId){
 
 // Wire all known place inputs. Safe to call repeatedly (guards against double-wiring).
 function initCityAutocomplete(){
-  ['kp','g-p','b-p','panch-city','gem-p','rem-p'].forEach(attachCityAutocomplete);
+  ['kp','nb-p','g-p','b-p','panch-city','gem-p','rem-p'].forEach(attachCityAutocomplete);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -3034,7 +3071,7 @@ function translateVaastuActive(lang,selectEl){
   translateContainer(vaastuActiveTabId(),lang,selectEl);
 }
 
-const AD_TOOL_IDS=['mKundli','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mAILang','mVaastu'];
+const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mAILang','mVaastu'];
 let _adInterstitialTimer=null;
 
 function shouldShowAd(){
@@ -5534,6 +5571,113 @@ const DASHA_Y=[6,10,7,18,16,19,17,7,20];
 const GEMS=['Ruby','Pearl','Red Coral','Hessonite','Yellow Sapphire','Blue Sapphire','Emerald','Cat\'s Eye','Diamond'];
 const COLS=['Ruby Red','Pearl White','Crimson','Silver','Golden Yellow','Deep Blue','Sea Green','Orange','Purple'];
 const DAYS_W=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+/* ═══════════════════════════════════════════════════
+   NEWBORN BABY KUNDLI
+   Separate from genKundli — reuses the same REAL ephemeris
+   (computeRealPositions) for genuine Moon-sign & Nakshatra,
+   then focuses on baby-specific guidance: naming syllables,
+   birth-star qualities, and blessings. Does not touch the
+   regular Kundli or AI Astrologer systems.
+
+   Naming syllables per Nakshatra (traditional Janma-Nakshatra
+   naming system: each nakshatra's 4 padas map to auspicious
+   starting sounds for the baby's name). Widely published in
+   Vedic naming references.
+═══════════════════════════════════════════════════ */
+const NAKSHATRA_NAMESYLLABLES={
+  'Ashwini':'Chu, Che, Cho, La','Bharani':'Lee, Lu, Le, Lo','Krittika':'Aa, Ee, U, Ae',
+  'Rohini':'O, Va/Ba, Vi/Bi, Vu/Bu','Mrigashira':'Ve/Be, Vo/Bo, Ka, Ki','Ardra':'Ku, Gha, Ing, Chha',
+  'Punarvasu':'Ke, Ko, Ha, Hi','Pushya':'Hu, He, Ho, Da','Ashlesha':'Dee, Doo, De, Do',
+  'Magha':'Ma, Mee, Mu, Me','Purva Phalguni':'Mo, Ta, Ti, Tu','Uttara Phalguni':'Te, To, Pa, Pi',
+  'Hasta':'Pu, Sha, Na, Tha','Chitra':'Pe, Po, Ra, Ri','Swati':'Ru, Re, Ro, Ta',
+  'Vishakha':'Ti, Tu, Te, To','Anuradha':'Na, Nee, Nu, Ne','Jyeshtha':'No, Ya, Yi, Yu',
+  'Mula':'Ye, Yo, Bha, Bhi','Purva Ashadha':'Bhu, Dha, Pha, Dha','Uttara Ashadha':'Bhe, Bho, Ja, Ji',
+  'Shravana':'Ju/Khi, Je/Khu, Jo/Khe, Gha/Kho','Dhanishtha':'Ga, Gi, Gu, Ge','Shatabhisha':'Go, Sa, Si, Su',
+  'Purva Bhadrapada':'Se, So, Da, Di','Uttara Bhadrapada':'Du, Tha, Jha, Da/Tra','Revati':'De, Do, Cha, Chi'
+};
+
+async function genNewborn(){
+  const name=v('nb-n'),d=v('nb-d'),t=v('nb-t'),city=v('nb-p'),lang=v('nb-l')||'English';
+  if(!d||!t){toast('⚠️ Please enter date and time of birth (both needed for a baby chart).','');return;}
+  const btn=document.getElementById('nb-btn');
+  if(btn.dataset.busy==='1')return;
+  btn.dataset.busy='1';btn.disabled=true;btn.textContent='⏳ Reading the stars…';
+  document.getElementById('nb-res').style.display='block';
+  document.getElementById('nb-ldr').style.display='block';document.getElementById('nb-cnt').style.display='none';
+  resetTranslation('nb-txt');
+  try{
+    const dt=new Date(d);
+    if(isNaN(dt.getTime()))throw new Error('Invalid date of birth.');
+    const yr=dt.getFullYear(),mo=dt.getMonth(),dy=dt.getDate();
+    let th=6,tm=0;
+    if(t&&t.indexOf(':')>-1){const pp=t.split(':');const ph=parseInt(pp[0],10),pm=parseInt(pp[1],10);th=isNaN(ph)?6:Math.min(23,Math.max(0,ph));tm=isNaN(pm)?0:Math.min(59,Math.max(0,pm));}
+
+    // REAL positions (same verified engine as the main Kundli).
+    const realPos=computeRealPositions(yr,mo+1,dy,th,tm,5.5);
+    const ri=Math.floor(realPos.positions.Moon/30);           // Moon sign (Rashi)
+    const ni=Math.floor(realPos.positions.Moon/(360/27));      // Nakshatra
+    const RASHIS_L=['Aries (Mesha)','Taurus (Vrishabha)','Gemini (Mithuna)','Cancer (Karka)','Leo (Simha)','Virgo (Kanya)','Libra (Tula)','Scorpio (Vrishchika)','Sagittarius (Dhanu)','Capricorn (Makara)','Aquarius (Kumbha)','Pisces (Meena)'];
+    const nakName=(typeof NAK!=='undefined'&&NAK[ni])?NAK[ni]:'—';
+    const rashiName=RASHIS_L[ri]||'—';
+    const syllables=NAKSHATRA_NAMESYLLABLES[nakName]||'—';
+
+    // Header
+    document.getElementById('nb-rname').textContent=(name?name+' — ':'')+'Baby\'s Cosmic Blueprint';
+    document.getElementById('nb-rdob').textContent=`${rashiName} Moon · ${nakName} Nakshatra`;
+
+    const sys=`You are AstroHand's gentle Vedic astrologer specializing in newborn (Janma) kundli for babies. Write warmly for new parents. Reply ENTIRELY in ${lang}. Structure the reading with these clear sections:
+
+1. BIRTH STAR (Nakshatra: ${nakName}) — its meaning, the ruling deity and planet, and the beautiful qualities this star gives the child.
+2. MOON SIGN (Rashi: ${rashiName}) — the baby's core emotional nature and temperament.
+3. AUSPICIOUS NAMING LETTERS — based on ${nakName} nakshatra, the traditional starting sounds are: ${syllables}. Suggest 4-6 lovely baby name ideas (appropriate for a ${v('nb-g')||'child'}) beginning with these sounds, with brief meanings.
+4. LUCKY ELEMENTS — favorable color, number, day, and gemstone for the child.
+5. PERSONALITY & STRENGTHS — the natural gifts and character this child is likely to have.
+6. GUIDANCE FOR PARENTS — 2-3 gentle, practical blessings/tips for nurturing this child's potential.
+
+Keep it warm, hopeful, and around 400-450 words. End with a short blessing for the baby. Note that astrology offers loving guidance, not fixed destiny.`;
+
+    const userPrompt=`Baby's birth star (Nakshatra): ${nakName}. Moon sign: ${rashiName}. ${name?`Name chosen: ${name}. `:'Not yet named. '}${v('nb-g')?`Gender: ${v('nb-g')}. `:''}${city?`Birth place: ${city}. `:''}Date: ${d}, Time: ${t}. Give the full newborn reading.`;
+
+    const txt=await callAI(sys,[{role:'user',content:userPrompt}],1200)||'The stars are still aligning for your little one. Please try again in a moment.';
+    document.getElementById('nb-ldr').style.display='none';document.getElementById('nb-cnt').style.display='block';
+    document.getElementById('nb-txt').textContent=txt;
+    // Mount translation bar for this reading
+    if(typeof mountTranslateBar==='function'){mountTranslateBar('nb-tr-bar','nb-txt');resetTranslation('nb-txt');}
+    // Save to readings if logged in
+    if(CU)addRd({type:'kundli',icon:'👶',title:'Newborn Kundli'+(name?' — '+name:''),sub:nakName+' Nakshatra · '+rashiName,preview:txt.substring(0,200)+'…',text:txt});
+    window._lastNewborn={name:name||'Baby',nak:nakName,rashi:rashiName,txt:txt,dob:d,tob:t};
+  }catch(e){
+    document.getElementById('nb-ldr').style.display='none';document.getElementById('nb-cnt').style.display='block';
+    document.getElementById('nb-txt').textContent='The cosmic nursery is momentarily clouded. Please check the birth details and try again.';
+  }
+  btn.dataset.busy='0';btn.disabled=false;btn.textContent='✨ Reveal Baby\'s Kundli';
+}
+
+function shareNewbornWA(){
+  const nb=window._lastNewborn;
+  const txt=nb?`🌟 ${nb.name}'s Newborn Kundli 🌟\n\nNakshatra: ${nb.nak}\nMoon Sign: ${nb.rashi}\n\n${nb.txt.substring(0,600)}...\n\n— via AstroHand`:'Check out AstroHand Newborn Kundli!';
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+
+function exportNewbornPDF(){
+  const nb=window._lastNewborn;
+  if(!nb){toast('Generate the baby\'s kundli first.','');return;}
+  const w=window.open('','_blank');
+  if(!w){toast('Please allow pop-ups to download the PDF.','');return;}
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(nb.name)} — Newborn Kundli</title>
+  <style>body{font-family:Georgia,serif;max-width:800px;margin:40px auto;padding:0 30px;color:#2d2d2d;line-height:1.7;}
+  h1{color:#7c3aed;text-align:center;border-bottom:2px solid #c8963c;padding-bottom:14px;}
+  .meta{text-align:center;color:#666;margin-bottom:24px;}.meta b{color:#c8963c;}
+  .body{white-space:pre-wrap;font-size:14px;}
+  .foot{margin-top:30px;text-align:center;color:#999;font-size:11px;border-top:1px solid #ddd;padding-top:14px;}</style></head>
+  <body><h1>👶 ${esc(nb.name)}'s Newborn Kundli</h1>
+  <div class="meta"><b>${esc(nb.nak)}</b> Nakshatra &nbsp;·&nbsp; <b>${esc(nb.rashi)}</b> Moon &nbsp;·&nbsp; Born ${esc(nb.dob)} ${esc(nb.tob)}</div>
+  <div class="body">${esc(nb.txt)}</div>
+  <div class="foot">Generated by AstroHand · astrohand.in · Astrology offers loving guidance, not fixed destiny.</div>
+  <script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  w.document.close();
+}
+
 async function genKundli(){
   const n=v('kn'),d=v('kd');
   if(!n||!d){toast('⚠️ Please enter name and date of birth.','');return;}
