@@ -6617,6 +6617,62 @@ async function calcNum(){
 let selH='right';
 function selHand(btn,h){document.querySelectorAll('.htb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');selH=h;}
 function setPalm(e){const f=e.target.files[0];if(!f)return;document.getElementById('p-img').src=URL.createObjectURL(f);document.getElementById('p-prev').style.display='block';}
+/* ═══════════════════════════════════════════════════
+   PALM PHOTO VALIDATION (browser-only, no backend/API)
+   A palm photo is dominated by human skin tones filling most
+   of the frame. We sample the image's pixels and estimate the
+   fraction that fall in a broad human-skin-tone range (works
+   across light-to-dark skin). A dog, a lion, a landscape, or a
+   random object will usually fail this because their color
+   distribution is very different from a hand filling the frame.
+
+   This is a heuristic, not perfect — so we PAIR it with a user
+   confirmation checkbox. Together they stop the obvious fakes
+   (animals, objects, scenery) without any external service.
+═══════════════════════════════════════════════════ */
+function analyzePalmImage(imgEl){
+  return new Promise((resolve)=>{
+    try{
+      const canvas=document.createElement('canvas');
+      const W=80, H=80; // small sample is enough and fast
+      canvas.width=W; canvas.height=H;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(imgEl,0,0,W,H);
+      let data;
+      try{ data=ctx.getImageData(0,0,W,H).data; }
+      catch(e){ resolve({ok:true,reason:'cannot-analyze',skinPct:null}); return; } // if blocked, don't hard-fail
+      let skin=0, total=0, veryDark=0, veryLight=0;
+      for(let i=0;i<data.length;i+=4){
+        const r=data[i], g=data[i+1], b=data[i+2], a=data[i+3];
+        if(a<125){continue;} // skip transparent
+        total++;
+        const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+        // Broad skin-tone test (covers many skin tones):
+        // red is the strongest channel, red>green>blue ordering, and not grey.
+        const isSkin = r>60 && g>35 && b>20 &&
+                       r>g && g>=b &&
+                       (r-b)>12 &&
+                       (mx-mn)>10 &&
+                       r<250; // avoid pure white blowout
+        if(isSkin)skin++;
+        if(mx<45)veryDark++;
+        if(mn>225)veryLight++;
+      }
+      if(total===0){resolve({ok:true,reason:'empty',skinPct:null});return;}
+      const skinPct=skin/total;
+      const darkPct=veryDark/total;
+      const lightPct=veryLight/total;
+      // A hand filling the frame typically has a high skin fraction.
+      // Require a reasonable amount of skin-tone, and not a frame that's mostly
+      // black or mostly white (which suggests it isn't a well-lit palm).
+      const looksLikeHand = skinPct>=0.30 && darkPct<0.6 && lightPct<0.7;
+      resolve({ok:looksLikeHand, skinPct:Math.round(skinPct*100), reason: looksLikeHand?'ok':'low-skin'});
+    }catch(e){
+      resolve({ok:true,reason:'error',skinPct:null}); // fail open on unexpected errors
+    }
+  });
+}
+
 async function doPalm(){
   const fi=document.getElementById('p-file'),dob=v('p-db'),t=v('p-tb'),city=v('p-ci');
   // A palm reading requires an actual palm photo. Without it there is nothing real to read,
@@ -6625,7 +6681,18 @@ async function doPalm(){
     toast('📷 Please upload a clear photo of your palm first — a palm reading needs your actual hand.','');
     return;
   }
-  const btn=document.getElementById('p-btn');btn.disabled=true;btn.textContent='✨ Reading your palm…';
+  // Check the uploaded image actually looks like a palm (skin-tone analysis, browser-only).
+  // This stops obvious non-hand photos (animals, objects, scenery) from getting a reading.
+  const imgEl=document.getElementById('p-img');
+  const btn=document.getElementById('p-btn');
+  btn.disabled=true;btn.textContent='🔍 Checking your photo…';
+  const check=await analyzePalmImage(imgEl);
+  if(!check.ok){
+    btn.disabled=false;btn.textContent='✨ Reveal My Palm Reading';
+    toast('🤚 This doesn\'t look like a clear palm photo. Please upload a well-lit picture of your open hand (palm facing the camera).','');
+    return;
+  }
+  btn.textContent='✨ Reading your palm…';
   document.getElementById('p-res').style.display='block';document.getElementById('p-ldr').style.display='block';document.getElementById('p-cnt').style.display='none';
   const sys=`You are AstroHand's master palm reader trained in Vedic Samudrika Shastra, Western chiromancy (Cheiro/Benham tradition), Chinese palmistry, and Arabic Ilmu'l-Kaff. For each reading analyze systematically: HEART LINE (depth, length, curvature, starting point) → emotional life, love capacity, romantic destiny; HEAD LINE (slope, length, depth) → intellect, decision style, creativity vs logic; LIFE LINE (arc width, depth, markings) → vital energy, health constitution, major life turning points; FATE LINE (presence/absence, starting point) → career path, self-determination; SUN LINE → success, recognition, creative fulfillment; MERCURY LINE → health, communication gifts; MARRIAGE LINES → relationship timing; MOUNTS (Venus, Jupiter, Saturn, Apollo, Mercury, Moon, Mars) → personality amplifiers. Write 400-450 words. Be specific with approximate age timings (e.g., "around age 28–34"). Close with one Vedic gemstone remedy and one mantra. State readings provide guidance, not certainty.`;
   const userPrompt=`Hand: ${selH}.${dob?` DOB: ${dob}.`:''}${t?` Time: ${t}.`:''}${city?` Birth city: ${city}.`:''} The user has uploaded a photo of their palm. Provide a detailed Vedic and Western palmistry reading of the hand, describing the lines and mounts as observed.`;
