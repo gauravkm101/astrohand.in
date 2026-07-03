@@ -3878,6 +3878,65 @@ function initStarfield(){
 }
 
 /* ══ BOOT ══ */
+/* ═══════════════════════════════════════════════════
+   ADMIN / TESTING UNLOCK
+   Lets the founders (or trusted testers) grant a paid plan to
+   their own logged-in account without a live payment gateway.
+   Usage:  astrohand.in/?unlock=<CODE>&plan=vip   (or gold / silver)
+   The plan is written to the user's Supabase profile + local
+   cache, so it persists like a real purchase.
+
+   NOTE: this is a frontend gate — determined users could find the
+   code by reading the source. It's meant for testing/team access,
+   not as hard security. Keep the code private; rotate if leaked.
+═══════════════════════════════════════════════════ */
+const ADMIN_UNLOCK_CODE='ah-2f286b78e56b4a9f';
+
+async function checkAdminUnlock(){
+  try{
+    const params=new URLSearchParams(window.location.search);
+    const code=params.get('unlock');
+    if(!code)return;                         // no unlock param — nothing to do
+    if(code!==ADMIN_UNLOCK_CODE){            // wrong code — fail quietly, don't reveal anything
+      return;
+    }
+    // Which plan? default to vip; accept silver/gold/vip only.
+    let plan=(params.get('plan')||'vip').toLowerCase();
+    if(!['silver','gold','vip'].includes(plan))plan='vip';
+
+    if(!CU||!CU.em){
+      toast('Please log in first, then open the unlock link again.','');
+      return;
+    }
+
+    // Update local cache immediately
+    CU.plan=plan;
+    if(typeof DB!=='undefined'&&DB.setU)DB.setU(CU.em,CU);
+
+    // Persist to Supabase profile so it survives across devices/logins (best-effort)
+    try{
+      const sb=getSB();
+      if(sb&&CU.id){
+        await sb.from('profiles').update({plan:plan}).eq('id',CU.id);
+      }
+    }catch(e){console.warn('Unlock: profile update skipped:',e&&e.message);}
+
+    // Refresh any plan-dependent UI
+    if(typeof renderPlans==='function')renderPlans();
+    const dpl=document.getElementById('d-plan');
+    if(dpl){dpl.textContent=(plan.charAt(0).toUpperCase()+plan.slice(1))+' Plan';dpl.className='planbdg '+(plan==='silver'?'ps':plan==='gold'?'pg2':'pv');}
+    const nup=document.getElementById('nav-uplan');
+    if(nup)nup.textContent=(plan.charAt(0).toUpperCase()+plan.slice(1))+' Plan';
+
+    toast('✨ '+plan.toUpperCase()+' unlocked for testing! All premium features are now active.','ok');
+
+    // Clean the URL so the code isn't left visible in the address bar / history
+    if(window.history&&window.history.replaceState){
+      window.history.replaceState({},document.title,window.location.pathname);
+    }
+  }catch(e){console.warn('Admin unlock error:',e&&e.message);}
+}
+
 window.addEventListener('DOMContentLoaded',async function(){
   // Detect a password-recovery link DIRECTLY from the URL, synchronously, before
   // anything else runs. Supabase's own PASSWORD_RECOVERY event is asynchronous and may
@@ -3908,6 +3967,8 @@ window.addEventListener('DOMContentLoaded',async function(){
   safe(initCityAutocomplete,'CityAutocomplete');
   try{loadCurrRates();}catch(e){console.warn('Rate load failed:',e);}
   try{await restoreSession();}catch(e){console.log('Session restore:',e);}
+  // Testing/team unlock: if the URL carries a valid ?unlock=CODE, grant the chosen plan.
+  try{await checkAdminUnlock();}catch(e){console.warn('Unlock check:',e);}
   // Don't fall back to home if we're mid password-reset — the reset screen must stay put.
   if(!CU&&!window._recoveryActive)router('home');
 });
