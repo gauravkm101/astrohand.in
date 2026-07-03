@@ -1771,7 +1771,7 @@ This single script enables ALL ad units on the page, including every
         <!-- Planet positions table -->
         <div id="nb-planets" style="margin-bottom:18px;"></div>
         <div id="nb-tr-bar"></div>
-        <div id="nb-txt" style="font-size:.86rem;line-height:1.85;color:var(--text);white-space:pre-wrap;"></div>
+        <div class="lock-wrap"><div id="nb-txt-wrap"><div id="nb-txt" style="font-size:.86rem;line-height:1.85;color:var(--text);white-space:pre-wrap;"></div></div><div id="nb-txt-lock" style="display:none;"></div></div>
       </div>
     </div>
   </div>
@@ -5697,14 +5697,29 @@ Keep it warm, hopeful, and around 400-450 words. End with a short blessing for t
 
     const userPrompt=`Baby's birth star (Nakshatra): ${nakName}. Moon sign: ${rashiName}. ${name?`Name chosen: ${name}. `:'Not yet named. '}${v('nb-g')?`Gender: ${v('nb-g')}. `:''}${city?`Birth place: ${city}. `:''}Date: ${d}, Time: ${t}. Give the full newborn reading.`;
 
-    const txt=await callAI(sys,[{role:'user',content:userPrompt}],1200)||'The stars are still aligning for your little one. Please try again in a moment.';
     document.getElementById('nb-ldr').style.display='none';document.getElementById('nb-cnt').style.display='block';
-    document.getElementById('nb-txt').textContent=txt;
-    // Mount translation bar for this reading
-    if(typeof mountTranslateBar==='function'){mountTranslateBar('nb-tr-bar','nb-txt');resetTranslation('nb-txt');}
-    // Save to readings if logged in
-    if(CU)addRd({type:'kundli',icon:'👶',title:'Newborn Kundli'+(name?' — '+name:''),sub:nakName+' Nakshatra · '+rashiName,preview:txt.substring(0,200)+'…',text:txt});
-    window._lastNewborn={name:name||'Baby',nak:nakName,rashi:rashiName,txt:txt,dob:d,tob:t};
+    const nbTxtWrap=document.getElementById('nb-txt-wrap'),nbTxtLock=document.getElementById('nb-txt-lock');
+    // Baby's charts, facts & planet positions are shown free (a meaningful taste).
+    // The full AI-personalized reading (naming ideas, guidance, blessings) is a paid feature.
+    const nbFallback=`✨ ${name||'Your baby'} is born under the ${nakName} Nakshatra with a ${rashiName} Moon — a beautiful and auspicious placement.\n\nThe complete personalized reading reveals your little one's birth-star qualities, hand-picked baby name ideas from the sacred ${nakName} syllables (${syllables}), lucky elements, natural gifts, and gentle guidance for you as parents.`;
+    if(isPaid()){
+      nbTxtWrap.classList.remove('lock-blurred');nbTxtLock.style.display='none';
+      let txt;
+      try{txt=await callAI(sys,[{role:'user',content:userPrompt}],1200);}catch(aiErr){txt=null;}
+      if(!txt)txt=nbFallback;
+      document.getElementById('nb-txt').textContent=txt;
+      if(typeof mountTranslateBar==='function'){mountTranslateBar('nb-tr-bar','nb-txt');resetTranslation('nb-txt');}
+      if(CU)addRd({type:'kundli',icon:'👶',title:'Newborn Kundli'+(name?' — '+name:''),sub:nakName+' Nakshatra · '+rashiName,preview:txt.substring(0,200)+'…',text:txt});
+      window._lastNewborn={name:name||'Baby',nak:nakName,rashi:rashiName,txt:txt,dob:d,tob:t};
+    }else{
+      // Free: show a short teaser, blurred, with an unlock card. No AI call (saves quota).
+      document.getElementById('nb-txt').textContent=nbFallback;
+      document.getElementById('nb-tr-bar').innerHTML='';
+      nbTxtWrap.classList.add('lock-blurred');
+      nbTxtLock.style.display='block';
+      nbTxtLock.innerHTML=lockCardHTML('Your Baby\'s Full Kundli Awaits','Unlock the complete personalized reading — birth-star qualities, hand-picked baby name ideas, lucky elements, and loving guidance for parents, plus a luxury PDF keepsake to treasure forever.');
+      window._lastNewborn={name:name||'Baby',nak:nakName,rashi:rashiName,txt:nbFallback,dob:d,tob:t,locked:true};
+    }
   }catch(e){
     document.getElementById('nb-ldr').style.display='none';document.getElementById('nb-cnt').style.display='block';
     document.getElementById('nb-txt').textContent='The cosmic nursery is momentarily clouded. Please check the birth details and try again.';
@@ -5714,6 +5729,7 @@ Keep it warm, hopeful, and around 400-450 words. End with a short blessing for t
 
 function shareNewbornWA(){
   const nb=window._lastNewborn;
+  if(!isPaid()){upgradePrompt();return;}
   const txt=nb?`🌟 ${nb.name}'s Newborn Kundli 🌟\n\nNakshatra: ${nb.nak}\nMoon Sign: ${nb.rashi}\n\n${nb.txt.substring(0,600)}...\n\n— via AstroHand`:'Check out AstroHand Newborn Kundli!';
   window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
 }
@@ -5721,6 +5737,7 @@ function shareNewbornWA(){
 function exportNewbornPDF(){
   const nb=window._lastNewborn;
   if(!nb){toast('Generate the baby\'s kundli first.','');return;}
+  if(!isPaid()){upgradePrompt();return;}
   const cd=window._nbChartData||{};
   const w=window.open('','_blank');
   if(!w){toast('Please allow pop-ups to download the PDF.','');return;}
