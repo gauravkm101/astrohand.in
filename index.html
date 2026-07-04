@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<!-- App (PWA) -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1035">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AstroHand">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon.png">
 <!-- Google AdSense -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8378418372848919" crossorigin="anonymous"></script>
 <meta name="description" content="AstroHand - AI-Powered Vedic Astrology. Free Kundli, AI Guru, Horoscope, Match Making, Gemstones & More.">
@@ -7209,9 +7218,58 @@ function shareKundliWA(){
   window.open('https://wa.me/?text='+encodeURIComponent('My Vedic Kundli from AstroHand AI:\n\n'+basics.split('\n').slice(0,5).join('\n')+'\n\nGet yours free: astrohand.in'),'_blank');
 }
 
+/* ═══════════════════════════════════════════════════
+   APP (PWA) — service worker + install prompt
+   Makes AstroHand installable on phones like a real app:
+   home-screen icon, fullscreen, splash, offline fallback.
+═══════════════════════════════════════════════════ */
+// Register the service worker (only on https — required for PWA)
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('/sw.js').catch(function(e){console.log('SW:',e&&e.message);});
+  });
+}
 
+// Install prompt: the browser fires this when the app CAN be installed.
+let _pwaPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  _pwaPrompt=e;
+  // Show our elegant install pill (unless the user dismissed it before)
+  if(!DB.g('pwaDismissed')){
+    const b=document.getElementById('pwa-install-btn');
+    if(b)b.style.display='flex';
+  }
+});
 
+async function installApp(){
+  const b=document.getElementById('pwa-install-btn');
+  if(!_pwaPrompt){if(b)b.style.display='none';return;}
+  _pwaPrompt.prompt();
+  try{await _pwaPrompt.userChoice;}catch(e){}
+  _pwaPrompt=null;
+  if(b)b.style.display='none';
+}
+
+function dismissInstall(){
+  const b=document.getElementById('pwa-install-btn');
+  if(b)b.style.display='none';
+  DB.s('pwaDismissed',1);
+}
+
+window.addEventListener('appinstalled',function(){
+  const b=document.getElementById('pwa-install-btn');
+  if(b)b.style.display='none';
+  if(typeof toast==='function')toast('🎉 AstroHand app installed! Find it on your home screen.','ok');
+});
 
 </script>
+
+<!-- App install prompt (appears only when the browser allows installing) -->
+<div id="pwa-install-btn" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1500;align-items:center;gap:8px;background:linear-gradient(135deg,#c8963c,#7c3aed);padding:12px 20px;border-radius:100px;box-shadow:0 10px 34px rgba(200,150,60,.4);white-space:nowrap;">
+  <span onclick="installApp()" style="color:#fff;font-weight:600;font-size:.84rem;font-family:Inter,sans-serif;cursor:pointer;">📲 Install AstroHand App</span>
+  <span onclick="dismissInstall()" style="color:rgba(255,255,255,.8);font-size:.95rem;padding:0 2px 0 8px;cursor:pointer;border-left:1px solid rgba(255,255,255,.3);">✕</span>
+</div>
+
 </body>
 </html>
