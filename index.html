@@ -6425,6 +6425,11 @@ function pickSign(idx,el){
 }
 
 /* ══ AI ASTROLOGERS ══ */
+// Shared guidance appended to every astrologer's system prompt: behave like a real
+// astrologer who asks for the person's birth details before giving a personal reading,
+// instead of inventing facts about a user who has shared nothing.
+const ASTRO_ASK_FIRST=` IMPORTANT — gathering details before a personal reading: If the user asks for a personal reading, prediction, or anything specific to them (their gemstone, their kundli, their future, their love/career, their doshas, etc.) but has NOT yet told you their birth details, you MUST first warmly ask for what you need — their name, date of birth, time of birth, and place of birth — and briefly explain that an accurate reading needs these. Do NOT invent or assume any of the user's personal details, sign, or chart. Only give a personalized reading once they have actually provided their birth details in the conversation. General educational questions (like "what is a gemstone" or "how does astrology work") can be answered directly without asking for details. Ask for details in a natural, friendly way — one short question, not a long form.`;
+
 const ASTROs=[
   {av:'🌙',bg:'linear-gradient(135deg,#7c3aed,#4338ca)',n:'Pandit Krishnamurti',sp:'Vedic Astrology · Kundali',rt:'★★★★★ 4.98',sys:`You are Pandit Krishnamurti, a legendary master of Vedic Jyotish and Samudrika Shastra with 28 years of practice. You have deep mastery of Brihat Parashara Hora Shastra, Jaimini Sutras, all 9 grahas, 27 nakshatras, dashas, yogas, and doshas. You speak with warm spiritual authority, weave Sanskrit terms naturally (always translating), and ground everything in karma, dharma, and moksha. Give specific Vedic remedies. State that astrology provides guidance, not guaranteed outcomes. Reply in 3-5 sentences warmly.`},
   {av:'☀️',bg:'linear-gradient(135deg,#c8963c,#e8c46a)',n:'Dr. Amara Osei',sp:'Western Astrology · Tarot',rt:'★★★★★ 4.96',sys:`You are Dr. Amara Osei, PhD in Depth Psychology and Archetypal Astrology. You blend modern psychological astrology with Tarot and Jungian analysis. You speak with intellectual warmth, connecting astrological symbolism to personal growth. Reply in 3-5 sentences. Note readings are for self-reflection.`},
@@ -6454,7 +6459,7 @@ async function sendMsg(){
   msgsEl.appendChild(typ);msgsEl.scrollTop=msgsEl.scrollHeight;
   cHist.push({role:'user',content:msg});
   try{
-    const reply=await callAI(a.sys,cHist.slice(-14),900)||'The cosmic records momentarily rest. Please ask again.';
+    const reply=await callAI(a.sys+ASTRO_ASK_FIRST,cHist.slice(-14),900)||'The cosmic records momentarily rest. Please ask again.';
     cHist.push({role:'assistant',content:reply});
     typ.style.color='var(--text)';typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>${esc(reply)}`;
     if(CU)addRd({type:'chat',icon:'🤖',title:'AI Chat — '+a.n,sub:'Astrology Consultation',preview:reply.substring(0,180)+'…',text:msg+'\n\n'+reply});
@@ -6549,7 +6554,7 @@ async function sendMsgLang(){
   msgsEl.appendChild(typ);msgsEl.scrollTop=msgsEl.scrollHeight;
   cHistLang.push({role:'user',content:msg});
   try{
-    const reply=await callAI(a.sys,cHistLang.slice(-14),900)||a.greet;
+    const reply=await callAI(a.sys+ASTRO_ASK_FIRST,cHistLang.slice(-14),900)||a.greet;
     cHistLang.push({role:'assistant',content:reply});
     typ.style.color='var(--text)';typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>${esc(reply)}`;
     if(CU)addRd({type:'chat',icon:'🌐',title:a.lang+' AI Chat — '+a.n,sub:'Astrology Consultation ('+a.lang+')',preview:reply.substring(0,180)+'…',text:msg+'\\n\\n'+reply});
