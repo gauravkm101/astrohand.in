@@ -2437,6 +2437,16 @@ function getSB(){
         if(event==='PASSWORD_RECOVERY'){
           window._recoveryActive=true;
           if(typeof router==='function')router('reset');
+          return;
+        }
+        // Google (OAuth) sign-in completes AFTER page load: the redirect back carries
+        // tokens that Supabase parses asynchronously, then fires SIGNED_IN. Boot-time
+        // restoreSession() often checks before that parsing finishes, finds nothing,
+        // and leaves the top-right stuck on "Sign In". This listener is the reliable
+        // path: when Supabase confirms SIGNED_IN and no user is loaded yet, log them in.
+        // (setTimeout defers the async work out of this callback, per Supabase guidance.)
+        if(event==='SIGNED_IN'&&session&&session.user&&!window._recoveryActive&&!CU){
+          setTimeout(function(){handleOAuthSignIn(session).catch(function(e){console.warn('OAuth sign-in:',e&&e.message);});},0);
         }
       });
     }
@@ -3759,6 +3769,53 @@ async function socialLogin(prov){
   }catch(err){
     toast(err.message||'Google login failed. Please try email & password.','');
   }
+}
+
+/* Completes a Google/OAuth login: builds CU from the Supabase session, creates the
+   profile row for first-time Google users (email signups get theirs during signup;
+   OAuth users don't have one yet), updates the UI, and enters the dashboard. */
+async function handleOAuthSignIn(session){
+  const sb=getSB();
+  const user=session&&session.user;
+  if(!sb||!user||CU)return;
+  let profile=null;
+  try{
+    const {data}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+    profile=data||null;
+  }catch(e){console.warn('OAuth profile fetch:',e&&e.message);}
+  if(!profile){
+    // First Google login — create the profile (same self-heal pattern as email login).
+    const meta=user.user_metadata||{};
+    const full=(meta.full_name||meta.name||'').trim();
+    const fn=full?full.split(' ')[0]:(user.email?user.email.split('@')[0]:'Seeker');
+    const ln=(full&&full.indexOf(' ')>-1)?full.split(' ').slice(1).join(' '):'';
+    try{
+      const {data:created}=await sb.from('profiles').upsert({
+        id:user.id,email:user.email,
+        first_name:fn,last_name:ln,
+        plan:'free',joined_at:user.created_at||new Date().toISOString()
+      }).select().maybeSingle();
+      profile=created||{first_name:fn,last_name:ln,plan:'free'};
+    }catch(e){console.warn('OAuth profile create:',e&&e.message);profile={first_name:fn,last_name:ln,plan:'free'};}
+  }
+  CU={
+    id:user.id,em:user.email,
+    fn:profile?.first_name||(user.email?user.email.split('@')[0]:'Seeker'),
+    ln:profile?.last_name||'',
+    plan:profile?.plan||'free',
+    joinedAt:profile?.joined_at||user.created_at,
+    gen:profile?.gender||'',dob:profile?.dob||''
+  };
+  DB.setU(CU.em,CU);
+  DB.setSess({em:CU.em,tok:(session.access_token||'sb-oauth'),at:Date.now(),rem:true});
+  enterDash();
+  toast('✨ Welcome, '+CU.fn+'!','ok');
+  // Tidy the OAuth tokens out of the address bar (both hash-token and ?code= flows).
+  try{
+    if(window.history&&window.history.replaceState&&(location.hash.indexOf('access_token')>-1||location.search.indexOf('code=')>-1)){
+      window.history.replaceState({},document.title,window.location.pathname);
+    }
+  }catch(e){}
 }
 
 function addRd(rd){
