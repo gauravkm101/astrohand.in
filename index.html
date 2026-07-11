@@ -892,9 +892,12 @@ This single script enables ALL ad units on the page, including every
   <a onclick="closeMnav();openTool('mRem')">🙏 Remedies</a>
   <a onclick="closeMnav();openTool('mPanch')">📅 Panchang</a>
   <a onclick="closeMnav();polPage('about')">ℹ️ About</a>
-  <div style="display:flex;gap:8px;margin-top:14px;">
+  <div style="display:flex;gap:8px;margin-top:14px;" id="mnav-auth">
     <button class="btn-si" style="flex:1" onclick="closeMnav();router('login')">Sign In</button>
     <button class="btn-ku" style="flex:1" onclick="closeMnav();router('signup')">Join Free</button>
+  </div>
+  <div style="display:none;gap:8px;margin-top:14px;" id="mnav-acct">
+    <button class="btn-ku" style="flex:1" onclick="closeMnav();enterDash()">🏠 My Dashboard</button>
   </div>
 </div>
 
@@ -2479,6 +2482,8 @@ async function callAI(systemPrompt,messages,maxTokens){
 
 /* ── Page Router ── */
 function router(page){
+  // Already signed in → login/signup make no sense; go to the dashboard instead.
+  if((page==='login'||page==='signup')&&CU){enterDash();return;}
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
   const el=document.getElementById('pg-'+page);
   if(el){el.classList.add('on');}
@@ -2522,6 +2527,10 @@ function polPage(p){
 function updNav(){
   const li=document.getElementById('nav-in'),lo=document.getElementById('nav-out');
   if(!li||!lo)return;
+  // Mobile hamburger menu: hide Sign In/Join when logged in, show Dashboard row
+  const ma=document.getElementById('mnav-auth'),md=document.getElementById('mnav-acct');
+  if(ma)ma.style.display=CU?'none':'flex';
+  if(md)md.style.display=CU?'flex':'none';
   if(CU){
     li.style.display='block';lo.style.display='none';
     const init=((CU.fn||'U')[0]+((CU.ln||'')[0]||'')).toUpperCase();
