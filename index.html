@@ -2101,6 +2101,18 @@ This single script enables ALL ad units on the page, including every
   .tlbl{max-width:104px;font-size:.66rem;}
 }
 
+
+/* ══ ANTI-GRAVITY LEVITATION ══ */
+@media (prefers-reduced-motion: no-preference){
+  @keyframes agfloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+  @keyframes agchip{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+  .hero-centerpiece{animation:agfloat 6.5s ease-in-out infinite;}
+  .tool .ticon{animation:agchip 4.6s ease-in-out infinite;}
+  .tool:nth-child(2n) .ticon{animation-delay:-1.6s;}
+  .tool:nth-child(3n) .ticon{animation-delay:-3.1s;}
+  .tool:nth-child(5n) .ticon{animation-duration:5.4s;}
+  .tool:hover .ticon{animation:none;transform:scale(1.12) rotate(-5deg);}
+}
 /* ══ HERO — theme tokens + mobile layout ══ */
 .hbadge{color:var(--g2c);border-color:var(--bdr);background:rgba(var(--gold-rgb),.1);}
 .bdot{background:var(--gold);}
@@ -4399,7 +4411,8 @@ function initStarfield(){
         twinklePhase:Math.random()*Math.PI*2,
         driftX:(Math.random()-0.5)*0.04,
         driftY:(Math.random()-0.5)*0.02,
-        gold:Math.random()<0.3
+        gold:Math.random()<0.3,
+        vx:0,vy:0
       });
     }
   }
@@ -4421,6 +4434,14 @@ function initStarfield(){
   // Theme switcher re-tints the nebula clouds without a reload
   window._refreshStarfield=function(){makeNebulae();};
 
+  // ── Anti-gravity field: pointer repulsion + scroll lift ──
+  let agX=-9999,agY=-9999,agScroll=0,_agLast=window.scrollY||0;
+  window.addEventListener('pointermove',e=>{agX=e.clientX;agY=e.clientY;},{passive:true});
+  window.addEventListener('pointerdown',e=>{agX=e.clientX;agY=e.clientY;},{passive:true});
+  document.addEventListener('pointerleave',()=>{agX=-9999;agY=-9999;},{passive:true});
+  window.addEventListener('touchend',()=>{agX=-9999;agY=-9999;},{passive:true});
+  window.addEventListener('scroll',()=>{const s=window.scrollY||0;agScroll+=(s-_agLast)*0.02;if(agScroll>3)agScroll=3;if(agScroll<-3)agScroll=-3;_agLast=s;},{passive:true});
+
   let t=0;
   function draw(){
     ctx.clearRect(0,0,w,h);
@@ -4438,8 +4459,14 @@ function initStarfield(){
     });
 
     // Stars with gentle twinkle and drift
+    agScroll*=0.92;
     stars.forEach(s=>{
-      s.x+=s.driftX;s.y+=s.driftY;
+      // pointer repulsion (anti-gravity bubble ~110px) with spring-back decay
+      const agdx=s.x-agX,agdy=s.y-agY,agd2=agdx*agdx+agdy*agdy;
+      if(agd2<12100&&agd2>0.01){const agd=Math.sqrt(agd2),agf=(1-agd/110)*1.5;s.vx+=(agdx/agd)*agf;s.vy+=(agdy/agd)*agf;}
+      s.vy-=agScroll*0.35; // scrolling down lifts the stars — floating upward through space
+      s.x+=s.driftX+s.vx;s.y+=s.driftY+s.vy;
+      s.vx*=0.88;s.vy*=0.88;
       if(s.x<0)s.x=w;if(s.x>w)s.x=0;
       if(s.y<0)s.y=h;if(s.y>h)s.y=0;
       const tw=Math.sin(t*s.twinkleSpeed+s.twinklePhase)*0.35+0.65;
