@@ -2281,13 +2281,7 @@ This single script enables ALL ad units on the page, including every
       </div>
       <div class="coupon-msg" id="coupon-msg"></div>
     </div>
-    <div class="fg"><label class="fl">Card Number</label><input class="fi" type="tel" id="crd-n" placeholder="1234 5678 9012 3456" maxlength="19" oninput="fmtCard(this)"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">
-      <div class="fg"><label class="fl">Expiry (MM/YY)</label><input class="fi" type="tel" id="crd-e" placeholder="MM/YY" maxlength="5" oninput="fmtExp(this)"></div>
-      <div class="fg"><label class="fl">CVV</label><input class="fi" type="password" id="crd-c" placeholder="•••" maxlength="4"></div>
-    </div>
-    <div class="fg"><label class="fl">Name on Card</label><input class="fi" id="crd-nm" placeholder="RAHUL MEHTA"></div>
-    <div class="gen-err" id="pay-err"></div>
+    <div style="background:rgba(200,150,60,.06);border:1px solid var(--bdr);border-radius:var(--r2);padding:12px 14px;margin:4px 0 10px;font-size:.78rem;color:var(--muted);text-align:center;line-height:1.5;">You’ll complete your payment securely in the <b style="color:var(--g2c);">Razorpay</b> window — UPI, Cards, NetBanking &amp; Wallets supported.</div>
     <button class="asbtn" id="pay-btn" onclick="procPay()" style="margin-top:6px;">Pay & Upgrade ✦</button>
     <p style="text-align:center;font-size:.65rem;color:var(--sub);margin-top:10px;">🔒 Secured by Razorpay · SSL Encrypted · PCI DSS Compliant</p>
   </div>
@@ -4027,71 +4021,80 @@ function toggle2FA(){}
 async function procPay(plan,amount){
   if(!CU){toast('Please sign in first to upgrade your plan.','');router('login');return;}
 
-  // Called bare from the pay modal → fall back to the selected plan (payPlan)
-  // and apply any active coupon discount to the charged amount.
-  if(plan===undefined&&payPlan){
-    plan=payPlan.id;
-    amount=finalChargeAmount();
-  }else if(amount!==undefined&&activeCoupon&&payPlan&&payPlan.id===plan){
-    // Direct call for the same plan that has a coupon applied → discount it too
-    amount=finalChargeAmount();
-  }
-  if(!plan||!amount){toast('Please select a plan first.','');return;}
+  // Called bare from the pay modal → fall back to the selected plan (payPlan).
+  // Price & coupon are now decided by the BACKEND (server-side validation) —
+  // the frontend never sends an amount.
+  if(plan===undefined&&payPlan){plan=payPlan.id;}
+  if(!plan){toast('Please select a plan first.','');return;}
 
-  const RAZORPAY_KEY='RAZORPAY_KEY_ID_HERE'; /* Get from razorpay.com dashboard after KYC approval */
-
-  if(RAZORPAY_KEY.includes('HERE')){
-    toast('Payment gateway is being activated. Please check back soon!','');
-    return;
-  }
+  const payBtn=document.getElementById('pay-btn');
+  const resetBtn=()=>{if(payBtn){payBtn.disabled=false;payBtn.innerHTML='Pay & Upgrade ✦';}};
+  if(payBtn){payBtn.disabled=true;payBtn.innerHTML='Preparing secure payment…';}
 
   try{
-    // Create order via backend (hides Razorpay secret key)
+    // Create order via backend (hides Razorpay secret key; validates price+coupon)
     const orderRes=await fetch('https://astrohand-backend.vercel.app/api/create-order',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({amount:amount*100,plan,email:CU.em})
+      body:JSON.stringify({plan,email:CU.em,user_id:CU.id||'',coupon:activeCoupon?activeCoupon.code:''})
     });
-    const order=await orderRes.json();
-    if(!order.id)throw new Error('Could not create order');
+    let order={};
+    try{order=await orderRes.json();}catch(e){}
+    if(orderRes.status===503||String(order.error||'').indexOf('not configured')>-1){
+      resetBtn();
+      toast('Payment gateway is being activated. Please check back soon!','');
+      return;
+    }
+    if(!orderRes.ok||!order.id||!order.key_id)throw new Error(order.error||'Could not create order');
 
     const options={
-      key:RAZORPAY_KEY,
-      amount:amount*100,
-      currency:'INR',
+      key:order.key_id, // public key comes from backend — no key hardcoded here
+      amount:order.amount,
+      currency:order.currency||'INR',
       name:'AstroHand',
       description:cap(plan)+' Plan Subscription',
-      image:'https://astrohand.in/logo.png',
+      image:'https://astrohand.in/icon-192.png',
       order_id:order.id,
       handler:async function(response){
-        // Verify payment via backend
-        const verifyRes=await fetch('https://astrohand-backend.vercel.app/api/verify-payment',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            razorpay_payment_id:response.razorpay_payment_id,
-            razorpay_order_id:response.razorpay_order_id,
-            razorpay_signature:response.razorpay_signature,
-            plan,email:CU.em
-          })
-        });
-        const verify=await verifyRes.json();
-        if(verify.success){
-          CU.plan=plan;
-          const sb=getSB();
-          if(sb&&CU.id){
-            // Same thenable caveat as in login — use try/catch, not a chained .catch(),
-            // or upgrading a plan throws ".catch is not a function".
-            try{await sb.from('profiles').update({plan}).eq('id',CU.id);}catch(e){console.warn('Plan sync to cloud skipped:',e&&e.message);}
+        try{
+          // Verify payment via backend — plan/email are read server-side from
+          // the order notes, so the client can't tamper with them.
+          const verifyRes=await fetch('https://astrohand-backend.vercel.app/api/verify-payment',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              razorpay_payment_id:response.razorpay_payment_id,
+              razorpay_order_id:response.razorpay_order_id,
+              razorpay_signature:response.razorpay_signature
+            })
+          });
+          let verify={};
+          try{verify=await verifyRes.json();}catch(e){}
+          if(verify.success){
+            CU.plan=plan;
+            const sb=getSB();
+            if(sb&&CU.id){
+              // Same thenable caveat as in login — use try/catch, not a chained .catch(),
+              // or upgrading a plan throws ".catch is not a function".
+              try{await sb.from('profiles').update({plan}).eq('id',CU.id);}catch(e){console.warn('Plan sync to cloud skipped:',e&&e.message);}
+            }
+            const users=DB.g('users')||{};
+            if(users[CU.em])users[CU.em].plan=plan;
+            DB.s('users',users);
+            DB.setU(CU.em,CU);
+            document.getElementById('pay-ov').classList.remove('open');
+            if(verify.plan_updated===false){
+              toast('Payment received! Your plan is activating — if it does not show in a few minutes, contact support@astrohand.ai','');
+            }else{
+              toast('🎉 Welcome to '+cap(plan)+' plan!','ok');
+            }
+            enterDash();
+          }else{
+            toast('Payment verification failed. Please contact support@astrohand.ai with your payment ID.','');
           }
-          const users=DB.g('users')||{};
-          if(users[CU.em])users[CU.em].plan=plan;
-          DB.s('users',users);
-          toast('🎉 Welcome to '+cap(plan)+' plan!','ok');
-          enterDash();
-        }else{
-          toast('Payment verification failed. Please contact support.','');
-        }
+        }catch(e){
+          toast('Payment received but confirmation failed. Please contact support@astrohand.ai','');
+        }finally{resetBtn();}
       },
       prefill:{
         name:(CU.fn+' '+(CU.ln||'')).trim(),
@@ -4099,15 +4102,17 @@ async function procPay(plan,amount){
         contact:CU.ph||''
       },
       theme:{color:'#c8963c'},
-      modal:{ondismiss:function(){toast('Payment cancelled.','');}}
+      modal:{ondismiss:function(){resetBtn();toast('Payment cancelled.','');}}
     };
 
     const rzp=new Razorpay(options);
     rzp.on('payment.failed',function(resp){
-      toast('Payment failed: '+(resp.error?.description||'Please try again.'),'');
+      resetBtn();
+      toast('Payment failed: '+(resp.error&&resp.error.description?resp.error.description:'Please try again.'),'');
     });
     rzp.open();
   }catch(err){
+    resetBtn();
     toast(err.message||'Could not process payment. Please try again.','');
   }
 }
@@ -6873,8 +6878,6 @@ function pwStrength(inp,bar,lbl){
   const b=document.getElementById(bar);if(b){b.style.width=(sc/5*100)+'%';b.style.background=sc>0?cols[sc-1]:'rgba(255,255,255,.07)';}
   const l=document.getElementById(lbl);if(l){l.textContent=sc>0?lbls[sc-1]:'';l.style.color=sc>0?cols[sc-1]:'var(--sub)';}
 }
-function fmtCard(inp){let v=inp.value.replace(/\D/g,'').substring(0,16);inp.value=v.replace(/(.{4})/g,'$1 ').trim();}
-function fmtExp(inp){let v=inp.value.replace(/\D/g,'').substring(0,4);if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);inp.value=v;}
 
 function subNL(e){e.preventDefault();toast('✨ You\'re aligned! Weekly cosmic update arrives every Monday.','g');document.getElementById('nlE').value='';}
 
