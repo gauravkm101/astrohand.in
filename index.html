@@ -1157,6 +1157,14 @@ This single script enables ALL ad units on the page, including every
     <div class="tool" onclick="openTool('mMuhurat');initMuhuratMonthSelector();renderMuhuratResults();"><span class="ticon">🗓️</span><span class="tlbl">Muhurat Finder</span><span class="tbdg">FREE</span></div>
     <div class="tool" onclick="openTool('mPuja');renderPujaResults();"><span class="ticon">🙏</span><span class="tlbl">Puja Tithi</span><span class="tbdg">FREE</span></div>
     <div class="tool" onclick="openTool('mVaastu');initVaastu();"><span class="ticon">🏛️</span><span class="tlbl">Vaastu Guide</span><span class="tbdg">FREE</span></div>
+    <div class="tool" onclick="openTool('mSade')"><span class="ticon">🪐</span><span class="tlbl">Sade Sati</span><span class="tbdg">NEW</span></div>
+    <div class="tool" onclick="openTool('mKaal')"><span class="ticon">🐍</span><span class="tlbl">Kaal Sarp Dosha</span><span class="tbdg">NEW</span></div>
+    <div class="tool" onclick="openTool('mMangal')"><span class="ticon">♂️</span><span class="tlbl">Mangal Dosha</span><span class="tbdg">NEW</span></div>
+    <div class="tool" onclick="openTool('mChogh');initChogh();"><span class="ticon">⏰</span><span class="tlbl">Choghadiya</span><span class="tbdg">NEW</span></div>
+    <div class="tool" onclick="openTool('mMoonSign')"><span class="ticon">🌙</span><span class="tlbl">Moon Sign</span><span class="tbdg">NEW</span></div>
+    <div class="tool" onclick="openTool('mBabyName')"><span class="ticon">👶</span><span class="tlbl">Baby Names</span><span class="tbdg">NEW</span></div>
+    <div class="tool" onclick="openTool('mRashifal')"><span class="ticon">📆</span><span class="tlbl">Rashifal</span><span class="tbdg">NEW</span></div>
+    <div class="tool" onclick="openTool('mLove')"><span class="ticon">💘</span><span class="tlbl">Love Calculator</span><span class="tbdg">FUN</span></div>
   </div>
 </div>
 
@@ -2356,6 +2364,124 @@ This single script enables ALL ad units on the page, including every
 </div>
 
 <!-- PAYMENT -->
+<!-- ═══ ASTROSAGE-PARITY TOOLS PACK — 8 modals ═══ -->
+<div class="ov" id="mSade" onclick="cov(event,'mSade')">
+  <div class="mbox sm">
+    <button class="mc" onclick="closeOv('mSade')">✕</button>
+    <div class="mt">🪐 Sade Sati Calculator</div>
+    <div class="ms">Real Saturn transits vs your natal Moon — current phase and every window of your life.</div>
+    <div class="fgrid two">
+      <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="sd-d"></div>
+      <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="sd-t"></div>
+      <div class="full"><button class="gbtn" onclick="genSade()">Check My Sade Sati ✦</button></div>
+    </div>
+    <div id="sd-res" style="display:none;margin-top:18px;"></div>
+  </div>
+</div>
+
+<div class="ov" id="mKaal" onclick="cov(event,'mKaal')">
+  <div class="mbox sm">
+    <button class="mc" onclick="closeOv('mKaal')">✕</button>
+    <div class="mt">🐍 Kaal Sarp Dosha Checker</div>
+    <div class="ms">Are all seven planets trapped between Rahu and Ketu in your chart? Checked with real positions.</div>
+    <div class="fgrid two">
+      <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="kl-d"></div>
+      <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="kl-t"></div>
+      <div class="full"><button class="gbtn" onclick="genKaal()">Check Kaal Sarp Dosha ✦</button></div>
+    </div>
+    <div id="kl-res" style="display:none;margin-top:18px;"></div>
+  </div>
+</div>
+
+<div class="ov" id="mMangal" onclick="cov(event,'mMangal')">
+  <div class="mbox sm">
+    <button class="mc" onclick="closeOv('mMangal')">✕</button>
+    <div class="mt">♂️ Mangal Dosha Checker</div>
+    <div class="ms">Manglik or not — Mars checked from both your Lagna and your Moon, with real positions.</div>
+    <div class="fgrid two">
+      <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="mg-d"></div>
+      <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="mg-t"></div>
+      <div class="full"><button class="gbtn" onclick="genMangal()">Check Mangal Dosha ✦</button></div>
+    </div>
+    <div id="mg-res" style="display:none;margin-top:18px;"></div>
+  </div>
+</div>
+
+<div class="ov" id="mChogh" onclick="cov(event,'mChogh')">
+  <div class="mbox sm">
+    <button class="mc" onclick="closeOv('mChogh')">✕</button>
+    <div class="mt">⏰ Choghadiya Timings</div>
+    <div class="ms">Today's auspicious and inauspicious time slots — computed from your city's real sunrise & sunset.</div>
+    <div class="fgrid two">
+      <div class="fg"><label class="fl">City</label><input class="fi" id="chg-city" placeholder="New Delhi, Delhi" autocomplete="off"></div>
+      <div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="chg-d"></div>
+      <div class="full"><button class="gbtn" onclick="genChogh()">Show Choghadiya ✦</button></div>
+    </div>
+    <div id="chg-res" style="display:none;margin-top:18px;"></div>
+  </div>
+</div>
+
+<div class="ov" id="mMoonSign" onclick="cov(event,'mMoonSign')">
+  <div class="mbox sm">
+    <button class="mc" onclick="closeOv('mMoonSign')">✕</button>
+    <div class="mt">🌙 Moon Sign & Nakshatra</div>
+    <div class="ms">Your real Vedic Moon sign, Sun sign, Nakshatra, pada and dasha lord — computed, not guessed.</div>
+    <div class="fgrid two">
+      <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="msn-d"></div>
+      <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="msn-t"></div>
+      <div class="full"><button class="gbtn" onclick="genMoonSign()">Reveal My Moon Sign ✦</button></div>
+    </div>
+    <div id="msn-res" style="display:none;margin-top:18px;"></div>
+  </div>
+</div>
+
+<div class="ov" id="mBabyName" onclick="cov(event,'mBabyName')">
+  <div class="mbox sm">
+    <button class="mc" onclick="closeOv('mBabyName')">✕</button>
+    <div class="mt">👶 Baby Name Letters</div>
+    <div class="ms">Naamkaran the Vedic way — auspicious starting syllables from your baby's real Nakshatra pada, plus AI name ideas.</div>
+    <div class="fgrid two">
+      <div class="fg"><label class="fl">Baby's Date of Birth *</label><input class="fi" type="date" id="bn-d"></div>
+      <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="bn-t"></div>
+      <div class="fg"><label class="fl">Gender</label><select class="fi" id="bn-g"><option value="baby">Any</option><option value="boy">Boy</option><option value="girl">Girl</option></select></div>
+      <div class="full"><button class="gbtn" onclick="genBaby()">Find Auspicious Letters ✦</button></div>
+    </div>
+    <div id="bn-res" style="display:none;margin-top:18px;"></div>
+  </div>
+</div>
+
+<div class="ov" id="mRashifal" onclick="cov(event,'mRashifal')">
+  <div class="mbox sm">
+    <button class="mc" onclick="closeOv('mRashifal')">✕</button>
+    <div class="mt">📆 Weekly · Monthly · Yearly Rashifal</div>
+    <div class="ms">Pick your sign and period — a fresh AI-written forecast, beyond the daily horoscope.</div>
+    <div style="display:flex;gap:8px;margin:12px 0;">
+      <button class="rf-tab" onclick="setRfPeriod('Weekly',this)" style="flex:1;padding:9px;border-radius:100px;border:1px solid var(--bdr);background:rgba(var(--gold-rgb),.16);color:var(--g3);cursor:pointer;font-size:.74rem;">Weekly</button>
+      <button class="rf-tab" onclick="setRfPeriod('Monthly',this)" style="flex:1;padding:9px;border-radius:100px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--muted);cursor:pointer;font-size:.74rem;">Monthly</button>
+      <button class="rf-tab" onclick="setRfPeriod('Yearly',this)" style="flex:1;padding:9px;border-radius:100px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--muted);cursor:pointer;font-size:.74rem;">Yearly</button>
+    </div>
+    <div class="fgrid two">
+      <div class="fg full"><label class="fl">Your Zodiac Sign</label><select class="fi" id="rf-sign"><option value="">Select sign</option><option>Aries</option><option>Taurus</option><option>Gemini</option><option>Cancer</option><option>Leo</option><option>Virgo</option><option>Libra</option><option>Scorpio</option><option>Sagittarius</option><option>Capricorn</option><option>Aquarius</option><option>Pisces</option></select></div>
+      <div class="full"><button class="gbtn" onclick="genRashifal()">Read My Rashifal ✦</button></div>
+    </div>
+    <div id="rf-res" class="rbox" style="display:none;margin-top:18px;"></div>
+  </div>
+</div>
+
+<div class="ov" id="mLove" onclick="cov(event,'mLove')">
+  <div class="mbox sm">
+    <button class="mc" onclick="closeOv('mLove')">✕</button>
+    <div class="mt">💘 Love Calculator</div>
+    <div class="ms">A playful cosmic spark-meter for two names. Just for fun ✦</div>
+    <div class="fgrid two">
+      <div class="fg"><label class="fl">Your Name</label><input class="fi" id="lv-a" placeholder="First name"></div>
+      <div class="fg"><label class="fl">Their Name</label><input class="fi" id="lv-b" placeholder="First name"></div>
+      <div class="full"><button class="gbtn" onclick="calcLove()">Calculate the Spark ✦</button></div>
+    </div>
+    <div id="lv-res" style="display:none;margin-top:14px;"></div>
+  </div>
+</div>
+
 <div class="pay-ov" id="pay-ov">
   <div class="pay-box">
     <button class="mc" onclick="document.getElementById('pay-ov').classList.remove('open')">✕</button>
@@ -3083,7 +3209,8 @@ function computeSunTimes(lat, lng, date, utcOffsetHours){
     const hh=((h+11)%12)+1, ap=h<12?'AM':'PM';
     return hh+':'+String(m).padStart(2,'0')+' '+ap;
   };
-  return{sunrise:toLocal(sunriseUTC),sunset:toLocal(sunsetUTC),polar:null};
+  const _lmin=(u)=>{let l=u+utcOffsetHours*60;return ((l%1440)+1440)%1440;};
+  return{sunrise:toLocal(sunriseUTC),sunset:toLocal(sunsetUTC),sunriseMin:_lmin(sunriseUTC),sunsetMin:_lmin(sunsetUTC),polar:null};
 }
 
 
@@ -3469,7 +3596,7 @@ function openArticle(id){
   router('article');
 }
 
-const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mAILang','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mVaastu'];
+const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mAILang','mHoro','mSade','mKaal','mMangal','mChogh','mMoonSign','mBabyName','mRashifal','mLove','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mVaastu'];
 let _adInterstitialTimer=null;
 
 function shouldShowAd(){
@@ -6179,6 +6306,238 @@ const NAKSHATRA_NAMESYLLABLES={
    Uses the same real ephemeris + AI as the rest of the app to
    produce a personalised month-by-month year-ahead reading.
 ═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   ASTROSAGE-PARITY TOOLS PACK — 8 tools, all driven by the
+   REAL ephemeris/sun-time engines above (no fabricated data):
+   Sade Sati · Kaal Sarp · Mangal Dosha · Choghadiya ·
+   Moon Sign · Baby Name Letters · Rashifal · Love Calculator
+═══════════════════════════════════════════════════ */
+function parseBirthAH(dId,tId){
+  const d=v(dId); if(!d)return null;
+  const p=d.split('-').map(Number); if(p.length!==3||!p[0])return null;
+  const t=(v(tId)||'12:00').split(':').map(Number);
+  return {yr:p[0],mo:p[1],dy:p[2],th:t[0]||12,tm:t[1]||0,timeGiven:!!v(tId)};
+}
+function _fmtMonth(y,m){return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]+' '+y;}
+function _padaOf(lon){return Math.floor((lon%(360/27))/(360/108))+1;}
+function _resCard(label,val,sub){return '<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px;text-align:center;"><div style="font-size:.6rem;letter-spacing:.09em;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">'+label+'</div><div style="font-family:\'Cinzel\',serif;font-size:.95rem;color:var(--g2c);">'+val+'</div>'+(sub?'<div style="font-size:.64rem;color:var(--muted);margin-top:3px;">'+sub+'</div>':'')+'</div>';}
+function _verdictBox(color,icon,title,body){
+  const c=color==='red'?'220,38,38':color==='green'?'22,163,74':'200,150,60';
+  return '<div style="background:rgba('+c+',.08);border:1px solid rgba('+c+',.25);border-radius:var(--r2);padding:16px;margin:14px 0;"><div style="font-family:\'Cinzel\',serif;font-size:.92rem;color:var(--g2c);margin-bottom:6px;">'+icon+' '+title+'</div><div style="font-size:.8rem;color:var(--text);line-height:1.6;">'+body+'</div></div>';
+}
+
+/* ── SADE SATI (real Saturn transits vs real natal Moon) ── */
+function _satSignAt(y,m){return Math.floor(computeRealPositions(y,m,15,12,0,5.5).positions.Saturn/30);}
+function genSade(){
+  const b=parseBirthAH('sd-d','sd-t'); if(!b){toast('Please enter your date of birth.','');return;}
+  const natal=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5);
+  const moonSign=Math.floor(natal.positions.Moon/30);
+  const now=new Date();
+  const satNow=_satSignAt(now.getFullYear(),now.getMonth()+1);
+  const rel=(satNow-moonSign+12)%12;
+  let status,phase='',color='green';
+  if(rel===11){status='Sade Sati ACTIVE — Rising phase';phase='Saturn is in the 12th from your Moon (first 2.5 years).';color='red';}
+  else if(rel===0){status='Sade Sati ACTIVE — Peak phase';phase='Saturn is transiting over your natal Moon (middle 2.5 years — the most intense).';color='red';}
+  else if(rel===1){status='Sade Sati ACTIVE — Setting phase';phase='Saturn is in the 2nd from your Moon (final 2.5 years).';color='red';}
+  else if(rel===3){status='Small Panoti (Dhaiya) — 4th house';phase='Saturn is 4th from your Moon (~2.5 years of friction, milder than Sade Sati).';color='gold';}
+  else if(rel===7){status='Small Panoti (Dhaiya) — 8th house';phase='Saturn is 8th from your Moon (~2.5 years, milder than Sade Sati).';color='gold';}
+  else{status='No Sade Sati right now';phase='Saturn is currently '+((rel+1))+' signs from your Moon — outside the Sade Sati zone.';}
+  // Lifetime windows: month-scan real Saturn positions
+  const endY=Math.min(b.yr+95,2090); let windows=[],cur=null;
+  for(let y=b.yr;y<=endY;y++)for(let m=1;m<=12;m++){
+    const r=(_satSignAt(y,m)-moonSign+12)%12;
+    if(r===11||r===0||r===1){if(!cur)cur={fy:y,fm:m};cur.ty=y;cur.tm2=m;}
+    else if(cur){windows.push(cur);cur=null;}
+  }
+  if(cur)windows.push(cur);
+  const nowKey=now.getFullYear()*12+now.getMonth()+1;
+  const rows=windows.map(w=>{
+    const active=(w.fy*12+w.fm)<=nowKey&&nowKey<=(w.ty*12+w.tm2);
+    const _mos=(w.ty*12+w.tm2)-(w.fy*12+w.fm)+1;const _dur=_mos>=24?(_mos/12).toFixed(1)+' yrs':_mos+' mo';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bdr2);font-size:.8rem;"><span style="color:var(--text);">'+_fmtMonth(w.fy,w.fm)+' → '+_fmtMonth(w.ty,w.tm2)+'</span>'+(active?'<span style="background:rgba(220,38,38,.14);color:#f87171;border:1px solid rgba(220,38,38,.25);padding:2px 10px;border-radius:100px;font-size:.62rem;">● NOW</span>':'<span style="color:var(--muted);font-size:.66rem;">'+_dur+'</span>')+'</div>';
+  }).join('');
+  document.getElementById('sd-res').style.display='block';
+  document.getElementById('sd-res').innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'+
+    _resCard('Your Moon Sign',RASHIS[moonSign],'Natal (computed)')+
+    _resCard('Saturn Today',RASHIS[satNow],'Current transit')+
+    _resCard('Position','House '+(rel+1),'from your Moon')+'</div>'+
+    _verdictBox(color,'🪐',status,phase+' Sade Sati is a period of discipline and karmic settlement — challenging but ultimately maturing. Traditional remedies: Hanuman Chalisa on Saturdays, sesame-oil lamp to Shani Dev, service to elders and workers.')+
+    '<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:14px 0 4px;">Your lifetime Sade Sati windows</div>'+rows+
+    '<p style="font-size:.64rem;color:var(--muted);margin-top:10px;">Computed from real Saturn transits (Lahiri sidereal, month-level precision). Exact entry/exit dates can shift by a few weeks near sign boundaries.</p>';
+}
+
+/* ── KAAL SARP DOSHA (all 7 classical planets vs real Rahu-Ketu axis) ── */
+function genKaal(){
+  const b=parseBirthAH('kl-d','kl-t'); if(!b){toast('Please enter your date of birth.','');return;}
+  const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
+  const seven=['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'];
+  const side=seven.map(n=>((P[n]-P.Rahu+360)%360)<180?1:0);
+  const inArc=side.reduce((a,x)=>a+x,0);
+  const outliers=inArc>=4?seven.filter((n,i)=>!side[i]):seven.filter((n,i)=>side[i]);
+  let verdict,body,color;
+  if(inArc===7||inArc===0){verdict='Kaal Sarp Dosha PRESENT (complete)';color='red';
+    body='All seven classical planets sit on one side of the Rahu–Ketu axis in your chart. Tradition reads this as a karmic pattern of delayed-but-destined results: struggle first, breakthrough later. Remedies traditionally suggested: Kaal Sarp shanti puja (Trimbakeshwar/Ujjain), Maha Mrityunjaya japa, and Nag Panchami observance.';}
+  else if(inArc>=6||inArc<=1){verdict='Partial (Anshik) Kaal Sarp Yoga';color='gold';
+    body='Only <b>'+esc(outliers.join(', '))+'</b> stands outside the Rahu–Ketu axis — a partial formation. Its effect is considered much milder and often fades after the Rahu dasha period. Regular Maha Mrityunjaya japa is the traditional remedy.';}
+  else{verdict='No Kaal Sarp Dosha';color='green';
+    body='Your planets are well distributed on both sides of the Rahu–Ketu axis ('+inArc+' vs '+(7-inArc)+'). No Kaal Sarp formation exists in this chart — no remedy needed.';}
+  document.getElementById('kl-res').style.display='block';
+  document.getElementById('kl-res').innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">'+
+    _resCard('☊ Rahu',RASHIS[Math.floor(P.Rahu/30)],'North node')+
+    _resCard('☋ Ketu',RASHIS[Math.floor(P.Ketu/30)],'South node')+'</div>'+
+    _verdictBox(color,'🐍',verdict,body)+
+    '<p style="font-size:.64rem;color:var(--muted);">Checked with real computed positions of all 7 classical planets against the lunar-node axis. The traditional 12 sub-types need a precise Lagna degree, which requires exact birth time'+(b.timeGiven?'':' (you left time blank — noon was assumed)')+'.</p>';
+}
+
+/* ── MANGAL DOSHA (real Mars vs Moon-lagna and approx Lagna) ── */
+function genMangal(){
+  const b=parseBirthAH('mg-d','mg-t'); if(!b){toast('Please enter your date of birth.','');return;}
+  const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
+  const moonSign=Math.floor(P.Moon/30);
+  const li=(moonSign+Math.floor((b.th*60+b.tm)/120))%12;
+  const marsSign=Math.floor(P.Mars/30);
+  const hL=(marsSign-li+12)%12+1, hM=(marsSign-moonSign+12)%12+1;
+  const bad=[1,2,4,7,8,12];
+  const mL=bad.includes(hL), mM=bad.includes(hM);
+  let verdict,body,color;
+  if(mL&&mM){verdict='Manglik (strong indication)';color='red';
+    body='Mars falls in house '+hL+' from your Lagna and house '+hM+' from your Moon — both in the classical Manglik houses (1, 2, 4, 7, 8, 12). Tradition suggests matching with another Manglik chart, Mangal shanti puja, or the Kumbh Vivah ritual. Many charts also carry cancellations (Mars in own/exalted sign, aspects of Jupiter) — a full chart reading confirms.';}
+  else if(mL||mM){verdict='Partial Manglik';color='gold';
+    body='Mars is in house '+(mL?hL+' from your Lagna':hM+' from your Moon')+' only — counted from '+(mL?'the Lagna':'the Moon')+' but not both. Partial Mangal dosha is widely considered mild, and often self-cancelling after age 28 or when matched with a compatible chart.';}
+  else{verdict='No Mangal Dosha';color='green';
+    body='Mars sits in house '+hL+' from your Lagna and '+hM+' from your Moon — neither is a Manglik house. No Mangal dosha in this chart.';}
+  document.getElementById('mg-res').style.display='block';
+  document.getElementById('mg-res').innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'+
+    _resCard('♂ Mars',RASHIS[marsSign],'Computed position')+
+    _resCard('From Lagna','House '+hL,'approx. Lagna')+
+    _resCard('From Moon','House '+hM,'Chandra kundli')+'</div>'+
+    _verdictBox(color,'♂️',verdict,body)+
+    '<p style="font-size:.64rem;color:var(--muted);">Mars & Moon positions are real computed values. The Lagna uses an equal-house approximation — for marriage decisions, confirm with a full Kundli reading'+(b.timeGiven?'':' (birth time was left blank — noon assumed, which strongly affects the Lagna)')+'.</p>';
+}
+
+/* ── CHOGHADIYA (traditional weekday sequences over real sun times) ── */
+const CH_ORDER=['Udveg','Char','Labh','Amrit','Kaal','Shubh','Rog'];
+const CH_DAY_FIRST=['Udveg','Amrit','Rog','Labh','Shubh','Char','Kaal'];
+const CH_NIGHT_FIRST=['Shubh','Char','Kaal','Udveg','Amrit','Rog','Labh'];
+const CH_GOOD={Amrit:'Best',Shubh:'Auspicious',Labh:'Gain',Char:'Good (travel)'};
+const CH_BAD={Udveg:'Anxiety — avoid',Kaal:'Inauspicious — avoid',Rog:'Illness — avoid'};
+function initChogh(){
+  const d=document.getElementById('chg-d'); if(d&&!d.value){const n=new Date();d.value=n.toISOString().slice(0,10);}
+  const c=document.getElementById('chg-city'); if(c&&!c.value)c.value='New Delhi, Delhi';
+  if(typeof attachCityAutocomplete==='function'&&!window._chgWired){attachCityAutocomplete('chg-city');window._chgWired=true;}
+}
+function _chgFmt(min){min=((min%1440)+1440)%1440;const h=Math.floor(min/60),m=Math.round(min%60);return (((h+11)%12)+1)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM');}
+function genChogh(){
+  const city=v('chg-city')||'New Delhi, Delhi';
+  const dstr=v('chg-d'); if(!dstr){toast('Pick a date.','');return;}
+  const coords=CITY_COORDS[city]||CITY_COORDS['New Delhi, Delhi']||{lat:28.6139,lng:77.2090};
+  const date=new Date(dstr+'T12:00:00');
+  const st=computeSunTimes(coords.lat,coords.lng,date,5.5);
+  const next=new Date(date.getTime()+86400000);
+  const stN=computeSunTimes(coords.lat,coords.lng,next,5.5);
+  if(!st||st.sunriseMin==null){toast('Sun times unavailable for this location.','');return;}
+  const wd=date.getDay();
+  const mkRows=(firstName,startMin,slotLen,count,nightWrap)=>{
+    let idx=CH_ORDER.indexOf(firstName),out='';
+    for(let i=0;i<count;i++){
+      const nm=CH_ORDER[(idx+i)%7];
+      const a=startMin+i*slotLen,bnd=startMin+(i+1)*slotLen;
+      const good=CH_GOOD[nm];
+      out+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bdr2);font-size:.78rem;"><span style="font-family:\'Cinzel\',serif;color:var(--g2c);width:74px;">'+nm+'</span><span style="color:var(--text);">'+_chgFmt(a)+' – '+_chgFmt(bnd)+'</span><span style="'+(good?'background:rgba(22,163,74,.12);color:#4ade80;border:1px solid rgba(22,163,74,.18);':'background:rgba(220,38,38,.12);color:#f87171;border:1px solid rgba(220,38,38,.18);')+'padding:2px 8px;border-radius:100px;font-size:.6rem;">'+(good||CH_BAD[nm])+'</span></div>';
+    }
+    return out;
+  };
+  const dayLen=(st.sunsetMin-st.sunriseMin)/8;
+  const nightLen=((stN.sunriseMin+1440)-st.sunsetMin)/8;
+  document.getElementById('chg-res').style.display='block';
+  document.getElementById('chg-res').innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">'+
+    _resCard('🌅 Sunrise',st.sunrise,city.split(',')[0])+
+    _resCard('🌇 Sunset',st.sunset,city.split(',')[0])+'</div>'+
+    '<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:14px 0 4px;">☀️ Day Choghadiya</div>'+mkRows(CH_DAY_FIRST[wd],st.sunriseMin,dayLen,8)+
+    '<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:14px 0 4px;">🌙 Night Choghadiya</div>'+mkRows(CH_NIGHT_FIRST[wd],st.sunsetMin,nightLen,8)+
+    '<p style="font-size:.64rem;color:var(--muted);margin-top:10px;">Sun times are computed for '+esc(city)+' (NOAA algorithm). Sequences follow the traditional weekday Choghadiya tables. Amrit, Shubh, Labh & Char are favourable; Udveg, Kaal & Rog are avoided for new beginnings.</p>';
+}
+
+/* ── MOON SIGN & NAKSHATRA CALCULATOR ── */
+function genMoonSign(){
+  const b=parseBirthAH('msn-d','msn-t'); if(!b){toast('Please enter your date of birth.','');return;}
+  const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
+  const nakIdx=Math.floor(P.Moon/(360/27)),pada=_padaOf(P.Moon);
+  const nak=NAK[nakIdx];
+  document.getElementById('msn-res').style.display='block';
+  document.getElementById('msn-res').innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">'+
+    _resCard('🌙 Moon Sign (Rashi)',RASHIS[Math.floor(P.Moon/30)],'Sidereal · Lahiri')+
+    _resCard('☀️ Sun Sign',RASHIS[Math.floor(P.Sun/30)],'Sidereal · Lahiri')+
+    _resCard('⭐ Nakshatra',nak,'Pada '+pada+' of 4')+
+    _resCard('🔱 Nakshatra Lord',NAKSHATRA_LORD[nak]||'—','Vimshottari dasha lord')+'</div>'+
+    _verdictBox('gold','✦','Name syllables for '+nak,'Traditional auspicious starting syllables: <b>'+esc(NAKSHATRA_NAMESYLLABLES[nak]||'—')+'</b>. Your Moon sign (not your Sun sign) is what Vedic astrology uses for daily predictions and matching.')+
+    (b.timeGiven?'':'<p style="font-size:.64rem;color:var(--muted);">Birth time was blank — noon assumed. The Moon moves ~13° a day, so on Moon-sign boundary days the exact time matters.</p>');
+}
+
+/* ── BABY NAME LETTERS (Naamkaran by real nakshatra pada) ── */
+async function genBaby(){
+  const b=parseBirthAH('bn-d','bn-t'); if(!b){toast('Please enter the baby\'s date of birth.','');return;}
+  const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
+  const nakIdx=Math.floor(P.Moon/(360/27)),pada=_padaOf(P.Moon);
+  const nak=NAK[nakIdx];
+  const syls=(NAKSHATRA_NAMESYLLABLES[nak]||'').split(',').map(s=>s.trim());
+  const padaSyl=syls[pada-1]||syls[0]||'—';
+  const res=document.getElementById('bn-res');
+  res.style.display='block';
+  res.innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'+
+    _resCard('⭐ Nakshatra',nak,'Pada '+pada)+
+    _resCard('🌙 Rashi',RASHIS[Math.floor(P.Moon/30)],'Moon sign')+
+    _resCard('✦ Pada Syllable',padaSyl,'This pada\'s letter')+'</div>'+
+    _verdictBox('gold','👶','Auspicious starting letters','All four pada syllables of '+nak+': <b>'+esc(syls.join(' · '))+'</b>. Tradition favours the syllable of the exact pada — <b>'+esc(padaSyl)+'</b> — for the naming (Naamkaran) ceremony.')+
+    '<div id="bn-ai" style="font-size:.8rem;color:var(--text);line-height:1.7;"></div>';
+  const g=v('bn-g')||'baby';
+  const aiEl=document.getElementById('bn-ai');
+  aiEl.innerHTML='<p class="rtxt">✦ Consulting the cosmic name registry…</p>';
+  try{
+    const names=await callAI('You are a Vedic naming expert. Suggest exactly 12 modern, melodious Indian '+g+' names that START with the syllable "'+padaSyl+'" (or its close phonetic variants). Format each as: Name — short meaning. Number them 1-12. No intro or outro text.',[{role:'user',content:'Suggest the names.'}],650);
+    aiEl.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:6px 0;">✨ AI name suggestions ('+esc(padaSyl)+')</div><div style="white-space:pre-line;">'+esc(names||'The oracle rests — try again.')+'</div>';
+  }catch(e){aiEl.innerHTML='<p style="color:var(--muted);font-size:.74rem;">AI suggestions unavailable right now — the syllables above are the traditional guide.</p>';}
+}
+
+/* ── RASHIFAL — weekly / monthly / yearly AI horoscope ── */
+let _rfPeriod='Weekly';
+function setRfPeriod(p,btn){_rfPeriod=p;document.querySelectorAll('.rf-tab').forEach(b=>{b.style.background='rgba(255,255,255,.05)';b.style.color='var(--muted)';});if(btn){btn.style.background='rgba(var(--gold-rgb),.16)';btn.style.color='var(--g3)';}}
+async function genRashifal(){
+  const sign=v('rf-sign'); if(!sign){toast('Choose your zodiac sign.','');return;}
+  const res=document.getElementById('rf-res');
+  res.style.display='block';
+  res.innerHTML='<p class="rtxt">✦ Reading the '+_rfPeriod.toLowerCase()+' skies for '+esc(sign)+'…</p>';
+  const today=new Date().toDateString();
+  try{
+    const txt=await callAI('You are AstroHand\'s senior Vedic astrologer. Today is '+today+'. Write the '+_rfPeriod+' horoscope (rashifal) for the sign '+sign+'. Structure: 2-3 sentences overall theme, then one short line each for Love, Career, Health and Finance (label them), then "Lucky tip:" one line. Warm, specific, grounded tone. End with a brief reminder that astrology guides rather than guarantees. Total under 220 words.',[{role:'user',content:_rfPeriod+' horoscope for '+sign}],700);
+    res.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:.85rem;color:var(--g2c);margin-bottom:8px;">'+esc(sign)+' — '+_rfPeriod+' Rashifal</div><div style="font-size:.82rem;color:var(--text);line-height:1.7;white-space:pre-line;">'+esc(txt||'The stars are quiet — please try again.')+'</div>';
+    if(CU)addRd({type:'rashifal',icon:'📆',title:_rfPeriod+' Rashifal — '+sign,sub:'Horoscope',preview:(txt||'').substring(0,160)+'…',text:txt||''});
+  }catch(e){res.innerHTML='<p style="color:var(--muted);">The oracle meditates momentarily — please try again. ✦</p>';}
+}
+
+/* ── LOVE CALCULATOR (clearly just-for-fun) ── */
+function calcLove(){
+  const a=(v('lv-a')||'').trim(),b2=(v('lv-b')||'').trim();
+  if(!a||!b2){toast('Enter both names.','');return;}
+  const norm=s=>s.toLowerCase().replace(/[^a-zऀ-ॿ]/g,'');
+  const pair=[norm(a),norm(b2)].sort().join('❤');
+  let h=0;for(let i=0;i<pair.length;i++){h=(h*31+pair.charCodeAt(i))>>>0;}
+  const score=41+(h%57);
+  const tier=score>=90?['💞','Written in the stars! A rare cosmic resonance.']:
+    score>=75?['💖','Beautiful chemistry — nurture it and it blooms.']:
+    score>=60?['💛','Good match — real love is built, and you two have the bricks.']:
+    ['🌱','Every bond can grow with patience, honesty and shared laughter.'];
+  const res=document.getElementById('lv-res');
+  res.style.display='block';
+  res.innerHTML='<div style="text-align:center;padding:8px 0;"><div style="font-family:\'Cinzel Decorative\',serif;font-size:3rem;color:var(--gold);line-height:1;">'+score+'%</div><div style="font-size:1.4rem;margin:6px 0;">'+tier[0]+'</div><div style="font-size:.84rem;color:var(--text);max-width:340px;margin:0 auto;line-height:1.6;">'+esc(a)+' ✦ '+esc(b2)+'<br>'+tier[1]+'</div><p style="font-size:.62rem;color:var(--muted);margin-top:12px;">✦ Just for fun — real compatibility is measured with the 36-guna Kundli Match tool. ✦</p></div>';
+}
+
 function openForecast(){
   if(!isVip()){
     // Not VIP — invite them to upgrade rather than opening the tool.
