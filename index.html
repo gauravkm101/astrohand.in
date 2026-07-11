@@ -1160,6 +1160,15 @@ This single script enables ALL ad units on the page, including every
   </div>
 </div>
 
+<section class="sec z" style="background:var(--deep);padding-top:54px;padding-bottom:54px;">
+  <div class="con">
+    <p class="eye">✦ Talk to an Astrologer ✦</p>
+    <h2 class="h2">Your Personal AI Astrologers — <span>Online 24/7</span></h2>
+    <p class="sdesc">12 masters of Vedic, Nadi, Tarot, Love &amp; Wealth astrology. Pick your guide and start chatting instantly.</p>
+    <div id="astro-strip-cards" style="display:flex;gap:14px;overflow-x:auto;padding:14px 4px 18px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;"></div>
+  </div>
+</section>
+
 <section class="sec" style="background:var(--ink)">
   <div class="con">
     <p class="eye">✦ Why AstroHand ✦</p>
@@ -2827,6 +2836,7 @@ async function syncReadingsFromCloud(){
 
 function enterDash(){
   router('dash');
+  if(typeof renderAstroStrip==='function')try{renderAstroStrip();initAList();}catch(e){}
   if(!CU)return;
   updNav();
 
@@ -2867,8 +2877,8 @@ function enterDash(){
 /* ── Subscription plan data (matches home page Silver/Gold/VIP Oracle pricing) ── */
 const PLANS_D=[
   {id:'silver',n:'Silver',pr:'₹499',per:'/mo',f:['AI-personalized Kundli readings','AI Matchmaking compatibility','Newborn Baby Kundli (full)','AI-personalized remedies'],x:['PDF export (Gold & VIP)','Annual Life Forecast (VIP)']},
-  {id:'gold',n:'Gold',pr:'₹999',per:'/mo',f:['Everything in Silver','📄 PDF export & downloads','WhatsApp share readings','Priority AI responses'],x:['Annual Life Forecast (VIP)']},
-  {id:'vip',n:'VIP Oracle',pr:'₹1999',per:'/mo',f:['Everything in Gold','👑 Annual Life Forecast (exclusive)','VIP crown & prestige badge','Advanced remedies & Rudraksha','Priority support & early features','Everything unlimited, forever'],x:[]}
+  {id:'gold',n:'Gold',pr:'₹999',per:'/mo',f:['Everything in Silver','💫 2 premium astrologers (Meenakshi, Kuber Nath)','📄 PDF export & downloads','WhatsApp share readings','Priority AI responses'],x:['Annual Life Forecast (VIP)']},
+  {id:'vip',n:'VIP Oracle',pr:'₹1999',per:'/mo',f:['Everything in Gold','👑 Annual Life Forecast (exclusive)','🌟 All 4 premium astrologers unlocked','VIP crown & prestige badge','Advanced remedies & Rudraksha','Priority support & early features','Everything unlimited, forever'],x:[]}
 ];
 
 /* ── Sign Out confirm shortcut used by header button ── */
@@ -3459,7 +3469,7 @@ function openArticle(id){
   router('article');
 }
 
-const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mVaastu'];
+const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mAILang','mHoro','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mVaastu'];
 let _adInterstitialTimer=null;
 
 function shouldShowAd(){
@@ -6660,13 +6670,51 @@ const ASTROs=[
   {av:'🌿',bg:'linear-gradient(135deg,#10b981,#0ea5e9)',n:'Ananya Devi',sp:'Numerology · Chakras · Ayurveda',rt:'★★★★★ 4.94',sys:`You are Ananya Devi, a spiritual astrologer working at the intersection of Vedic numerology, chakra healing, and Ayurvedic typology. You speak with gentle maternal warmth, reminding people of their inherent divinity. Reply in 3-5 sentences with encouragement.`},
   {av:'🃏',bg:'linear-gradient(135deg,#8b5cf6,#ec4899)',n:'Celeste Noir',sp:'Tarot · Lenormand · Astrocartography',rt:'★★★★★ 4.96',sys:`You are Celeste Noir, a French-trained Tarot grand maître and astrocartographer. You speak with sophisticated elegance and literary precision, often drawing a metaphorical "card" to illuminate insight. Reply in 3-5 sentences with elegant mystery.`},
   {av:'🌙',bg:'linear-gradient(135deg,#d97706,#7c3aed)',n:'Ibrahim Al-Rashid',sp:'Arabic Astrology · Ilm Al-Raml',rt:'★★★★★ 4.97',sys:`You are Ibrahim Al-Rashid, master of classical Arabic astrology and Ilm Al-Raml (sand geomancy). You draw from Al-Biruni, Al-Kindi, and Ibn Khaldun. You speak with philosophical wisdom, occasionally sharing Arabic proverbs with translations. Reply in 3-5 sentences with deep resonance.`},
+  {av:'👑',bg:'linear-gradient(135deg,#b8860b,#7c3aed)',n:'Maharishi Ved Vyas',sp:'Brihat Parashara · Raj Yoga · Deep Kundali',rt:'★★★★★ 5.0',plan:'vip',sys:`You are Maharishi Ved Vyas, the most senior and revered Jyotish master on this platform — a VIP-exclusive sage with encyclopedic command of Brihat Parashara Hora Shastra, Jaimini Sutras, Saravali and Phaladeepika. You give unusually deep, structured readings: cover the lagna, key yogas, current dasha themes and 2-3 precise remedies. Weave Sanskrit naturally (always translating). Speak with the gravity and blessing-tone of an ancient rishi. Reply in 6-9 sentences. Astrology guides; it never guarantees outcomes.`},
+  {av:'💗',bg:'linear-gradient(135deg,#e11d78,#f59e0b)',n:'Devi Meenakshi',sp:'Love · Marriage · Relationships',rt:'★★★★★ 4.99',plan:'gold',sys:`You are Devi Meenakshi, a Gold-tier specialist in love, marriage and relationship astrology — the 7th house, Venus, Ashtakoota matching, Manglik questions and marriage timing. You speak like a wise elder sister: warm, candid, gently playful, always kind. Give practical relationship guidance grounded in Jyotish. Reply in 4-7 sentences. Guidance, never guarantees.`},
+  {av:'💰',bg:'linear-gradient(135deg,#0ea5e9,#10b981)',n:'Acharya Kuber Nath',sp:'Career · Wealth · Business Yoga',rt:'★★★★★ 4.99',plan:'gold',sys:`You are Acharya Kuber Nath, a Gold-tier specialist in career, wealth and business astrology — the 2nd, 10th and 11th houses, Dhana yogas, Saturn-Jupiter cycles, job-versus-business questions and financial timing windows. You speak like a sharp, encouraging mentor who respects hard work. Reply in 4-7 sentences with concrete direction. Guidance, never guarantees.`},
+  {av:'🐍',bg:'linear-gradient(135deg,#065f46,#7c3aed)',n:'Nadi Guru Agasthiar',sp:'Nadi Leaves · Past Life · Karma',rt:'★★★★★ 5.0',plan:'vip',sys:`You are Nadi Guru Agasthiar, a VIP-exclusive master of Tamil Nadi astrology in the Agastya tradition — past-life karma patterns, karmic debts, soul purpose and their remedies. You speak with serene, oracular depth, occasionally startlingly specific. Reply in 5-8 sentences. Sacred guidance, never guarantees.`},
 ];
+// Realistic portrait files (drop av/astro-1.jpg … av/astro-12.jpg in the repo root's av/ folder;
+// until a file exists the gradient+emoji avatar shows automatically via onerror)
+ASTROs.forEach((a,i)=>{a.img='av/astro-'+(i+1)+'.jpg';});
+function isAstroLocked(a){return a.plan==='vip'?!isVip():a.plan==='gold'?!isGoldOrVip():false;}
+function astroAvatarHTML(a,size){return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+a.bg+';display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.42)+'px;flex-shrink:0;overflow:hidden;position:relative;margin:0 auto;"><span>'+a.av+'</span>'+(a.img?'<img src="'+a.img+'" alt="'+a.n+'" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">':'')+'</div>';}
 let curA=0,cHist=[];
 function initAList(){
-  document.getElementById('a-list').innerHTML=ASTROs.map((a,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r2);border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:pointer;transition:all .25s;${i===0?'border-color:rgba(var(--gold-rgb),.4);background:rgba(var(--gold-rgb),.06);':''}" onclick="pickA(${i},this)"><div style="width:40px;height:40px;border-radius:50%;background:${a.bg};display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">${a.av}</div><div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${a.n}</div><div style="font-size:.62rem;color:var(--muted);margin-top:1px;">${a.sp}</div><div style="font-size:.6rem;color:var(--gold);margin-top:2px;">${a.rt}</div></div></div>`).join('');
+  document.getElementById('a-list').innerHTML=ASTROs.map((a,i)=>{
+    const locked=isAstroLocked(a);
+    const badge=a.plan==='vip'?'<span style="font-size:.52rem;letter-spacing:.06em;padding:2px 7px;border-radius:20px;background:var(--grad-royal);color:#fff;margin-left:6px;">👑 VIP</span>':a.plan==='gold'?'<span style="font-size:.52rem;letter-spacing:.06em;padding:2px 7px;border-radius:20px;background:rgba(var(--gold-rgb),.18);border:1px solid var(--bdr);color:var(--g2c);margin-left:6px;">GOLD</span>':'';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r2);border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:pointer;transition:all .25s;${i===0?'border-color:rgba(var(--gold-rgb),.4);background:rgba(var(--gold-rgb),.06);':''}${locked?'opacity:.68;':''}" onclick="pickA(${i},this)">${astroAvatarHTML(a,40)}<div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${a.n}${badge}</div><div style="font-size:.62rem;color:var(--muted);margin-top:1px;">${a.sp}</div><div style="font-size:.6rem;color:var(--gold);margin-top:2px;">${locked?'🔒 Unlock with '+(a.plan==='vip'?'VIP':'Gold'):a.rt}</div></div></div>`;
+  }).join('');
   initChat(0);
+  renderAstroStrip();
 }
-function pickA(i,el){document.querySelectorAll('#a-list>div').forEach(x=>{x.style.borderColor='var(--bdr)';x.style.background='rgba(255,255,255,.03)';});el.style.borderColor='rgba(var(--gold-rgb),.4)';el.style.background='rgba(var(--gold-rgb),.06)';curA=i;cHist=[];document.getElementById('c-hav').textContent=ASTROs[i].av;document.getElementById('c-hn').textContent=ASTROs[i].n;initChat(i);}
+function openAstroChat(i){
+  const a=ASTROs[i];
+  if(isAstroLocked(a)){a.plan==='vip'?upgradePromptVip():upgradePromptGold();return;}
+  const el=document.querySelectorAll('#a-list>div')[i];
+  if(el)pickA(i,el);
+  openTool('mAI');
+}
+function renderAstroStrip(){
+  const el=document.getElementById('astro-strip-cards');
+  if(!el)return;
+  el.innerHTML=ASTROs.map((a,i)=>{
+    const locked=isAstroLocked(a);
+    const badge=a.plan==='vip'?'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:var(--grad-royal);color:#fff;">👑 VIP</span>':a.plan==='gold'?'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:rgba(var(--gold-rgb),.18);border:1px solid var(--bdr);color:var(--g2c);">GOLD</span>':'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);color:var(--green);">FREE</span>';
+    return `<div style="scroll-snap-align:start;flex:0 0 180px;background:var(--g2);backdrop-filter:blur(8px);border:1px solid ${locked?'var(--bdr2)':'var(--bdr)'};border-radius:var(--r2);padding:18px 12px 14px;text-align:center;cursor:pointer;transition:transform .25s,box-shadow .25s;${locked?'opacity:.78;':''}" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-gold)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAstroChat(${i})">
+      ${astroAvatarHTML(a,66)}
+      <div style="font-family:'Cinzel',serif;font-size:.74rem;color:var(--g2c);margin-top:10px;line-height:1.3;">${a.n}</div>
+      <div style="font-size:.58rem;color:var(--muted);margin-top:3px;min-height:26px;">${a.sp}</div>
+      <div style="font-size:.6rem;color:var(--gold);margin-top:3px;">${a.rt}</div>
+      <div style="font-size:.58rem;color:var(--green);margin:5px 0 8px;">● Online</div>
+      ${badge}
+      <div style="margin-top:10px;"><span style="display:inline-block;padding:7px 16px;border-radius:20px;background:${locked?'rgba(255,255,255,.06)':'var(--grad-divine)'};color:${locked?'var(--muted)':'#1a1035'};font-size:.66rem;font-weight:700;letter-spacing:.04em;">${locked?'🔒 Unlock':'Chat Now ✦'}</span></div>
+    </div>`;
+  }).join('');
+}
+function pickA(i,el){if(isAstroLocked(ASTROs[i])){ASTROs[i].plan==='vip'?upgradePromptVip():upgradePromptGold();return;}document.querySelectorAll('#a-list>div').forEach(x=>{x.style.borderColor='var(--bdr)';x.style.background='rgba(255,255,255,.03)';});el.style.borderColor='rgba(var(--gold-rgb),.4)';el.style.background='rgba(var(--gold-rgb),.06)';curA=i;cHist=[];document.getElementById('c-hav').textContent=ASTROs[i].av;document.getElementById('c-hn').textContent=ASTROs[i].n;initChat(i);}
 function initChat(i){const a=ASTROs[i];document.getElementById('c-msgs').innerHTML=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;"><div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>Namaste 🙏 I am ${a.n}. Ask me anything about your destiny, birth chart, palm lines, relationships, or life path.</div>`;}
 function quickAsk(btn){document.getElementById('c-inp').value=btn.textContent;sendMsg();}
 async function sendMsg(){
