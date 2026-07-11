@@ -2146,7 +2146,7 @@ This single script enables ALL ad units on the page, including every
 /* floating sparkle near the header */
 .mbox > .mt::after{content:'✦';position:absolute;top:20px;right:56px;color:rgba(var(--gold-rgb),.55);font-size:.95rem;text-shadow:0 0 12px rgba(var(--gold-rgb),.6);}
 /* ── TITLE: big, bright, effortless to read ── */
-.mt{font-family:'Cinzel',serif;font-size:1.65rem;font-weight:700;line-height:1.28;color:var(--text);letter-spacing:.01em;margin-bottom:8px;padding-right:38px;text-shadow:0 0 26px rgba(var(--gold-rgb),.4),0 1px 2px rgba(0,0,0,.5);}
+.mt{font-family:'Cinzel',serif;font-size:1.92rem;font-weight:900;line-height:1.28;color:var(--text);letter-spacing:.01em;margin-bottom:8px;padding-right:38px;text-shadow:0 0 26px rgba(var(--gold-rgb),.4),0 1px 2px rgba(0,0,0,.5);}
 .mt::before{content:'';display:block;width:58px;height:2.5px;margin-bottom:12px;border-radius:3px;background:linear-gradient(90deg,var(--gold),rgba(var(--gold-rgb),0));box-shadow:0 0 12px rgba(var(--gold-rgb),.7);}
 .ms{color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:22px;max-width:60ch;}
 /* ── FORM: brighter labels, glowing focus ── */
@@ -2165,7 +2165,7 @@ This single script enables ALL ad units on the page, including every
   .mbox > .mt::after{animation:mSpk 4.2s ease-in-out infinite;}
   @keyframes mSpk{0%,100%{transform:translateY(0) scale(1);opacity:.45;}50%{transform:translateY(-7px) scale(1.15);opacity:1;}}
 }
-@media(max-width:680px){.mt{font-size:1.38rem;}.ms{font-size:.84rem;}}
+@media(max-width:680px){.mt{font-size:1.6rem;}.ms{font-size:.84rem;}}
 </style>
     <button class="gbtn" id="p-btn" onclick="doPalm()" style="margin-top:14px;">✨ Reveal My Palm Reading</button>
     <div id="p-res" style="display:none;margin-top:18px;">
@@ -4418,7 +4418,7 @@ function initStarfield(){
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
   let w,h,stars=[],nebulae=[];
-  const STAR_COUNT=110;
+  const STAR_COUNT=190;
   const NEBULA_COUNT=3;
 
   function resize(){
@@ -4438,8 +4438,8 @@ function initStarfield(){
         baseAlpha:Math.random()*0.5+0.15,
         twinkleSpeed:Math.random()*0.015+0.005,
         twinklePhase:Math.random()*Math.PI*2,
-        driftX:(Math.random()-0.5)*0.04,
-        driftY:(Math.random()-0.5)*0.02,
+        driftX:(Math.random()-0.5)*0.12,
+        driftY:(Math.random()-0.5)*0.07,
         gold:Math.random()<0.3,
         vx:0,vy:0
       });
@@ -4459,6 +4459,66 @@ function initStarfield(){
       });
     }
   }
+
+  // ── Real constellation patterns (stick-figure classics) ──
+  const CONST_PATTERNS=[
+    {pts:[[0,0],[24,10],[46,14],[66,22],[64,48],[92,52],[96,24]],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]]},          // Saptarishi / Big Dipper
+    {pts:[[40,0],[0,10],[28,42],[40,46],[52,50],[70,88],[16,84]],lines:[[1,2],[0,4],[2,3],[3,4],[4,5],[2,6]]},                 // Orion
+    {pts:[[0,20],[22,0],[44,18],[66,4],[88,26]],lines:[[0,1],[1,2],[2,3],[3,4]]},                                              // Cassiopeia (W)
+    {pts:[[0,0],[14,10],[24,24],[30,42],[28,62],[38,78],[56,86],[74,80]],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]}    // Scorpius curve
+  ];
+  let consts=[];
+  function makeConsts(){
+    consts=[];
+    const scale=w<560?0.85:1.25;
+    const n=w<560?3:4;
+    for(let i=0;i<n;i++){
+      consts.push({p:CONST_PATTERNS[i%CONST_PATTERNS.length],
+        x:(i+0.15)*(w/n)+Math.random()*40,
+        y:Math.random()*h*0.55+20,
+        s:scale*(0.85+Math.random()*0.4),
+        dx:(Math.random()-0.5)*0.1,dy:(Math.random()-0.5)*0.06,
+        ph:Math.random()*Math.PI*2});
+    }
+  }
+  makeConsts();
+  // ── Shooting stars ──
+  let shoots=[],shootTimer=180;
+  function spawnShoot(){
+    const sx=Math.random()*w*0.8+w*0.1, sy=Math.random()*h*0.25;
+    const ang=(35+Math.random()*30)*Math.PI/180, sp=8+Math.random()*5;
+    shoots.push({x:sx,y:sy,vx:Math.cos(ang)*sp*(Math.random()<0.5?1:-1),vy:Math.sin(ang)*sp,life:0,max:55+Math.random()*30});
+  }
+  function drawConsts(){
+    const rgb=window._starRGB||'232,196,106';
+    consts.forEach(c=>{
+      c.x+=c.dx;c.y+=c.dy;
+      if(c.x>w+170)c.x=-170;if(c.x<-170)c.x=w+170;
+      if(c.y>h+130)c.y=-130;if(c.y<-130)c.y=h+130;
+      const tw=Math.sin(t*0.008+c.ph)*0.25+0.75;
+      ctx.strokeStyle='rgba('+rgb+','+(0.18*tw).toFixed(3)+')';ctx.lineWidth=1;
+      c.p.lines.forEach(L=>{const a=c.p.pts[L[0]],b=c.p.pts[L[1]];
+        ctx.beginPath();ctx.moveTo(c.x+a[0]*c.s,c.y+a[1]*c.s);ctx.lineTo(c.x+b[0]*c.s,c.y+b[1]*c.s);ctx.stroke();});
+      c.p.pts.forEach((p,i)=>{const twi=Math.sin(t*0.02+c.ph+i)*0.3+0.7;
+        const px=c.x+p[0]*c.s,py=c.y+p[1]*c.s;
+        ctx.beginPath();ctx.arc(px,py,3.8,0,Math.PI*2);ctx.fillStyle='rgba('+rgb+','+(0.12*twi).toFixed(3)+')';ctx.fill();
+        ctx.beginPath();ctx.arc(px,py,1.9,0,Math.PI*2);ctx.fillStyle='rgba('+rgb+','+(0.85*twi).toFixed(3)+')';ctx.fill();});
+    });
+    shootTimer--;
+    if(shootTimer<=0){spawnShoot();shootTimer=340+Math.random()*500;}
+    shoots=shoots.filter(sh=>sh.life<sh.max&&sh.x>-100&&sh.x<w+100&&sh.y<h+100);
+    shoots.forEach(sh=>{
+      sh.x+=sh.vx;sh.y+=sh.vy;sh.life++;
+      const fade=1-sh.life/sh.max;
+      const g=ctx.createLinearGradient(sh.x,sh.y,sh.x-sh.vx*7,sh.y-sh.vy*7);
+      g.addColorStop(0,'rgba('+rgb+','+(0.95*fade).toFixed(3)+')');
+      g.addColorStop(1,'rgba('+rgb+',0)');
+      ctx.strokeStyle=g;ctx.lineWidth=1.7;
+      ctx.beginPath();ctx.moveTo(sh.x,sh.y);ctx.lineTo(sh.x-sh.vx*7,sh.y-sh.vy*7);ctx.stroke();
+      ctx.beginPath();ctx.arc(sh.x,sh.y,1.8,0,Math.PI*2);ctx.fillStyle='rgba('+rgb+','+(0.95*fade).toFixed(3)+')';ctx.fill();
+    });
+  }
+
   makeStars();makeNebulae();
   // Theme switcher re-tints the nebula clouds without a reload
   window._refreshStarfield=function(){makeNebulae();};
@@ -4486,6 +4546,8 @@ function initStarfield(){
       ctx.fillStyle=grad;
       ctx.fillRect(0,0,w,h);
     });
+
+    drawConsts();
 
     // Stars with gentle twinkle and drift
     agScroll*=0.92;
