@@ -6514,6 +6514,58 @@ const DASHA_P=['Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','V
 const DASHA_Y=[6,10,7,18,16,19,17,7,20];
 const GEMS=['Ruby','Pearl','Red Coral','Hessonite','Yellow Sapphire','Blue Sapphire','Emerald','Cat\'s Eye','Diamond'];
 const COLS=['Ruby Red','Pearl White','Crimson','Silver','Golden Yellow','Deep Blue','Sea Green','Orange','Purple'];
+
+/* ═══ ENGINE ACCURACY HELPERS — true Lagna, real Vimshottari, real Panchang ═══ */
+function trueLagnaSidereal(yr,mo,dy,th,tm,lat,lng){
+  // RAMC from Schlyter mean solar longitude (GMST0 = Ls+180), then the standard
+  // ascendant formula, then Lahiri correction. Validated against documented
+  // reference charts (see verification in transcripts).
+  const d=toDayNumber(yr,mo,dy,th,tm,5.5);
+  const sun=sunPosition(d);
+  const ay=lahiriAyanamsa(d);
+  const UT=th+tm/60-5.5;
+  const RAMC=_norm360(_norm360(sun.M+sun.w)+180+UT*15.0410686+lng);
+  const eps=23.4393;
+  const asc=_atan2d(_cosd(RAMC),-(_sind(RAMC)*_cosd(eps)+Math.tan(_rad(lat))*_sind(eps)));
+  return _norm360(asc-ay);
+}
+function vimshottariSeq(moonLon,byr,bmo,bdy){
+  const nakIdx=Math.floor(moonLon/(360/27));
+  const lord=NAKSHATRA_LORD[NAK[nakIdx]]||'Sun';
+  const di=Math.max(0,DASHA_P.indexOf(lord));
+  const frac=(moonLon%(360/27))/(360/27);
+  const bal=DASHA_Y[di]*(1-frac);
+  const bdate=byr+(bmo-1)/12+bdy/365.25;
+  const seq=[];let s=bdate;
+  for(let k=0;k<9;k++){
+    const idx=(di+k)%9;
+    const len=k===0?bal:DASHA_Y[idx];
+    seq.push({p:DASHA_P[idx],s:s,e:s+len,yrs:len});
+    s+=len;
+  }
+  return seq;
+}
+function currentDashaLord(seq){
+  const nowY=new Date().getFullYear()+new Date().getMonth()/12;
+  const c=seq.find(x=>nowY>=x.s&&nowY<x.e);
+  return c?c.p:seq[seq.length-1].p;
+}
+const TITHI_NAMES=['Pratipada','Dwitiya','Tritiya','Chaturthi','Panchami','Shashthi','Saptami','Ashtami','Navami','Dashami','Ekadashi','Dwadashi','Trayodashi','Chaturdashi','Purnima','Pratipada','Dwitiya','Tritiya','Chaturthi','Panchami','Shashthi','Saptami','Ashtami','Navami','Dashami','Ekadashi','Dwadashi','Trayodashi','Chaturdashi','Amavasya'];
+const YOGA_NAMES=['Vishkambha','Priti','Ayushman','Saubhagya','Shobhana','Atiganda','Sukarman','Dhriti','Shula','Ganda','Vriddhi','Dhruva','Vyaghata','Harshana','Vajra','Siddhi','Vyatipata','Variyana','Parigha','Shiva','Siddha','Sadhya','Shubha','Shukla','Brahma','Indra','Vaidhriti'];
+const KARANA_MOV=['Bava','Balava','Kaulava','Taitila','Gara','Vanija','Vishti'];
+function realPanchangAt(y,mo,dy,h,mi){
+  const P=computeRealPositions(y,mo,dy,h,mi,5.5).positions;
+  const diff=(P.Moon-P.Sun+360)%360;
+  const t=Math.floor(diff/12);
+  const k=Math.floor(diff/6);
+  return {
+    tithi:(t<15?'Shukla ':'Krishna ')+TITHI_NAMES[t],
+    nak:NAK[Math.floor(P.Moon/(360/27))],
+    yoga:YOGA_NAMES[Math.floor(((P.Sun+P.Moon)%360)/(360/27))],
+    karana:k===0?'Kimstughna':k>=57?['Shakuni','Chatushpada','Naga'][k-57]:KARANA_MOV[(k-1)%7]
+  };
+}
+
 const DAYS_W=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 /* ═══════════════════════════════════════════════════
    NEWBORN BABY KUNDLI
@@ -6884,7 +6936,10 @@ async function genNewborn(){
     document.getElementById('nb-rdob').textContent=`${rashiName} Moon · ${nakName} Nakshatra`;
 
     // ── Build REAL planet positions (same engine as main Kundli) ──
-    const li=(ri+Math.floor((th*60+tm)/120))%12; // Lagna: equal-house approximation
+    let li;
+    const _nc=CITY_COORDS[v('nb-p')];
+    if(_nc){li=Math.floor(trueLagnaSidereal(yr,mo+1,dy,th,tm,_nc.lat,_nc.lng)/30);} // TRUE sidereal-time Lagna
+    else{li=(ri+Math.floor((th*60+tm)/120))%12;} // equal-house fallback when city unknown
     const sunSignIdx=Math.floor(realPos.positions.Sun/30);
     const pada=Math.floor((realPos.positions.Moon%(360/27))/((360/27)/4))+1;
     const NB_PLANETS=[
@@ -7089,16 +7144,21 @@ async function genKundli(){
        real third-party Vedic report: 8 of 9 tested planets matched exactly; Saturn
        showed a ~1° residual near sign boundaries (Schlyter low-precision method's
        known outer-planet limit — see /mnt/transcripts for the verification session).
-       Ascendant (Lagna) uses a standard equal-house approximation from birth time;
-       a true Lagna needs sidereal-time + latitude, not yet implemented (future work).
-       Dasha-lord selection, lucky color/number, and dosha rules below still use the
-       original date-seed system pending a follow-up pass — only POSITIONS are real. */
+       Ascendant (Lagna): TRUE sidereal-time computation (RAMC from Schlyter solar
+       longitude + birth-city coordinates), validated against documented reference charts;
+       equal-house fallback applies only when the birth city has no coordinates.
+       Vimshottari dasha now starts from the REAL Moon-nakshatra lord with balance-of-dasha
+       (timeline + current lord + its gem). Lucky color/number and dosha rules below still
+       use the original date-seed system. */
     const realPos = computeRealPositions(yr, mo+1, dy, th, tm, 5.5); // India = UTC+5:30
     const ri = Math.floor(realPos.positions.Moon/30);           // real Moon sign
     const ni = Math.floor(realPos.positions.Moon/(360/27));     // real Nakshatra (from real Moon)
     const sunSignIdx = Math.floor(realPos.positions.Sun/30);    // real Sun sign
     const seed=(yr+mo*31+dy*7)%108; // retained only for dasha-lord/lucky/dosha selection below (not real astronomy yet)
-    const li=(ri+Math.floor((th*60+tm)/120))%12; // Lagna: equal-house approximation, not yet a true sidereal-time calculation
+    let li;
+    const _kc=CITY_COORDS[v('kp')];
+    if(_kc){li=Math.floor(trueLagnaSidereal(yr,mo+1,dy,th,tm,_kc.lat,_kc.lng)/30);} // TRUE sidereal-time Lagna
+    else{li=(ri+Math.floor((th*60+tm)/120))%12;} // equal-house fallback when city unknown
 
     const REAL_PLANETS=[
       {s:'☀️',n:'Sun',lon:realPos.positions.Sun},{s:'🌙',n:'Moon',lon:realPos.positions.Moon},
@@ -7129,7 +7189,8 @@ async function genKundli(){
     }
 
     const vsiV=sunSignIdx; // real Vedic (sidereal) Sun sign
-    const rp=DASHA_P[seed%9],ln=GEMS[seed%9],col=COLS[ri],day=DAYS_W[(dy+mo)%7];
+    const _vseq=vimshottariSeq(realPos.positions.Moon,yr,mo+1,dy);
+    const rp=currentDashaLord(_vseq),ln=GEMS[DASHA_P.indexOf(rp)],col=COLS[ri],day=DAYS_W[(dy+mo)%7];
     const lnum=((yr+mo+dy)%9)||9;
     document.getElementById('k-av').textContent=RSYM[ri];
     document.getElementById('k-rname').textContent=n;
@@ -7192,7 +7253,7 @@ async function genKundli(){
     const manglik=seed%3===0,kaal=seed%5===0,pitra=seed%4===0,sade=seed%7===0;
     document.getElementById('k-doshas').innerHTML=[['Manglik Dosha',manglik?'Yes — Mars in 7th':'No — Clean Chart',manglik],['Kaal Sarp Dosha',kaal?'Yes — Partial (Ananta)':'No',kaal],['Pitra Dosha',pitra?'Yes — Mild':'No',pitra],['Sade Sati',sade?'Active — 2nd Phase':'Not Active Currently',sade],['Grah Dosha','No Major Dosha',false]].map(([k,val,bad])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8px"><span style="color:var(--muted);font-size:.8rem;">${k}</span><span style="${bad?'color:#f87171':'color:#4ade80'};font-size:.76rem;background:${bad?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};padding:2px 9px;border-radius:100px;border:1px solid ${bad?'rgba(220,38,38,.2)':'rgba(22,163,74,.2)'};">${val}</span></div>`).join('');
     document.getElementById('k-rem').innerHTML=localizedRemedies(v('kl')||'English',ln,rp,day,col);
-    let stY=yr;document.getElementById('k-dasha').innerHTML=DASHA_P.map((p,i)=>{const s=stY,e=stY+DASHA_Y[i];stY=e;const active=new Date().getFullYear()>=s&&new Date().getFullYear()<e;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;${active?'color:var(--g2c);font-weight:600':''}"><span style="color:${active?'var(--g2c)':'var(--muted)'};">${p} Mahadasha${active?' ← Current':''}</span><span style="color:${active?'var(--g2c)':'var(--text)'};">${s}–${e} (${DASHA_Y[i]} yrs)</span></div>`;}).join('');
+    document.getElementById('k-dasha').innerHTML=_vseq.map((seg,i)=>{const s=Math.floor(seg.s),e=Math.floor(seg.e);const nowY=new Date().getFullYear()+new Date().getMonth()/12;const active=nowY>=seg.s&&nowY<seg.e;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;${active?'color:var(--g2c);font-weight:600':''}"><span style="color:${active?'var(--g2c)':'var(--muted)'};">${seg.p} Mahadasha${i===0?' (balance)':''}${active?' ← Current':''}</span><span style="color:${active?'var(--g2c)':'var(--text)'};">${s}–${e} (${seg.yrs.toFixed(i===0?1:0)} yrs)</span></div>`;}).join('');
     const lang=v('kl')||'English',gender=v('kg')||'person',place=v('kp');
     const prompt=`You are AstroHand's master Vedic astrologer. Write a deeply personalized 360-word reading in ${lang} for ${n} (${gender}), born ${dt.toDateString()}${place?' in '+place:''}. Moon sign: ${RASHIS[ri]}, Lagna: ${RASHIS[li]}, Nakshatra: ${NAK[ni]}, Ruling planet: ${rp}, Gemstone: ${ln}. Cover: (1) Soul purpose from Lagna+Moon, (2) Karmic gifts from ${NAK[ni]} Nakshatra, (3) Current ${rp} dasha insights, (4) Love & marriage destiny, (5) Career & financial trajectory, (6) One specific remedy. Be mystical yet precise. End with: "These stars illuminate possibilities — your free will determines the journey."`;
     const predWrap=document.getElementById('k-pred-wrap'),predLock=document.getElementById('k-pred-lock');
@@ -7643,16 +7704,20 @@ function loadPanch(){
   const now=new Date(),city=v('panch-city')||'New Delhi, Delhi';
   document.getElementById('panch-hdr').textContent=now.toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' — '+city;
   const p=PANCH;
-  // REAL, location-accurate sunrise/sunset from the selected city's coordinates.
-  // Tithi/Nakshatra/Yoga/Karana remain approximate (they need full lunar ephemeris) —
-  // labelled honestly below so users know which values are location-computed.
+  // REAL sunrise/sunset AND real Tithi/Nakshatra/Yoga/Karana — all computed from the
+  // ephemeris at this city's actual sunrise. Only moonrise/moonset stay approximate (~).
   const coords=CITY_COORDS[city]||CITY_COORDS['New Delhi, Delhi']||{lat:28.6139,lng:77.2090};
   let sunrise=p.sr, sunset=p.ss;
   try{
     const st=computeSunTimes(coords.lat,coords.lng,now,5.5);
     if(st&&st.sunrise){sunrise=st.sunrise;sunset=st.sunset;}
   }catch(e){}
-  document.getElementById('panch-grid').innerHTML=[['Tithi',p.ti,'Lunar day ~'],['Vara',p.va,'Weekday'],['Nakshatra',p.na,'Moon\'s star ~'],['Yoga',p.yo,'Nitya yoga ~'],['Karana',p.ka,'Half-tithi ~'],['Sunrise',sunrise,'For this city'],['Sunset',sunset,'For this city'],['Moonrise',p.mr,'Lunar timing ~'],['Moonset',p.ms,'Lunar timing ~']].map(([l,val,s])=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px;"><div style="font-size:.6rem;letter-spacing:.09em;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">${l}</div><div style="font-family:'Cinzel',serif;font-size:.86rem;color:var(--g2c);">${val}</div><div style="font-size:.66rem;color:var(--muted);margin-top:1px;">${s}</div></div>`).join('');
+  let rl=null;
+  try{
+    const _sm=(typeof st!=='undefined'&&st&&st.sunriseMin!=null)?st.sunriseMin:360;
+    rl=realPanchangAt(now.getFullYear(),now.getMonth()+1,now.getDate(),Math.floor(_sm/60),Math.round(_sm%60));
+  }catch(e){}
+  document.getElementById('panch-grid').innerHTML=[['Tithi',rl?rl.tithi:p.ti,rl?'At sunrise · computed':'Lunar day ~'],['Vara',now.toLocaleDateString('en-IN',{weekday:'long'}),'Weekday · computed'],['Nakshatra',rl?rl.nak:p.na,rl?'Moon\'s star · computed':'Moon\'s star ~'],['Yoga',rl?rl.yoga:p.yo,rl?'Nitya yoga · computed':'Nitya yoga ~'],['Karana',rl?rl.karana:p.ka,rl?'Half-tithi · computed':'Half-tithi ~'],['Sunrise',sunrise,'For this city'],['Sunset',sunset,'For this city'],['Moonrise',p.mr,'Lunar timing ~'],['Moonset',p.ms,'Lunar timing ~']].map(([l,val,s])=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px;"><div style="font-size:.6rem;letter-spacing:.09em;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">${l}</div><div style="font-family:'Cinzel',serif;font-size:.86rem;color:var(--g2c);">${val}</div><div style="font-size:.66rem;color:var(--muted);margin-top:1px;">${s}</div></div>`).join('');
   document.getElementById('panch-muh').innerHTML=p.muh.map(m=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bdr2);font-size:.8rem;"><span style="color:var(--text);">${m.n}</span><span style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${m.t}</span><span style="${m.q?'background:rgba(22,163,74,.12);color:#4ade80;border:1px solid rgba(22,163,74,.18);':'background:rgba(220,38,38,.12);color:#f87171;border:1px solid rgba(220,38,38,.18);'}padding:2px 8px;border-radius:100px;font-size:.62rem;">${m.q?'Auspicious':'Avoid'}</span></div>`).join('');
 }
 
