@@ -767,8 +767,8 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
 .dis-b{background:rgba(var(--gold-rgb),.06);border:1px solid rgba(var(--gold-rgb),.12);border-radius:var(--r2);padding:14px;}
 
 /* ── RESPONSIVE ── */
-@media(max-width:960px){.dash-layout{grid-template-columns:1fr;}.dash-sb{display:grid;grid-template-columns:1fr 1fr;gap:10px;}.dp-card{display:flex;align-items:center;gap:16px;text-align:left;}.d-minis{margin-top:0;}.fg3,.tg3,.pg3{grid-template-columns:repeat(2,1fr);}.fg4{grid-template-columns:1fr 1fr 1fr;}.sr4{grid-template-columns:repeat(2,1fr);}.qt-g{grid-template-columns:repeat(3,1fr);}.pl-g{grid-template-columns:1fr 1fr;}}
-@media(max-width:820px){.nav-links-d{display:none!important;}.nav-r .btn-si,.nav-r .btn-ku{display:none;}#nav-out{display:none!important;}.acct-trigger-txt{display:none;}.acct-trigger{padding:5px;}.ham{display:flex;}}
+@media(max-width:960px),(orientation:portrait) and (max-width:1100px){.dash-layout{grid-template-columns:1fr;}.dash-sb{display:grid;grid-template-columns:1fr 1fr;gap:10px;}.dp-card{display:flex;align-items:center;gap:16px;text-align:left;}.d-minis{margin-top:0;}.fg3,.tg3,.pg3{grid-template-columns:repeat(2,1fr);}.fg4{grid-template-columns:1fr 1fr 1fr;}.sr4{grid-template-columns:repeat(2,1fr);}.qt-g{grid-template-columns:repeat(3,1fr);}.pl-g{grid-template-columns:1fr 1fr;}}
+@media(max-width:820px),(orientation:portrait) and (max-width:1100px){.nav-links-d{display:none!important;}.nav-r .btn-si,.nav-r .btn-ku{display:none;}#nav-out{display:none!important;}.acct-trigger-txt{display:none;}.acct-trigger{padding:5px;}.ham{display:flex;}}
 @media(max-width:680px){nav{padding:0 16px;}.nav-links-d{display:none!important;}.nav-r .btn-si,.nav-r .btn-ku{display:none;}.acct-trigger-txt{display:none;}.acct-trigger{padding:5px;}.ham{display:flex;}.fg3,.tg3,.pg3{grid-template-columns:1fr;}.pc.pop{transform:none;}.fgrid,.frm2{grid-template-columns:1fr;}.pfg{grid-template-columns:1fr;}.dash-sb{grid-template-columns:1fr;}.dp-card{flex-direction:column;text-align:center;}.sr4{grid-template-columns:1fr 1fr;}.qt-g{grid-template-columns:repeat(2,1fr);}.pl-g{grid-template-columns:1fr;}.fg4{grid-template-columns:1fr 1fr;}.fbot{flex-direction:column;text-align:center;}.nlf{flex-direction:column;}.acard{padding:28px 20px;}.mbox{padding:24px 18px;}.otp-boxes{gap:7px;}.ob{width:44px;height:50px;font-size:1.2rem;}}
 
 
@@ -2122,7 +2122,7 @@ This single script enables ALL ad units on the page, including every
 .sn{color:var(--g2c);}
 .sl{color:var(--muted);}
 .tools-wrap .tlbl{}
-@media(max-width:680px){
+@media(max-width:680px),(orientation:portrait) and (max-width:1100px){
   .hero{min-height:auto;padding:88px 16px 36px;}
   .hero-centerpiece{order:-1;width:230px;height:230px;margin:4px auto 22px;}
   .hbadge{margin-bottom:16px;}
