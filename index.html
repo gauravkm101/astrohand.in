@@ -5025,17 +5025,24 @@ function fillProfile(){
 
 function uploadAv(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{CU.avatar=ev.target.result;DB.setU(CU.em,CU);const avEl=document.getElementById('d-av-txt');avEl.style.display='none';const img=document.createElement('img');img.src=ev.target.result;document.getElementById('d-av-txt').parentElement.appendChild(img);toast('✅ Photo updated!','ok');};r.readAsDataURL(f);}
 
+const PLAN_RANK={free:0,silver:1,gold:2,vip:3};
 function renderPlans(){
   document.getElementById('cp-lbl').textContent=cap(CU.plan);
+  const curRank=PLAN_RANK[CU.plan]??0;
   document.getElementById('pl-g').innerHTML=PLANS_D.map(p=>{
     const inrNum=parseFloat(String(p.pr).replace(/[^\d.]/g,''))||0;
+    const pRank=PLAN_RANK[p.id]??0;
+    const btn=CU.plan===p.id?`<button class="upb upb-c">Current Plan</button>`
+      :curRank>pRank?`<button class="upb upb-c" disabled>✔ Included in your plan</button>`
+      :p.id==='free'?`<button class="upb upb-o" onclick="downgFree()">Downgrade to Free</button>`
+      :`<button class="upb upb-g" onclick="openPay('${p.id}','${p.n}','${p.pr}','${p.per}')">Upgrade to ${p.n}</button>`;
     return `
     <div class="pl-c${CU.plan===p.id?' cur':''}">
       ${CU.plan===p.id?'<div class="cb">✦ Current</div>':''}
       <div class="pl-tier">${p.n}</div>
       <div class="pl-pr"><span data-inr="${inrNum}">${p.pr}</span><span class="pl-per">${p.per}</span></div>
       <ul class="pl-fl">${p.f.map(f=>`<li><span style="color:var(--gold);font-size:.7rem;flex-shrink:0">✦</span>${f}</li>`).join('')}${p.x.map(f=>`<li><span style="color:var(--sub);font-size:.7rem;flex-shrink:0">○</span><span style="color:var(--sub)">${f}</span></li>`).join('')}</ul>
-      ${CU.plan===p.id?`<button class="upb upb-c">Current Plan</button>`:p.id==='free'?`<button class="upb upb-o" onclick="downgFree()">Downgrade to Free</button>`:`<button class="upb upb-g" onclick="openPay('${p.id}','${p.n}','${p.pr}','${p.per}')">Upgrade to ${p.n}</button>`}
+      ${btn}
     </div>`;
   }).join('');
   applyCurrencyDisplay();
