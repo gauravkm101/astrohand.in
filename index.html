@@ -1187,7 +1187,7 @@ This single script enables ALL ad units on the page, including every
     <p class="eye">✦ Talk to an Astrologer ✦</p>
     <h2 class="h2">Your Personal AI Astrologers — <span>Online 24/7</span></h2>
     <p class="sdesc">12 masters of Vedic, Nadi, Tarot, Love &amp; Wealth astrology. Pick your guide and start chatting instantly.</p>
-    <div id="astro-strip-cards" style="display:flex;gap:14px;overflow-x:auto;padding:14px 4px 18px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;"></div>
+    <div id="astro-strip-cards" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:14px 4px 18px;max-width:860px;margin:0 auto;"></div>
   </div>
 </section>
 
@@ -1196,7 +1196,7 @@ This single script enables ALL ad units on the page, including every
     <p class="eye">✦ World Astrologers ✦</p>
     <h2 class="h2">Wisdom From <span>Every Civilisation</span></h2>
     <p class="sdesc">Chinese · Japanese · Arabic · Islamic · Egyptian · African · Celtic · Kabbalah — master astrologers of eight great traditions, exclusively for Gold &amp; VIP members.</p>
-    <div id="astro-world-cards" style="display:flex;gap:14px;overflow-x:auto;padding:14px 4px 18px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;"></div>
+    <div id="astro-world-cards" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:14px 4px 18px;max-width:860px;margin:0 auto;"></div>
   </div>
 </section>
 
@@ -7490,7 +7490,7 @@ const ASTROs=[
 // would look wrong for Chinese/Egyptian/Celtic masters; add tradition-specific photos later.
 ASTROs.forEach((a,i)=>{if(!a.world)a.img='av/astro-'+(i+1)+'.jpg';});
 function isAstroLocked(a){return a.plan==='vip'?!isVip():a.plan==='gold'?!isGoldOrVip():false;}
-function astroAvatarHTML(a,size){return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+a.bg+';display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.42)+'px;flex-shrink:0;overflow:hidden;position:relative;margin:0 auto;"><span>'+a.av+'</span>'+(a.img?'<img src="'+a.img+'" alt="'+a.n+'" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">':'')+'</div>';}
+function astroAvatarHTML(a,size){const ring=size>=60?'border:2px solid rgba(var(--gold-rgb),.45);box-shadow:0 0 22px rgba(var(--gold-rgb),.28);':'';return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+a.bg+';display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.42)+'px;flex-shrink:0;overflow:hidden;position:relative;margin:0 auto;'+ring+'"><span>'+a.av+'</span>'+(a.img?'<img src="'+a.img+'" alt="'+a.n+'" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">':'')+'</div>';}
 let curA=0,cHist=[];
 function initAList(){
   document.getElementById('a-list').innerHTML=ASTROs.map((a,i)=>{
@@ -7515,14 +7515,14 @@ function renderWorldStrip(){
     if(!a.world)return '';
     const locked=isAstroLocked(a);
     const badge=a.plan==='vip'?'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:var(--grad-royal);color:#fff;">👑 VIP</span>':'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:rgba(var(--gold-rgb),.18);border:1px solid var(--bdr);color:var(--g2c);">GOLD</span>';
-    return `<div style="scroll-snap-align:start;flex:0 0 180px;background:var(--g2);backdrop-filter:blur(8px);border:1px solid ${locked?'var(--bdr2)':'var(--bdr)'};border-radius:var(--r2);padding:18px 12px 14px;text-align:center;cursor:pointer;transition:transform .25s,box-shadow .25s;${locked?'opacity:.82;':''}" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-gold)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAstroChat(${i})">
-      ${astroAvatarHTML(a,66)}
-      <div style="font-family:'Cinzel',serif;font-size:.74rem;color:var(--g2c);margin-top:10px;line-height:1.3;">${a.n}</div>
-      <div style="font-size:.58rem;color:var(--muted);margin-top:3px;min-height:26px;">${a.sp}</div>
-      <div style="font-size:.6rem;color:var(--gold);margin-top:3px;">${a.rt}</div>
-      <div style="font-size:.58rem;color:var(--green);margin:5px 0 8px;">● Online</div>
+    return `<div style="background:var(--g2);backdrop-filter:blur(8px);border:1px solid ${locked?'var(--bdr2)':'var(--bdr)'};border-radius:var(--r2);padding:24px 14px 20px;text-align:center;cursor:pointer;transition:transform .25s,box-shadow .25s;${locked?'opacity:.82;':''}" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-gold)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAstroChat(${i})">
+      ${astroAvatarHTML(a,116)}
+      <div style="font-family:'Cinzel',serif;font-size:.98rem;color:var(--g2c);margin-top:14px;line-height:1.3;">${a.n}</div>
+      <div style="font-size:.7rem;color:var(--muted);margin-top:4px;min-height:28px;">${a.sp}</div>
+      <div style="font-size:.72rem;color:var(--gold);margin-top:4px;">${a.rt}</div>
+      <div style="font-size:.68rem;color:var(--green);margin:6px 0 9px;">● Online</div>
       ${badge}
-      <div style="margin-top:10px;"><span style="display:inline-block;padding:7px 16px;border-radius:20px;background:${locked?'rgba(255,255,255,.06)':'var(--grad-divine)'};color:${locked?'var(--muted)':'#1a1035'};font-size:.66rem;font-weight:700;letter-spacing:.04em;">${locked?'🔒 Unlock':'Chat Now ✦'}</span></div>
+      <div style="margin-top:12px;"><span style="display:inline-block;padding:9px 22px;border-radius:20px;background:${locked?'rgba(255,255,255,.06)':'var(--grad-divine)'};color:${locked?'var(--muted)':'#1a1035'};font-size:.76rem;font-weight:700;letter-spacing:.04em;">${locked?'🔒 Unlock':'Chat Now ✦'}</span></div>
     </div>`;
   }).join('');
 }
@@ -7534,14 +7534,14 @@ function renderAstroStrip(){
     if(a.world)return '';
     const locked=isAstroLocked(a);
     const badge=a.plan==='vip'?'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:var(--grad-royal);color:#fff;">👑 VIP</span>':a.plan==='gold'?'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:rgba(var(--gold-rgb),.18);border:1px solid var(--bdr);color:var(--g2c);">GOLD</span>':'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);color:var(--green);">FREE</span>';
-    return `<div style="scroll-snap-align:start;flex:0 0 180px;background:var(--g2);backdrop-filter:blur(8px);border:1px solid ${locked?'var(--bdr2)':'var(--bdr)'};border-radius:var(--r2);padding:18px 12px 14px;text-align:center;cursor:pointer;transition:transform .25s,box-shadow .25s;${locked?'opacity:.78;':''}" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-gold)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAstroChat(${i})">
-      ${astroAvatarHTML(a,66)}
-      <div style="font-family:'Cinzel',serif;font-size:.74rem;color:var(--g2c);margin-top:10px;line-height:1.3;">${a.n}</div>
-      <div style="font-size:.58rem;color:var(--muted);margin-top:3px;min-height:26px;">${a.sp}</div>
-      <div style="font-size:.6rem;color:var(--gold);margin-top:3px;">${a.rt}</div>
-      <div style="font-size:.58rem;color:var(--green);margin:5px 0 8px;">● Online</div>
+    return `<div style="background:var(--g2);backdrop-filter:blur(8px);border:1px solid ${locked?'var(--bdr2)':'var(--bdr)'};border-radius:var(--r2);padding:24px 14px 20px;text-align:center;cursor:pointer;transition:transform .25s,box-shadow .25s;${locked?'opacity:.78;':''}" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-gold)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAstroChat(${i})">
+      ${astroAvatarHTML(a,116)}
+      <div style="font-family:'Cinzel',serif;font-size:.98rem;color:var(--g2c);margin-top:14px;line-height:1.3;">${a.n}</div>
+      <div style="font-size:.7rem;color:var(--muted);margin-top:4px;min-height:28px;">${a.sp}</div>
+      <div style="font-size:.72rem;color:var(--gold);margin-top:4px;">${a.rt}</div>
+      <div style="font-size:.68rem;color:var(--green);margin:6px 0 9px;">● Online</div>
       ${badge}
-      <div style="margin-top:10px;"><span style="display:inline-block;padding:7px 16px;border-radius:20px;background:${locked?'rgba(255,255,255,.06)':'var(--grad-divine)'};color:${locked?'var(--muted)':'#1a1035'};font-size:.66rem;font-weight:700;letter-spacing:.04em;">${locked?'🔒 Unlock':'Chat Now ✦'}</span></div>
+      <div style="margin-top:12px;"><span style="display:inline-block;padding:9px 22px;border-radius:20px;background:${locked?'rgba(255,255,255,.06)':'var(--grad-divine)'};color:${locked?'var(--muted)':'#1a1035'};font-size:.76rem;font-weight:700;letter-spacing:.04em;">${locked?'🔒 Unlock':'Chat Now ✦'}</span></div>
     </div>`;
   }).join('');
 }
@@ -7564,7 +7564,7 @@ async function sendMsg(){
   }
   const btn=document.getElementById('c-send');btn.disabled=true;inp.value='';
   const a=ASTROs[curA],msgsEl=document.getElementById('c-msgs');
-  msgsEl.innerHTML+=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84px;line-height:1.58;background:rgba(var(--gold-rgb),.13);border:1px solid rgba(var(--gold-rgb),.2);color:var(--g3);align-self:flex-end;border-bottom-right-radius:4px;margin-left:auto;"><div style="font-size:.58rem;letter-spacing:.08em;color:rgba(var(--gold-rgb),.5);margin-bottom:4px;font-family:'Cinzel',serif;text-align:right;">YOU</div>${esc(msg)}</div>`;
+  msgsEl.innerHTML+=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(var(--gold-rgb),.13);border:1px solid rgba(var(--gold-rgb),.2);color:var(--g3);align-self:flex-end;border-bottom-right-radius:4px;margin-left:auto;"><div style="font-size:.58rem;letter-spacing:.08em;color:rgba(var(--gold-rgb),.5);margin-bottom:4px;font-family:'Cinzel',serif;text-align:right;">YOU</div>${esc(msg)}</div>`;
   const typ=document.createElement('div');
   typ.style.cssText='max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.2);color:var(--sub);align-self:flex-start;border-bottom-left-radius:4px;';
   typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>✦ Consulting the cosmic records…`;
