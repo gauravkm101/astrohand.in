@@ -7494,17 +7494,31 @@ const ASTROs=[
 ASTROs.forEach((a,i)=>{if(!a.world)a.img='av/astro-'+(i+1)+'.jpg';});
 function isAstroLocked(a){return a.plan==='vip'?!isVip():a.plan==='gold'?!isGoldOrVip():false;}
 function astroAvatarHTML(a,size){const ring=size>=60?'border:2px solid rgba(var(--gold-rgb),.45);box-shadow:0 0 22px rgba(var(--gold-rgb),.28);':'';return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+a.bg+';display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.42)+'px;flex-shrink:0;overflow:hidden;position:relative;margin:0 auto;'+ring+'"><span>'+a.av+'</span>'+(a.img?'<img src="'+a.img+'" alt="'+a.n+'" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">':'')+'</div>';}
-// Tall rectangular portrait (face + mala/clothes) framed by golden designer corner brackets.
+// Tall rectangular portrait (face + mala/clothes) inside an ornate, museum-grade
+// gilt frame: gradient gold moulding, inner bevel, and filigree flourishes in each corner.
+function astroCornerSVG(rot){
+  return '<svg viewBox="0 0 40 40" width="40" height="40" style="position:absolute;'+rot+';filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));" xmlns="http://www.w3.org/2000/svg">'
+    +'<defs><linearGradient id="agc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e39c"/><stop offset=".5" stop-color="#d4a637"/><stop offset="1" stop-color="#8a6410"/></linearGradient></defs>'
+    +'<path d="M2 2 L2 16 Q2 8 8 4 Q13 2 22 2 Z" fill="url(#agc)"/>'
+    +'<path d="M6 6 Q16 6 22 9 M6 6 Q6 16 9 22" stroke="url(#agc)" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+    +'<circle cx="6" cy="6" r="2.4" fill="url(#agc)"/>'
+    +'<circle cx="22" cy="4.5" r="1.5" fill="url(#agc)"/><circle cx="4.5" cy="22" r="1.5" fill="url(#agc)"/>'
+    +'</svg>';
+}
 function astroPortraitHTML(a){
-  const c='position:absolute;width:24px;height:24px;border-color:var(--gold);border-style:solid;';
-  return '<div style="position:relative;width:82%;max-width:172px;aspect-ratio:204/265;margin:0 auto;">'
-    +'<div style="width:100%;height:100%;border-radius:12px;background:'+a.bg+';display:flex;align-items:center;justify-content:center;font-size:3rem;overflow:hidden;position:relative;box-shadow:0 8px 28px rgba(var(--gold-rgb),.22);"><span>'+a.av+'</span>'
+  return '<div style="position:relative;width:84%;max-width:180px;aspect-ratio:204/265;margin:0 auto;padding:7px;border-radius:8px;'
+      +'background:linear-gradient(135deg,#5a4210,#d4a637 18%,#f7e39c 34%,#b98a22 52%,#8a6410 70%,#e8cf7e 88%,#6b4e0a);'
+      +'box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 22px rgba(var(--gold-rgb),.30),inset 0 0 0 1px rgba(255,240,190,.5);">'
+    // inner bevel + photo
+    +'<div style="position:relative;width:100%;height:100%;border-radius:4px;overflow:hidden;background:'+a.bg+';display:flex;align-items:center;justify-content:center;font-size:3rem;'
+      +'box-shadow:inset 0 0 0 2px rgba(60,40,5,.55),inset 0 0 14px rgba(0,0,0,.5);"><span>'+a.av+'</span>'
     +(a.img?'<img src="'+a.img+'" alt="'+a.n+'" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">':'')
     +'</div>'
-    +'<span style="'+c+'top:-6px;left:-6px;border-width:2px 0 0 2px;border-top-left-radius:10px;"></span>'
-    +'<span style="'+c+'top:-6px;right:-6px;border-width:2px 2px 0 0;border-top-right-radius:10px;"></span>'
-    +'<span style="'+c+'bottom:-6px;left:-6px;border-width:0 0 2px 2px;border-bottom-left-radius:10px;"></span>'
-    +'<span style="'+c+'bottom:-6px;right:-6px;border-width:0 2px 2px 0;border-bottom-right-radius:10px;"></span>'
+    // filigree corner flourishes
+    +astroCornerSVG('top:-3px;left:-3px')
+    +astroCornerSVG('top:-3px;right:-3px;transform:scaleX(-1)')
+    +astroCornerSVG('bottom:-3px;left:-3px;transform:scaleY(-1)')
+    +astroCornerSVG('bottom:-3px;right:-3px;transform:scale(-1,-1)')
     +'</div>';
 }
 let curA=0,cHist=[];
