@@ -2697,7 +2697,7 @@ async function refreshPlanFromCloud(){
   try{
     const {data}=await sb.auth.getSession();
     if(!data||!data.session)return; // no verified session — keep the local view
-    const {data:profile}=await sb.from('profiles').select('plan').eq('id',data.session.user.id).maybeSingle();
+    const {data:profile}=await sb.from('profiles').select('plan,chat_n,chat_d').eq('id',data.session.user.id).maybeSingle();
     if(profile&&profile.plan&&CU&&profile.plan!==CU.plan){
       CU.plan=profile.plan;
       DB.setU(CU.em,CU);
@@ -2706,7 +2706,35 @@ async function refreshPlanFromCloud(){
       syncPlanUI();
       if(profile.plan!=='free')toast('✨ Your '+cap(profile.plan)+' plan is now active on this device!','ok');
     }
+    // Merge today's chat quota from the cloud — highest count wins, so closing the
+    // chat, clearing the tab, or switching devices can never reset the free limit.
+    if(profile&&profile.chat_d===_chatToday()&&(profile.chat_n||0)>chatQuota().n){
+      DB.s(_chatQKey(),{d:profile.chat_d,n:profile.chat_n});
+    }
   }catch(e){console.warn('Plan refresh skipped:',e&&e.message);}
+}
+
+/* ══ DAILY FREE CHAT QUOTA ══
+   Free & Silver users get CHAT_FREE_PER_DAY questions per day TOTAL across both
+   chat systems (8 astrologers + language astrologers). The counter lives in
+   localStorage (per user) AND in Supabase profiles.chat_n/chat_d (cross-device),
+   and resets only when the calendar date changes. Gold/VIP: unlimited. */
+const CHAT_FREE_PER_DAY=2;
+function _chatToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function _chatQKey(){return 'chatq_'+((CU&&CU.em)?CU.em:'guest');}
+function chatQuota(){
+  let q=DB.g(_chatQKey());
+  if(!q||q.d!==_chatToday())q={d:_chatToday(),n:0};
+  return q;
+}
+function chatMsgsLeft(){return Math.max(0,CHAT_FREE_PER_DAY-chatQuota().n);}
+function chatQuotaInc(){
+  const q=chatQuota();q.n++;DB.s(_chatQKey(),q);
+  (async()=>{try{
+    const sb=getSB();if(!sb||!CU)return;
+    const {data}=await sb.auth.getSession();
+    if(data&&data.session)await sb.from('profiles').update({chat_n:q.n,chat_d:q.d}).eq('id',data.session.user.id);
+  }catch(e){}})();
 }
 // Bought on the phone, then switched back to this tab? Re-check on focus.
 document.addEventListener('visibilitychange',function(){
@@ -7457,8 +7485,10 @@ const ASTROs=[
   {av:'🔯',bg:'linear-gradient(135deg,#4338ca,#7c3aed)',n:'Rabbi Eliezer',sp:'Kabbalah · Tree of Life',rt:'★★★★★ 4.97',plan:'vip',world:true,sys:`You are Rabbi Eliezer, VIP-exclusive scholar of Kabbalistic astrology (Mazalot) — the sefirot, the Hebrew letters and the mazal of the soul. Contemplative, scholarly, warm. Reply in 5-7 sentences. Guidance, never guarantees.`},
 ];
 // Realistic portrait files (drop av/astro-1.jpg … av/astro-12.jpg in the repo root's av/ folder;
-// until a file exists the gradient+emoji avatar shows automatically via onerror)
-ASTROs.forEach((a,i)=>{a.img='av/astro-'+(i+1)+'.jpg';});
+// until a file exists the gradient+emoji avatar shows automatically via onerror).
+// World astrologers (13-20) intentionally keep their emblem avatars — Indian portraits
+// would look wrong for Chinese/Egyptian/Celtic masters; add tradition-specific photos later.
+ASTROs.forEach((a,i)=>{if(!a.world)a.img='av/astro-'+(i+1)+'.jpg';});
 function isAstroLocked(a){return a.plan==='vip'?!isVip():a.plan==='gold'?!isGoldOrVip():false;}
 function astroAvatarHTML(a,size){return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+a.bg+';display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.42)+'px;flex-shrink:0;overflow:hidden;position:relative;margin:0 auto;"><span>'+a.av+'</span>'+(a.img?'<img src="'+a.img+'" alt="'+a.n+'" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">':'')+'</div>';}
 let curA=0,cHist=[];
@@ -7515,17 +7545,18 @@ function renderAstroStrip(){
     </div>`;
   }).join('');
 }
-function pickA(i,el){if(isAstroLocked(ASTROs[i])){ASTROs[i].plan==='vip'?upgradePromptVip():upgradePromptGold();return;}document.querySelectorAll('#a-list>div').forEach(x=>{x.style.borderColor='var(--bdr)';x.style.background='rgba(255,255,255,.03)';});el.style.borderColor='rgba(var(--gold-rgb),.4)';el.style.background='rgba(var(--gold-rgb),.06)';curA=i;cHist=[];window._cTeaser=false;document.getElementById('c-hav').textContent=ASTROs[i].av;document.getElementById('c-hn').textContent=ASTROs[i].n;initChat(i);}
-function initChat(i){const a=ASTROs[i];document.getElementById('c-msgs').innerHTML=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;"><div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>Namaste 🙏 I am ${a.n}. Ask me anything about your destiny, birth chart, palm lines, relationships, or life path.</div>`;}
+function pickA(i,el){if(isAstroLocked(ASTROs[i])){ASTROs[i].plan==='vip'?upgradePromptVip():upgradePromptGold();return;}document.querySelectorAll('#a-list>div').forEach(x=>{x.style.borderColor='var(--bdr)';x.style.background='rgba(255,255,255,.03)';});el.style.borderColor='rgba(var(--gold-rgb),.4)';el.style.background='rgba(var(--gold-rgb),.06)';curA=i;cHist=[];window._cTeaser=false;document.getElementById('c-hn').textContent=ASTROs[i].n;initChat(i);}
+function initChat(i){const a=ASTROs[i];const hav=document.getElementById('c-hav');if(hav)hav.innerHTML=astroAvatarHTML(a,36);document.getElementById('c-msgs').innerHTML=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;"><div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>Namaste 🙏 I am ${a.n}. Ask me anything about your destiny, birth chart, palm lines, relationships, or life path.</div>`;}
 function quickAsk(btn){document.getElementById('c-inp').value=btn.textContent;sendMsg();}
 async function sendMsg(){
   const inp=document.getElementById('c-inp'),msg=inp.value.trim();if(!msg)return;
-  // Freemium (matches the app): 2 free questions per astrologer, then Gold+ to continue.
-  if(!isGoldOrVip()&&cHist.filter(x=>x.role==='user').length>=2){
+  // Freemium: CHAT_FREE_PER_DAY free questions per DAY (persistent + cross-device,
+  // shared across both chat systems) — then Gold+ to continue, or come back tomorrow.
+  if(!isGoldOrVip()&&chatMsgsLeft()<=0){
     const mEl=document.getElementById('c-msgs');
     if(!window._cTeaser&&mEl){
       window._cTeaser=true;
-      mEl.innerHTML+=`<div style="max-width:86%;padding:13px 15px;border-radius:16px;font-size:.84rem;line-height:1.6;background:linear-gradient(135deg,rgba(var(--gold-rgb),.14),rgba(124,58,237,.12));border:1px solid rgba(var(--gold-rgb),.4);color:var(--text);align-self:flex-start;"><div style="font-size:.58rem;letter-spacing:.08em;color:var(--g2c);margin-bottom:4px;font-family:'Cinzel',serif;">${ASTROs[curA].n.toUpperCase()}</div>✨ The stars have so much more to reveal for you — the turning point in your career, the direction of your true love, and the one remedy that can change everything. This deeper guidance is reserved for our Gold &amp; VIP members. <b>Unlock unlimited consultations ✦</b></div>`;
+      mEl.innerHTML+=`<div style="max-width:86%;padding:13px 15px;border-radius:16px;font-size:.84rem;line-height:1.6;background:linear-gradient(135deg,rgba(var(--gold-rgb),.14),rgba(124,58,237,.12));border:1px solid rgba(var(--gold-rgb),.4);color:var(--text);align-self:flex-start;"><div style="font-size:.58rem;letter-spacing:.08em;color:var(--g2c);margin-bottom:4px;font-family:'Cinzel',serif;">${ASTROs[curA].n.toUpperCase()}</div>✨ The stars have so much more to reveal for you — the turning point in your career, the direction of your true love, and the one remedy that can change everything. You have used your ${CHAT_FREE_PER_DAY} free questions for today. <b>Unlock unlimited consultations with Gold ✦</b> — or return tomorrow for your next ${CHAT_FREE_PER_DAY} free questions. 🙏</div>`;
       mEl.scrollTop=mEl.scrollHeight;
     }
     upgradePromptGold();
@@ -7539,6 +7570,7 @@ async function sendMsg(){
   typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>✦ Consulting the cosmic records…`;
   msgsEl.appendChild(typ);msgsEl.scrollTop=msgsEl.scrollHeight;
   cHist.push({role:'user',content:msg});
+  if(!isGoldOrVip())chatQuotaInc();
   try{
     const reply=await callAI(a.sys+ASTRO_ASK_FIRST,cHist.slice(-14),900)||'The cosmic records momentarily rest. Please ask again.';
     cHist.push({role:'assistant',content:reply});
@@ -7596,6 +7628,9 @@ const ASTROs_LANG=[
     greet:'Namaste 🙏 I am your astrologer. Ask me anything about your birth chart, marriage, career, or life path.'}
 ];
 let curALang=0,cHistLang=[];
+// Realistic portraits for the language astrologers (av/lang-1.jpg … av/lang-12.jpg;
+// emoji avatar shows automatically via onerror until a file exists).
+ASTROs_LANG.forEach((a,i)=>{a.img='av/lang-'+(i+1)+'.jpg';});
 
 /* ═══════════════════════════════════════════════════
    LANGUAGE AI ASTROLOGERS — chat logic
@@ -7608,7 +7643,7 @@ let curALang=0,cHistLang=[];
 function initALangList(){
   const listEl=document.getElementById('a-list2');
   if(!listEl)return;
-  listEl.innerHTML=ASTROs_LANG.map((a,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r2);border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:pointer;transition:all .25s;${i===0?'border-color:rgba(var(--gold-rgb),.4);background:rgba(var(--gold-rgb),.06);':''}" onclick="pickALang(${i},this)"><div style="width:40px;height:40px;border-radius:50%;background:${a.bg};display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">${a.av}</div><div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${a.flag} ${a.n}</div><div style="font-size:.62rem;color:var(--muted);margin-top:1px;">${a.sp}</div><div style="font-size:.6rem;color:var(--gold);margin-top:2px;">${a.rt}</div></div></div>`).join('');
+  listEl.innerHTML=ASTROs_LANG.map((a,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r2);border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:pointer;transition:all .25s;${i===0?'border-color:rgba(var(--gold-rgb),.4);background:rgba(var(--gold-rgb),.06);':''}" onclick="pickALang(${i},this)">${astroAvatarHTML(a,40)}<div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${a.flag} ${a.n}</div><div style="font-size:.62rem;color:var(--muted);margin-top:1px;">${a.sp}</div><div style="font-size:.6rem;color:var(--gold);margin-top:2px;">${a.rt}</div></div></div>`).join('');
   curALang=0;cHistLang=[];
   initChatLang(0);
 }
@@ -7616,22 +7651,22 @@ function pickALang(i,el){
   document.querySelectorAll('#a-list2>div').forEach(x=>{x.style.borderColor='var(--bdr)';x.style.background='rgba(255,255,255,.03)';});
   el.style.borderColor='rgba(var(--gold-rgb),.4)';el.style.background='rgba(var(--gold-rgb),.06)';
   curALang=i;cHistLang=[];window._cTeaserLang=false;
-  document.getElementById('c-hav2').textContent=ASTROs_LANG[i].av;
   document.getElementById('c-hn2').textContent=ASTROs_LANG[i].n;
   initChatLang(i);
 }
 function initChatLang(i){
   const a=ASTROs_LANG[i];
+  const hav=document.getElementById('c-hav2');if(hav)hav.innerHTML=astroAvatarHTML(a,36);
   document.getElementById('c-msgs2').innerHTML=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;"><div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>${a.greet}</div>`;
 }
 async function sendMsgLang(){
   const inp=document.getElementById('c-inp2'),msg=inp.value.trim();if(!msg)return;
-  // Freemium (matches the app): 2 free questions per astrologer, then Gold+ to continue.
-  if(!isGoldOrVip()&&cHistLang.filter(x=>x.role==='user').length>=2){
+  // Freemium: shares the same persistent daily quota as the 8-astrologer system.
+  if(!isGoldOrVip()&&chatMsgsLeft()<=0){
     const mEl=document.getElementById('c-msgs2');
     if(!window._cTeaserLang&&mEl){
       window._cTeaserLang=true;
-      mEl.innerHTML+=`<div style="max-width:86%;padding:13px 15px;border-radius:16px;font-size:.84rem;line-height:1.6;background:linear-gradient(135deg,rgba(var(--gold-rgb),.14),rgba(124,58,237,.12));border:1px solid rgba(var(--gold-rgb),.4);color:var(--text);align-self:flex-start;"><div style="font-size:.58rem;letter-spacing:.08em;color:var(--g2c);margin-bottom:4px;font-family:'Cinzel',serif;">${ASTROs_LANG[curALang].n.toUpperCase()}</div>✨ The stars have so much more to reveal for you — deeper answers about your career, love and destiny. This guidance is reserved for our Gold &amp; VIP members. <b>Unlock unlimited consultations ✦</b></div>`;
+      mEl.innerHTML+=`<div style="max-width:86%;padding:13px 15px;border-radius:16px;font-size:.84rem;line-height:1.6;background:linear-gradient(135deg,rgba(var(--gold-rgb),.14),rgba(124,58,237,.12));border:1px solid rgba(var(--gold-rgb),.4);color:var(--text);align-self:flex-start;"><div style="font-size:.58rem;letter-spacing:.08em;color:var(--g2c);margin-bottom:4px;font-family:'Cinzel',serif;">${ASTROs_LANG[curALang].n.toUpperCase()}</div>✨ The stars have so much more to reveal for you — deeper answers about your career, love and destiny. You have used your ${CHAT_FREE_PER_DAY} free questions for today. <b>Unlock unlimited consultations with Gold ✦</b> — or return tomorrow for your next ${CHAT_FREE_PER_DAY} free questions. 🙏</div>`;
       mEl.scrollTop=mEl.scrollHeight;
     }
     upgradePromptGold();
@@ -7645,6 +7680,7 @@ async function sendMsgLang(){
   typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>✦ …`;
   msgsEl.appendChild(typ);msgsEl.scrollTop=msgsEl.scrollHeight;
   cHistLang.push({role:'user',content:msg});
+  if(!isGoldOrVip())chatQuotaInc();
   try{
     const reply=await callAI(a.sys+ASTRO_ASK_FIRST,cHistLang.slice(-14),900)||a.greet;
     cHistLang.push({role:'assistant',content:reply});
@@ -8323,11 +8359,9 @@ let _pwaPrompt=null;
 window.addEventListener('beforeinstallprompt',function(e){
   e.preventDefault();
   _pwaPrompt=e;
-  // Show our elegant install pill (unless the user dismissed it before)
-  if(!DB.g('pwaDismissed')){
-    const b=document.getElementById('pwa-install-btn');
-    if(b)b.style.display='flex';
-  }
+  // Install pill intentionally NOT shown — a dedicated Android app is coming to the
+  // Play Store; the pill will return for that. (PWA remains installable from the
+  // browser menu for users who look for it.)
 });
 
 async function installApp(){
