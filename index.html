@@ -699,6 +699,9 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
 .upb-o{background:transparent;border:1px solid rgba(var(--gold-rgb),.22);color:var(--g2c);}
 .upb-o:hover{background:rgba(var(--gold-rgb),.07);}
 .upb-c{background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.22);color:#4ade80;cursor:default;}
+/* Astrologer card grids — 4 across on desktop, 2 on phones */
+.astro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:14px 4px 18px;max-width:1160px;margin:0 auto;}
+@media(max-width:820px){.astro-grid{grid-template-columns:repeat(2,1fr);gap:12px;}}
 
 /* ── SECURITY ── */
 .sec-i{background:rgba(255,255,255,.025);border:1px solid var(--bdr2);border-radius:var(--r2);
@@ -1187,7 +1190,7 @@ This single script enables ALL ad units on the page, including every
     <p class="eye">✦ Talk to an Astrologer ✦</p>
     <h2 class="h2">Your Personal AI Astrologers — <span>Online 24/7</span></h2>
     <p class="sdesc">12 masters of Vedic, Nadi, Tarot, Love &amp; Wealth astrology. Pick your guide and start chatting instantly.</p>
-    <div id="astro-strip-cards" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:14px 4px 18px;max-width:860px;margin:0 auto;"></div>
+    <div id="astro-strip-cards" class="astro-grid"></div>
   </div>
 </section>
 
@@ -1196,7 +1199,7 @@ This single script enables ALL ad units on the page, including every
     <p class="eye">✦ World Astrologers ✦</p>
     <h2 class="h2">Wisdom From <span>Every Civilisation</span></h2>
     <p class="sdesc">Chinese · Japanese · Arabic · Islamic · Egyptian · African · Celtic · Kabbalah — master astrologers of eight great traditions, exclusively for Gold &amp; VIP members.</p>
-    <div id="astro-world-cards" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:14px 4px 18px;max-width:860px;margin:0 auto;"></div>
+    <div id="astro-world-cards" class="astro-grid"></div>
   </div>
 </section>
 
@@ -7491,6 +7494,19 @@ const ASTROs=[
 ASTROs.forEach((a,i)=>{if(!a.world)a.img='av/astro-'+(i+1)+'.jpg';});
 function isAstroLocked(a){return a.plan==='vip'?!isVip():a.plan==='gold'?!isGoldOrVip():false;}
 function astroAvatarHTML(a,size){const ring=size>=60?'border:2px solid rgba(var(--gold-rgb),.45);box-shadow:0 0 22px rgba(var(--gold-rgb),.28);':'';return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+a.bg+';display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.42)+'px;flex-shrink:0;overflow:hidden;position:relative;margin:0 auto;'+ring+'"><span>'+a.av+'</span>'+(a.img?'<img src="'+a.img+'" alt="'+a.n+'" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">':'')+'</div>';}
+// Tall rectangular portrait (face + mala/clothes) framed by golden designer corner brackets.
+function astroPortraitHTML(a){
+  const c='position:absolute;width:24px;height:24px;border-color:var(--gold);border-style:solid;';
+  return '<div style="position:relative;width:82%;max-width:172px;aspect-ratio:204/265;margin:0 auto;">'
+    +'<div style="width:100%;height:100%;border-radius:12px;background:'+a.bg+';display:flex;align-items:center;justify-content:center;font-size:3rem;overflow:hidden;position:relative;box-shadow:0 8px 28px rgba(var(--gold-rgb),.22);"><span>'+a.av+'</span>'
+    +(a.img?'<img src="'+a.img+'" alt="'+a.n+'" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">':'')
+    +'</div>'
+    +'<span style="'+c+'top:-6px;left:-6px;border-width:2px 0 0 2px;border-top-left-radius:10px;"></span>'
+    +'<span style="'+c+'top:-6px;right:-6px;border-width:2px 2px 0 0;border-top-right-radius:10px;"></span>'
+    +'<span style="'+c+'bottom:-6px;left:-6px;border-width:0 0 2px 2px;border-bottom-left-radius:10px;"></span>'
+    +'<span style="'+c+'bottom:-6px;right:-6px;border-width:0 2px 2px 0;border-bottom-right-radius:10px;"></span>'
+    +'</div>';
+}
 let curA=0,cHist=[];
 function initAList(){
   document.getElementById('a-list').innerHTML=ASTROs.map((a,i)=>{
@@ -7516,7 +7532,7 @@ function renderWorldStrip(){
     const locked=isAstroLocked(a);
     const badge=a.plan==='vip'?'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:var(--grad-royal);color:#fff;">👑 VIP</span>':'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:rgba(var(--gold-rgb),.18);border:1px solid var(--bdr);color:var(--g2c);">GOLD</span>';
     return `<div style="background:var(--g2);backdrop-filter:blur(8px);border:1px solid ${locked?'var(--bdr2)':'var(--bdr)'};border-radius:var(--r2);padding:24px 14px 20px;text-align:center;cursor:pointer;transition:transform .25s,box-shadow .25s;${locked?'opacity:.82;':''}" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-gold)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAstroChat(${i})">
-      ${astroAvatarHTML(a,116)}
+      ${astroPortraitHTML(a)}
       <div style="font-family:'Cinzel',serif;font-size:.98rem;color:var(--g2c);margin-top:14px;line-height:1.3;">${a.n}</div>
       <div style="font-size:.7rem;color:var(--muted);margin-top:4px;min-height:28px;">${a.sp}</div>
       <div style="font-size:.72rem;color:var(--gold);margin-top:4px;">${a.rt}</div>
@@ -7535,7 +7551,7 @@ function renderAstroStrip(){
     const locked=isAstroLocked(a);
     const badge=a.plan==='vip'?'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:var(--grad-royal);color:#fff;">👑 VIP</span>':a.plan==='gold'?'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:rgba(var(--gold-rgb),.18);border:1px solid var(--bdr);color:var(--g2c);">GOLD</span>':'<span style="font-size:.55rem;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);color:var(--green);">FREE</span>';
     return `<div style="background:var(--g2);backdrop-filter:blur(8px);border:1px solid ${locked?'var(--bdr2)':'var(--bdr)'};border-radius:var(--r2);padding:24px 14px 20px;text-align:center;cursor:pointer;transition:transform .25s,box-shadow .25s;${locked?'opacity:.78;':''}" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-gold)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAstroChat(${i})">
-      ${astroAvatarHTML(a,116)}
+      ${astroPortraitHTML(a)}
       <div style="font-family:'Cinzel',serif;font-size:.98rem;color:var(--g2c);margin-top:14px;line-height:1.3;">${a.n}</div>
       <div style="font-size:.7rem;color:var(--muted);margin-top:4px;min-height:28px;">${a.sp}</div>
       <div style="font-size:.72rem;color:var(--gold);margin-top:4px;">${a.rt}</div>
