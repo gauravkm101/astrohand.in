@@ -2199,12 +2199,12 @@ This single script enables ALL ad units on the page, including every
   background-size:250% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   animation:mtShimmer 5.5s ease-in-out infinite,mtPulse 2.2s ease-in-out infinite;
   filter:drop-shadow(0 0 16px rgba(var(--gold-rgb),.35));
-  transform-origin:left center;cursor:default;
+  cursor:default;transform-origin:left center;will-change:font-size;
   transition:filter .35s ease,letter-spacing .35s ease;}
 .mt:hover{letter-spacing:.035em;filter:drop-shadow(0 0 30px rgba(var(--gold-rgb),.75)) drop-shadow(0 2px 10px rgba(var(--gold-rgb),.35));}
 @keyframes mtShimmer{0%,18%{background-position:115% 0;}58%,100%{background-position:-55% 0;}}
-/* "breathing" pulse — titles gently zoom in & out like a heartbeat */
-@keyframes mtPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.11);}}
+/* "breathing" pulse — font-size zoom (works with gradient-clipped text, unlike transform) */
+@keyframes mtPulse{0%,100%{font-size:2.25rem;}50%{font-size:2.6rem;}}
 .mt::before{content:'';display:block;width:58px;height:2.5px;margin-bottom:12px;border-radius:3px;background:linear-gradient(90deg,var(--gold),rgba(var(--gold-rgb),0));box-shadow:0 0 12px rgba(var(--gold-rgb),.7);}
 .ms{color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:22px;max-width:60ch;}
 /* ── FORM: brighter labels, glowing focus ── */
@@ -2223,7 +2223,8 @@ This single script enables ALL ad units on the page, including every
   .mbox > .mt::after{animation:mSpk 4.2s ease-in-out infinite;}
   @keyframes mSpk{0%,100%{transform:translateY(0) scale(1);opacity:.45;}50%{transform:translateY(-7px) scale(1.15);opacity:1;}}
 }
-@media(max-width:680px){.mt{font-size:1.85rem;}.ms{font-size:.84rem;}}
+@media(max-width:680px){.mt{font-size:1.85rem;animation:mtShimmer 5.5s ease-in-out infinite,mtPulseM 2.2s ease-in-out infinite;}.ms{font-size:.84rem;}}
+@keyframes mtPulseM{0%,100%{font-size:1.85rem;}50%{font-size:2.12rem;}}
 
 /* ══ HALF KUNDLI CLOCK WHEELS — hero edges (left cosmic blue, right fiery gold) ══ */
 .hero{overflow:hidden;}
