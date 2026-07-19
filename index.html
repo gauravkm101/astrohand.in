@@ -1618,7 +1618,7 @@ This single script enables ALL ad units on the page, including every
         <!-- PLANS PANEL -->
         <div class="dpnl" id="dp-plans">
           <div><div class="dpt">Subscription Plans</div><div class="dps">Upgrade to unlock unlimited readings and premium features.</div></div>
-          <div class="dc"><div class="dct">💎 Current: <span id="cp-lbl" style="color:var(--g2c)">Free</span></div><div class="pl-g" id="pl-g"></div></div>
+          <div class="dc"><div class="dct">💎 Current: <span id="cp-lbl" style="color:var(--g2c)">Free</span><span id="cp-validity" style="margin-left:12px;font-size:.7rem;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;letter-spacing:.02em;"></span></div><div class="pl-g" id="pl-g"></div></div>
         </div>
         <!-- SECURITY PANEL -->
         <div class="dpnl" id="dp-security">
@@ -2442,6 +2442,7 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <div class="mt">🪐 Sade Sati Calculator</div>
     <div class="ms">Real Saturn transits vs your natal Moon — current phase and every window of your life.</div>
     <div class="fgrid two">
+      <div class="fg full"><label class="fl">Full Name</label><input class="fi" id="sd-n" placeholder="Your name" autocomplete="off"></div>
       <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="sd-d"></div>
       <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="sd-t"></div>
       <div class="full"><button class="gbtn" onclick="genSade()">Check My Sade Sati ✦</button></div>
@@ -2456,6 +2457,7 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <div class="mt">🐍 Kaal Sarp Dosha Checker</div>
     <div class="ms">Are all seven planets trapped between Rahu and Ketu in your chart? Checked with real positions.</div>
     <div class="fgrid two">
+      <div class="fg full"><label class="fl">Full Name</label><input class="fi" id="kl-n" placeholder="Your name" autocomplete="off"></div>
       <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="kl-d"></div>
       <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="kl-t"></div>
       <div class="full"><button class="gbtn" onclick="genKaal()">Check Kaal Sarp Dosha ✦</button></div>
@@ -2470,6 +2472,7 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <div class="mt">♂️ Mangal Dosha Checker</div>
     <div class="ms">Manglik or not — Mars checked from both your Lagna and your Moon, with real positions.</div>
     <div class="fgrid two">
+      <div class="fg full"><label class="fl">Full Name</label><input class="fi" id="mg-n" placeholder="Your name" autocomplete="off"></div>
       <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="mg-d"></div>
       <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="mg-t"></div>
       <div class="full"><button class="gbtn" onclick="genMangal()">Check Mangal Dosha ✦</button></div>
@@ -2713,7 +2716,7 @@ async function refreshPlanFromCloud(){
   try{
     const {data}=await sb.auth.getSession();
     if(!data||!data.session)return; // no verified session — keep the local view
-    const {data:profile}=await sb.from('profiles').select('plan,chat_n,chat_d').eq('id',data.session.user.id).maybeSingle();
+    const {data:profile}=await sb.from('profiles').select('plan,chat_n,chat_d,pdf_n,pdf_d,plan_since,plan_until').eq('id',data.session.user.id).maybeSingle();
     if(profile&&profile.plan&&CU&&profile.plan!==CU.plan){
       CU.plan=profile.plan;
       DB.setU(CU.em,CU);
@@ -2722,10 +2725,19 @@ async function refreshPlanFromCloud(){
       syncPlanUI();
       if(profile.plan!=='free')toast('✨ Your '+cap(profile.plan)+' plan is now active on this device!','ok');
     }
+    // Plan validity window ("kab se kab tak") — shown on the Subscription panel.
+    if(profile&&CU){
+      CU.planSince=profile.plan_since||null;
+      CU.planUntil=profile.plan_until||null;
+      DB.setU(CU.em,CU);
+    }
     // Merge today's chat quota from the cloud — highest count wins, so closing the
     // chat, clearing the tab, or switching devices can never reset the free limit.
     if(profile&&profile.chat_d===_chatToday()&&(profile.chat_n||0)>chatQuota().n){
       DB.s(_chatQKey(),{d:profile.chat_d,n:profile.chat_n});
+    }
+    if(profile&&profile.pdf_d===_chatToday()&&(profile.pdf_n||0)>pdfQuota().n){
+      DB.s(_pdfQKey(),{d:profile.pdf_d,n:profile.pdf_n});
     }
   }catch(e){console.warn('Plan refresh skipped:',e&&e.message);}
 }
@@ -2751,6 +2763,36 @@ function chatQuotaInc(){
     const {data}=await sb.auth.getSession();
     if(data&&data.session)await sb.from('profiles').update({chat_n:q.n,chat_d:q.d}).eq('id',data.session.user.id);
   }catch(e){}})();
+}
+
+/* ══ DAILY PDF QUOTA — Silver: 2 PDF downloads/day; Gold & VIP unlimited ══ */
+const PDF_FREE_PER_DAY=2;
+function _pdfQKey(){return 'pdfq_'+((CU&&CU.em)?CU.em:'guest');}
+function pdfQuota(){
+  let q=DB.g(_pdfQKey());
+  if(!q||q.d!==_chatToday())q={d:_chatToday(),n:0};
+  return q;
+}
+function pdfLeft(){return Math.max(0,PDF_FREE_PER_DAY-pdfQuota().n);}
+function pdfInc(){
+  const q=pdfQuota();q.n++;DB.s(_pdfQKey(),q);
+  (async()=>{try{
+    const sb=getSB();if(!sb||!CU)return;
+    const {data}=await sb.auth.getSession();
+    if(data&&data.session)await sb.from('profiles').update({pdf_n:q.n,pdf_d:q.d}).eq('id',data.session.user.id);
+  }catch(e){}})();
+}
+/* Shared gate for every PDF download button. Returns true if allowed (and counts it). */
+function pdfGate(){
+  if(!isPaid()){toast('📄 PDF downloads are for Silver, Gold & VIP members.','');upgradePrompt();return false;}
+  if(!isGoldOrVip()&&pdfLeft()<=0){toast('📄 You have used today\'s '+PDF_FREE_PER_DAY+' PDF downloads. Unlimited with Gold — or return tomorrow.','');upgradePromptGold();return false;}
+  if(!isGoldOrVip())pdfInc();
+  return true;
+}
+function _fmtPlanDate(s){
+  if(!s)return '—';
+  const d=new Date(s);if(isNaN(d))return '—';
+  return d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' '+d.getFullYear();
 }
 // Bought on the phone, then switched back to this tab? Re-check on focus.
 document.addEventListener('visibilitychange',function(){
@@ -3142,8 +3184,8 @@ function enterDash(){
 
 /* ── Subscription plan data (matches home page Silver/Gold/VIP Oracle pricing) ── */
 const PLANS_D=[
-  {id:'silver',n:'Silver',pr:'₹499',per:'/mo',f:['AI-personalized Kundli readings','AI Matchmaking compatibility','Newborn Baby Kundli (full)','AI-personalized remedies'],x:['PDF export (Gold & VIP)','Annual Life Forecast (VIP)']},
-  {id:'gold',n:'Gold',pr:'₹999',per:'/mo',f:['Everything in Silver','💫 Gold astrologers — Indian + World traditions','📄 PDF export & downloads','WhatsApp share readings','Priority AI responses'],x:['Annual Life Forecast (VIP)']},
+  {id:'silver',n:'Silver',pr:'₹499',per:'/mo',f:['AI-personalized Kundli readings','AI Matchmaking compatibility','Newborn Baby Kundli (full)','AI-personalized remedies','📄 2 PDF downloads per day'],x:['Unlimited PDFs (Gold & VIP)','Annual Life Forecast (VIP)']},
+  {id:'gold',n:'Gold',pr:'₹999',per:'/mo',f:['Everything in Silver','💫 Gold astrologers — Indian + World traditions','📄 UNLIMITED PDF export & downloads','WhatsApp share readings','Priority AI responses'],x:['Annual Life Forecast (VIP)']},
   {id:'vip',n:'VIP Oracle',pr:'₹1999',per:'/mo',f:['Everything in Gold','👑 Annual Life Forecast (exclusive)','🌟 Every astrologer — Indian + 8 World masters','VIP crown & prestige badge','Advanced remedies & Rudraksha','Priority support & early features','Everything unlimited, forever'],x:[]}
 ];
 
@@ -5072,6 +5114,8 @@ function uploadAv(e){const f=e.target.files[0];if(!f)return;const r=new FileRead
 const PLAN_RANK={free:0,silver:1,gold:2,vip:3};
 function renderPlans(){
   document.getElementById('cp-lbl').textContent=cap(CU.plan);
+  const vEl=document.getElementById('cp-validity');
+  if(vEl)vEl.textContent=(CU.plan!=='free'&&CU.planUntil)?('✦ Valid: '+_fmtPlanDate(CU.planSince)+' — '+_fmtPlanDate(CU.planUntil)):'';
   const curRank=PLAN_RANK[CU.plan]??0;
   document.getElementById('pl-g').innerHTML=PLANS_D.map(p=>{
     const inrNum=parseFloat(String(p.pr).replace(/[^\d.]/g,''))||0;
@@ -6804,8 +6848,10 @@ function genSade(){
     const _mos=(w.ty*12+w.tm2)-(w.fy*12+w.fm)+1;const _dur=_mos>=24?(_mos/12).toFixed(1)+' yrs':_mos+' mo';
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bdr2);font-size:.8rem;"><span style="color:var(--text);">'+_fmtMonth(w.fy,w.fm)+' → '+_fmtMonth(w.ty,w.tm2)+'</span>'+(active?'<span style="background:rgba(220,38,38,.14);color:#f87171;border:1px solid rgba(220,38,38,.25);padding:2px 10px;border-radius:100px;font-size:.62rem;">● NOW</span>':'<span style="color:var(--muted);font-size:.66rem;">'+_dur+'</span>')+'</div>';
   }).join('');
+  const sdNm=(v('sd-n')||'').trim();
   document.getElementById('sd-res').style.display='block';
   document.getElementById('sd-res').innerHTML=
+    (sdNm?'<div style="font-family:\'Cinzel\',serif;font-size:.92rem;color:var(--g3);text-align:center;margin-bottom:12px;">✦ Sade Sati Report — '+esc(sdNm)+' ✦</div>':'')+
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'+
     _resCard('Your Moon Sign',RASHIS[moonSign],'Natal (computed)')+
     _resCard('Saturn Today',RASHIS[satNow],'Current transit')+
@@ -6830,8 +6876,10 @@ function genKaal(){
     body='Only <b>'+esc(outliers.join(', '))+'</b> stands outside the Rahu–Ketu axis — a partial formation. Its effect is considered much milder and often fades after the Rahu dasha period. Regular Maha Mrityunjaya japa is the traditional remedy.';}
   else{verdict='No Kaal Sarp Dosha';color='green';
     body='Your planets are well distributed on both sides of the Rahu–Ketu axis ('+inArc+' vs '+(7-inArc)+'). No Kaal Sarp formation exists in this chart — no remedy needed.';}
+  const klNm=(v('kl-n')||'').trim();
   document.getElementById('kl-res').style.display='block';
   document.getElementById('kl-res').innerHTML=
+    (klNm?'<div style="font-family:\'Cinzel\',serif;font-size:.92rem;color:var(--g3);text-align:center;margin-bottom:12px;">✦ Kaal Sarp Report — '+esc(klNm)+' ✦</div>':'')+
     '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">'+
     _resCard('☊ Rahu',RASHIS[Math.floor(P.Rahu/30)],'North node')+
     _resCard('☋ Ketu',RASHIS[Math.floor(P.Ketu/30)],'South node')+'</div>'+
@@ -6856,8 +6904,10 @@ function genMangal(){
     body='Mars is in house '+(mL?hL+' from your Lagna':hM+' from your Moon')+' only — counted from '+(mL?'the Lagna':'the Moon')+' but not both. Partial Mangal dosha is widely considered mild, and often self-cancelling after age 28 or when matched with a compatible chart.';}
   else{verdict='No Mangal Dosha';color='green';
     body='Mars sits in house '+hL+' from your Lagna and '+hM+' from your Moon — neither is a Manglik house. No Mangal dosha in this chart.';}
+  const mgNm=(v('mg-n')||'').trim();
   document.getElementById('mg-res').style.display='block';
   document.getElementById('mg-res').innerHTML=
+    (mgNm?'<div style="font-family:\'Cinzel\',serif;font-size:.92rem;color:var(--g3);text-align:center;margin-bottom:12px;">✦ Mangal Dosha Report — '+esc(mgNm)+' ✦</div>':'')+
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'+
     _resCard('♂ Mars',RASHIS[marsSign],'Computed position')+
     _resCard('From Lagna','House '+hL,'approx. Lagna')+
@@ -6943,13 +6993,23 @@ async function genBaby(){
     _resCard('🌙 Rashi',RASHIS[Math.floor(P.Moon/30)],'Moon sign')+
     _resCard('✦ Pada Syllable',padaSyl,'This pada\'s letter')+'</div>'+
     _verdictBox('gold','👶','Auspicious starting letters','All four pada syllables of '+nak+': <b>'+esc(syls.join(' · '))+'</b>. Tradition favours the syllable of the exact pada — <b>'+esc(padaSyl)+'</b> — for the naming (Naamkaran) ceremony.')+
+    '<div style="font-family:\'Cinzel\',serif;font-size:.78rem;color:var(--g2c);margin:12px 0 6px;">✦ Or pick ANY starting letter (A–Z) ✦</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">'+
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l=>'<button onclick="genBabyNames(\''+l+'\')" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--bdr);background:rgba(var(--gold-rgb),.07);color:var(--g2c);cursor:pointer;font-size:.8rem;font-weight:700;">'+l+'</button>').join('')+
+    '</div>'+
     '<div id="bn-ai" style="font-size:.8rem;color:var(--text);line-height:1.7;"></div>';
+  genBabyNames(padaSyl); // auto-suggest with the traditional pada syllable first
+}
+// Names + meanings for ANY chosen starting letter/syllable (A–Z or pada syllable).
+async function genBabyNames(letter){
   const g=v('bn-g')||'baby';
   const aiEl=document.getElementById('bn-ai');
-  aiEl.innerHTML='<p class="rtxt">✦ Consulting the cosmic name registry…</p>';
+  if(!aiEl)return;
+  aiEl.innerHTML='<p class="rtxt">✦ Gathering beautiful names starting with "'+esc(letter)+'"…</p>';
   try{
-    const names=await callAI('You are a Vedic naming expert. Suggest exactly 12 modern, melodious Indian '+g+' names that START with the syllable "'+padaSyl+'" (or its close phonetic variants). Format each as: Name — short meaning. Number them 1-12. No intro or outro text.',[{role:'user',content:'Suggest the names.'}],650);
-    aiEl.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:6px 0;">✨ AI name suggestions ('+esc(padaSyl)+')</div><div style="white-space:pre-line;">'+esc(names||'The oracle rests — try again.')+'</div>';
+    const names=await callAI('You are a Vedic naming expert. Suggest exactly 12 modern, melodious Indian '+g+' names that START with "'+letter+'" (or its close phonetic variants). Format each on its own line as: Name — short meaning. Every name MUST include its meaning. Number them 1-12. No intro or outro text.',[{role:'user',content:'Suggest the names.'}],650);
+    aiEl.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:6px 0;">✨ AI name suggestions — "'+esc(letter)+'" (with meanings)</div><div style="white-space:pre-line;">'+esc(names||'The oracle rests — try again.')+'</div>';
+    if(CU)addRd({type:'baby',icon:'👶',title:'Baby Names — '+letter,sub:'Naamkaran suggestions',preview:(names||'').substring(0,160)+'…',text:names||''});
   }catch(e){aiEl.innerHTML='<p style="color:var(--muted);font-size:.74rem;">AI suggestions unavailable right now — the syllables above are the traditional guide.</p>';}
 }
 
@@ -7191,7 +7251,7 @@ function shareNewbornWA(){
 function exportNewbornPDF(){
   const nb=window._lastNewborn;
   if(!nb){toast('Generate the baby\'s kundli first.','');return;}
-  if(!isGoldOrVip()){toast('📄 PDF export is a Gold & VIP feature.','');upgradePromptGold();return;}
+  if(!pdfGate())return; // Silver: 2/day · Gold & VIP: unlimited
   const cd=window._nbChartData||{};
   const w=window.open('','_blank');
   if(!w){toast('Please allow pop-ups to download the PDF.','');return;}
@@ -8142,7 +8202,7 @@ const RPT_LABELS={
 function exportKundliPDF(){
   const name=(document.getElementById('k-rname')||{}).textContent||'';
   if(!name||name==='—'||!name.trim()){toast('Please generate your Kundli first!','');return;}
-  if(!isGoldOrVip()){toast('📄 PDF export is a Gold & VIP feature.','');upgradePromptGold();return;}
+  if(!pdfGate())return; // Silver: 2/day · Gold & VIP: unlimited
   const dob=(document.getElementById('kd')||{}).value||'';
   const place=(document.getElementById('kp')||{}).value||'';
   const gender=(document.getElementById('kg')||{}).value||'';
