@@ -3813,6 +3813,20 @@ function cov(ev,id){
   if(ev.target===document.getElementById(id))closeOv(id);
 }
 
+/* ── Deep-link straight into a free tool: astrohand.in/?tool=sade-sati ──
+   Lets blog guides, social posts, Google Business posts and partner sites link
+   directly into a specific calculator. Slug is validated against a whitelist;
+   anything unknown is ignored. Opens the modal directly (no ad interstitial) so
+   a deep-linked visitor lands on exactly what they clicked. */
+const TOOL_DEEPLINKS={kundli:'mKundli',newborn:'mNewborn','annual-forecast':'mForecast',forecast:'mForecast',matching:'mMatch','kundli-matching':'mMatch',horoscope:'mHoro',rashifal:'mRashifal',numerology:'mNum',palm:'mPalm','palm-reading':'mPalm',panchang:'mPanch',gemstone:'mGem',gemstones:'mGem',remedies:'mRem',tarot:'mTarot',muhurat:'mMuhurat',vaastu:'mVaastu','sade-sati':'mSade','kaal-sarp':'mKaal','mangal-dosha':'mMangal',manglik:'mMangal',choghadiya:'mChogh','moon-sign':'mMoonSign','baby-name':'mBabyName','baby-names':'mBabyName',love:'mLove','love-calculator':'mLove',astrologer:'mAI','ai-astrologer':'mAI'};
+function openToolFromURL(){
+  const slug=(new URLSearchParams(window.location.search).get('tool')||'').toLowerCase().trim();
+  if(!slug)return;
+  const id=TOOL_DEEPLINKS[slug];
+  const el=id&&document.getElementById(id);
+  if(el){el.classList.add('open');document.body.style.overflow='hidden';}
+}
+
 /* ── Mobile hamburger nav ── */
 function toggleMnav(){
   const m=document.getElementById('mnav');
@@ -4824,6 +4838,8 @@ window.addEventListener('DOMContentLoaded',async function(){
   try{await checkAdminUnlock();}catch(e){console.warn('Unlock check:',e);}
   // Don't fall back to home if we're mid password-reset — the reset screen must stay put.
   if(!CU&&!window._recoveryActive)router('home');
+  // Deep-link into a specific free tool if the URL carries ?tool=<slug>
+  try{openToolFromURL();}catch(e){console.warn('Tool deep-link:',e);}
 });
 
 
