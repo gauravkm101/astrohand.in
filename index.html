@@ -2245,9 +2245,21 @@ This single script enables ALL ad units on the page, including every
 .ai-modal-layout{display:grid;grid-template-columns:200px 1fr;gap:14px;}
 @media(max-width:680px){
   .ai-modal-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr;}
-  #a-list{display:flex!important;flex-direction:row!important;overflow-x:auto!important;max-height:none!important;gap:8px!important;padding-bottom:4px;}
-  #a-list>div{min-width:150px!important;flex-shrink:0;}
-  #c-msgs{max-height:320px!important;}
+  /* both AI modals: the 8-astrologer one (#a-list/#c-msgs) AND the 12-language one
+     (#a-list2/#c-msgs2). The Language modal was missing here, so its list stayed a
+     460px vertical column that pushed the chat off-screen — hence the broken mobile
+     layout. Turn the picker into a horizontal chip strip for both. */
+  #a-list,#a-list2{display:flex!important;flex-direction:row!important;overflow-x:auto!important;overflow-y:hidden!important;max-height:none!important;gap:8px!important;padding-bottom:4px;}
+  #a-list>div,#a-list2>div{min-width:150px!important;flex-shrink:0;}
+  #c-msgs,#c-msgs2{max-height:320px!important;}
+  /* let the chat panel size to its content instead of a fixed 460px desktop height */
+  .ai-modal-layout > div:last-child{height:auto!important;}
+}
+/* On very tall viewports (e.g. a phone in "Desktop site" mode) the auto-margin
+   centering left a huge empty gap above & below the modal. Anchor it near the top
+   instead. Normal laptops/desktops (≤1080px tall) keep the centered look. */
+@media(min-height:1100px){
+  .mbox{margin-top:6vh!important;margin-bottom:auto!important;}
 }
 
 
