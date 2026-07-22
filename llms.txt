@@ -1,0 +1,76 @@
+# AstroHand — AI-Powered Vedic Astrology
+
+> AstroHand (astrohand.in) is a free, AI-powered Vedic astrology (Jyotish) platform by AstroHand Technologies Pvt. Ltd. It generates real, computed birth charts (Kundli), Rashifal, 36-guna Kundli matching, dosha analysis (Sade Sati, Kaal Sarp, Mangal Dosha), Panchang, Muhurat, gemstone and remedy guidance, numerology and palm reading — every result computed from real astronomical positions using the Lahiri Ayanamsa, never fabricated. It also offers AI astrologers in English and 12 Indian languages.
+
+AstroHand's guiding principle is honesty: readings are for guidance and self-reflection, never guaranteed predictions, and where a calculation is an approximation it is stated plainly. Company: AstroHand Technologies Pvt. Ltd., Khunti, Jharkhand, India. Founders: Nitish Kumar (CEO, Vedic astrology practitioner) and Kumar Gaurav (CTO). Contact: support@astrohand.ai.
+
+## Free Tools
+- [Free Vedic Kundli](https://astrohand.in/): Generate a complete birth chart — Lagna, Moon sign, Sun sign, Nakshatra, planetary placements and North Indian chart, computed from real astronomy.
+- [Kundli Matching (Guna Milan)](https://astrohand.in/): 36-guna Ashtakoota compatibility plus Mangal Dosha check from real nakshatra positions.
+- [Daily Rashifal & Horoscope](https://astrohand.in/): Moon-sign based daily, weekly, monthly and yearly predictions.
+- [Sade Sati, Kaal Sarp & Mangal Dosha calculators](https://astrohand.in/): Dosha analysis computed from real Saturn/Mars/node positions.
+- [Panchang, Muhurat & Choghadiya](https://astrohand.in/): Auspicious timing computed from real sunrise, sunset and lunar positions per city.
+
+## Astrology Guides (Articles)
+### Basics
+- [What Is Vedic Astrology? A Clear Introduction to Jyotish](https://astrohand.in/blog/what-is-vedic-astrology.html): Vedic astrology explained from first principles — how it differs from Western astrology, the sidereal zodiac, and what a Jyotish chart can and cannot tell you.
+- [How to Read a Kundli: A Beginner’s Guide to Your Birth Chart](https://astrohand.in/blog/how-to-read-kundli.html): A step-by-step walkthrough of the North Indian kundli — how to find your Lagna, read the houses and planets, and turn a confusing diamond diagram into a story about your life.
+- [The Ascendant (Lagna): Why Your Rising Sign Is the Key to Your Whole Chart](https://astrohand.in/blog/ascendant-lagna-explained.html): The Lagna explained — what the Ascendant is, why it matters more than the Sun sign in Jyotish, how it sets the houses, and why an accurate birth time is essential.
+
+### Zodiac
+- [The 12 Rashis: A Complete Guide to the Vedic Zodiac Signs](https://astrohand.in/blog/12-rashis-guide.html): Each of the twelve rashis — their ruling planet, element, symbol and core temperament — and why your Moon rashi matters more than your Sun sign in Jyotish.
+
+### Transits
+- [Sade Sati: Saturn’s 7½-Year Lesson — Phases, Myths, and How to Navigate It](https://astrohand.in/blog/sade-sati-complete-guide.html): What Sade Sati actually is, why it lasts seven and a half years, the meaning of its three phases, and why it is not the curse it is so often made out to be.
+
+### Doshas
+- [Kaal Sarp Yoga: What It Really Means When Planets Gather Between Rahu and Ketu](https://astrohand.in/blog/kaal-sarp-yoga-explained.html): A clear-eyed look at Kaal Sarp Yoga — how it forms, its supposed effects, why it is so widely exaggerated, and how to tell a genuine formation from fear-mongering.
+- [Mangal Dosha Explained: How Mars Placement Creates the Manglik Pattern](https://astrohand.in/blog/mangal-dosha-marriage-guide.html): The astronomy behind Mangal Dosha — which houses count, why it is measured from both Lagna and Moon, and how to read a Manglik result without fear.
+- [Manglik and Marriage: Matching, Cancellations, and the Myths Worth Dropping](https://astrohand.in/blog/manglik-dosha.html): How Manglik matching actually works, the real cancellations that nullify the dosha, why Manglik-to-Manglik is suggested, and the fear-based myths that deserve to be retired.
+
+### Panchang
+- [Choghadiya and Muhurat: How to Choose an Auspicious Time the Vedic Way](https://astrohand.in/blog/choghadiya-muhurat-guide.html): A practical guide to Choghadiya — how the day is divided, which slots are favourable, and how muhurat selection uses real sunrise and sunset to time important beginnings.
+- [The Panchang: Understanding the Five Limbs of the Vedic Calendar](https://astrohand.in/blog/panchang-five-limbs-of-time.html): The Hindu almanac explained — the five elements of tithi, vaara, nakshatra, yoga, and karana, how they define the quality of a day, and how the Panchang guides daily life.
+
+### Traditions
+- [Naming Your Baby by Nakshatra: The Vedic Naamkaran Tradition](https://astrohand.in/blog/baby-naming-nakshatra.html): How the Vedic Naamkaran ceremony chooses a name from a baby’s birth nakshatra and pada, why the starting syllable matters, and how to honour the tradition today.
+
+### Planets
+- [Rahu and Ketu: The Shadow Planets That Shape Desire and Detachment](https://astrohand.in/blog/rahu-ketu-shadow-planets.html): The lunar nodes explained — why Rahu and Ketu are called shadow planets, the mythology behind them, and how they drive ambition, obsession, and spiritual release in a chart.
+- [Saturn (Shani) in Vedic Astrology: The Strict Teacher of Karma](https://astrohand.in/blog/saturn-shani-in-astrology.html): Saturn’s true role in Jyotish — discipline, delay, and earned reward — how it behaves in the houses, its transits and Sade Sati, and why it is misunderstood as malefic.
+- [Jupiter (Guru): The Great Benefic of Wisdom, Fortune, and Growth](https://astrohand.in/blog/jupiter-guru-brihaspati.html): Jupiter’s role in Vedic astrology as the greatest benefic — wisdom, expansion, children, and dharma — how it blesses the houses, and why its condition shapes a chart’s fortune.
+- [The Sun (Surya) in Vedic Astrology: Soul, Authority, and the Father](https://astrohand.in/blog/sun-surya-vedic-astrology.html): The Sun’s role in Jyotish as the significator of the soul, ego, and authority — how it behaves in the houses, its dignity by sign, and what a strong or weak Sun means.
+- [The Moon (Chandra) in Vedic Astrology: The Mind, Emotions, and the Mother](https://astrohand.in/blog/moon-chandra-mind-emotions.html): Why the Moon is the most important planet for daily life in Jyotish — the significator of the mind, emotions, and the mother — and what its placement reveals about your inner world.
+- [Mars (Mangal) in Vedic Astrology: Energy, Courage, and the Warrior Within](https://astrohand.in/blog/mars-mangal-planet.html): Mars as a planet in Jyotish — the significator of energy, courage, and drive — how it shapes the houses, the meaning of a strong or afflicted Mars, and its role beyond Mangal Dosha.
+- [Mercury (Budha) in Vedic Astrology: Intellect, Speech, and Commerce](https://astrohand.in/blog/mercury-budha-intellect.html): Mercury’s role in Jyotish as the significator of intelligence, communication, and business — how it shapes the houses, its dual nature, and what a strong Mercury gives.
+- [Venus (Shukra) in Vedic Astrology: Love, Beauty, and the Art of Enjoyment](https://astrohand.in/blog/venus-shukra-love-luxury.html): Venus in Jyotish — the significator of love, marriage, beauty, and luxury — how it shapes the houses, its role in relationships, and what a strong Venus brings to a life.
+
+### Nakshatras
+- [The 27 Nakshatras: The Lunar Mansions at the Heart of Jyotish](https://astrohand.in/blog/nakshatras-guide.html): An introduction to the nakshatras — the 27 lunar mansions, their ruling deities and planets, the four padas, and why they add a depth of meaning the twelve signs alone cannot.
+
+### Remedies
+- [Gemstones and Your Rashi: A Practical, Honest Guide to Jyotish Ratna](https://astrohand.in/blog/gemstones-and-rashi.html): How Vedic astrology matches gemstones to planets, which stone links to each rashi, and the safety rules — especially around blue sapphire — that responsible practice demands.
+- [Vedic Remedies (Upaya): Mantras, Charity, and the Honest Art of Astrological Repair](https://astrohand.in/blog/vedic-remedies-mantras-upaya.html): A grounded guide to Vedic remedies — how mantras, charity, gemstones, fasting, and service are meant to work, which remedies are safe, and how to avoid remedy scams.
+
+### Dashas
+- [Vimshottari Dasha: How Vedic Astrology Times the Events of a Life](https://astrohand.in/blog/vimshottari-dasha-guide.html): The 120-year Vimshottari dasha system explained — how planetary periods work, why they begin with your birth nakshatra, and how mahadasha and antardasha reveal timing.
+
+### Charts
+- [The Navamsa (D9) Chart: The Second Chart That Reveals Marriage and Dharma](https://astrohand.in/blog/navamsa-d9-chart.html): Why Vedic astrology reads a second, deeper chart — how the Navamsa is built, what it reveals about marriage, inner strength and destiny, and how it refines the birth chart.
+
+### Houses
+- [The 7th House: What Vedic Astrology Reveals About Marriage and Partnership](https://astrohand.in/blog/seventh-house-marriage.html): The house of marriage explained — what the 7th house governs, how its lord and occupants shape partnership, the role of Venus and the Navamsa, and reading marriage honestly.
+- [The 10th House: Career, Reputation, and Your Karma in the World](https://astrohand.in/blog/tenth-house-career.html): The house of career explained — what the 10th house governs, how its lord and planets shape profession and status, and how Jyotish reads vocation and worldly success.
+
+### Matchmaking
+- [Ashtakoota Guna Milan: How Vedic Astrology Scores Marriage Compatibility](https://astrohand.in/blog/ashtakoota-guna-milan-matching.html): The 36-guna matching system explained — the eight kootas, what each measures, what the score really means, and why Guna Milan is a starting point, not a verdict.
+
+### Numerology
+- [Vedic Numerology: How Numbers Reflect Your Nature and Destiny](https://astrohand.in/blog/vedic-numerology-basics.html): An introduction to Vedic numerology — how the birth date and name generate core numbers, what the planetary rulers of 1 to 9 mean, and how to use numerology honestly.
+
+## About & Policies
+- [About AstroHand](https://astrohand.in/about.html): Mission, team, and the real-astronomy engine behind every reading.
+- [Contact](https://astrohand.in/contact.html): Email, phone and registered address.
+- [Privacy Policy](https://astrohand.in/privacy.html)
+- [Terms & Conditions](https://astrohand.in/terms.html)
+- [Disclaimer](https://astrohand.in/disclaimer.html): Astrology is for guidance and reflection, not guaranteed prediction or professional advice.
