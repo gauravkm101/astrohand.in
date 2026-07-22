@@ -1461,7 +1461,7 @@ This single script enables ALL ad units on the page, including every
       <div class="adiv">or continue with</div>
       <div class="sbts">
         <button class="sbt" onclick="socialLogin('Google')">🇬 Google</button>
-        <button class="sbt" onclick="socialLogin('Apple')">🍎 Apple</button>
+        <button class="sbt" onclick="socialLogin('Apple')">Apple</button>
         <button class="sbt" onclick="socialLogin('Facebook')">f Facebook</button>
       </div>
       <p class="asw">New to AstroHand? <a onclick="router('signup')">Create free account →</a></p>
@@ -1501,7 +1501,7 @@ This single script enables ALL ad units on the page, including every
       <div class="adiv">or sign up with</div>
       <div class="sbts">
         <button class="sbt" onclick="socialLogin('Google')">🇬 Google</button>
-        <button class="sbt" onclick="socialLogin('Apple')">🍎 Apple</button>
+        <button class="sbt" onclick="socialLogin('Apple')">Apple</button>
         <button class="sbt" onclick="socialLogin('Facebook')">f Facebook</button>
       </div>
       <p class="asw">Already have an account? <a onclick="router('login')">Sign in →</a></p>
@@ -2279,9 +2279,10 @@ This single script enables ALL ad units on the page, including every
 .mc:hover{transform:rotate(90deg) scale(1.08);border-color:rgba(var(--gold-rgb),.5);background:rgba(var(--gold-rgb),.12);}
 /* ── anti-gravity entrance + levitation ── */
 @media (prefers-reduced-motion: no-preference){
-  .ov.open .mbox{animation:mIn .55s cubic-bezier(.16,1,.3,1),mFloat 7s ease-in-out .55s infinite;}
+  /* entrance only — the perpetual mFloat levitation made the small close (×) a
+     moving target that was hard to tap; removed so modals close on the first click. */
+  .ov.open .mbox{animation:mIn .5s cubic-bezier(.16,1,.3,1);}
   @keyframes mIn{0%{opacity:0;transform:translateY(30px) scale(.955);}100%{opacity:1;transform:translateY(0) scale(1);}}
-  @keyframes mFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
   .mbox > .mt::after{animation:mSpk 4.2s ease-in-out infinite;}
   @keyframes mSpk{0%,100%{transform:translateY(0) scale(1);opacity:.45;}50%{transform:translateY(-7px) scale(1.15);opacity:1;}}
 }
