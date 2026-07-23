@@ -14,6 +14,14 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png">
 <!-- Google AdSense -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8378418372848919" crossorigin="anonymous"></script>
+<!-- Google Analytics 4 — active. GA4_ID holds the Measurement ID; loader stays dormant if it's ever unset/placeholder. -->
+<script>
+window.GA4_ID='G-ML6JBG78CG';
+(function(){var id=window.GA4_ID;if(!id||id.indexOf('G-')!==0||id.indexOf('XXXX')>-1)return; /* not set yet → load nothing */
+  var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id='+id;document.head.appendChild(s);
+  window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments);};
+  gtag('js',new Date());gtag('config',id);})();
+</script>
 <meta name="description" content="Free online Kundli, daily Rashifal, Kundli Matching (36 guna), Moon sign, Sade Sati, Mangal Dosha, Panchang &amp; AI astrologers — all computed from real Vedic astronomy. Get your free birth chart on AstroHand.">
 <meta name="keywords" content="free kundli, kundli matching, rashifal, horoscope matching, moon sign, sade sati, mangal dosha, manglik, kaal sarp dosha, panchang, muhurat, choghadiya, vedic astrology, janam kundli, gemstone, numerology, ai astrologer">
 <title>Free Kundli, Rashifal &amp; Kundli Matching Online | AstroHand</title>
@@ -3827,6 +3835,12 @@ function openToolFromURL(){
   if(el){el.classList.add('open');document.body.style.overflow='hidden';}
 }
 
+/* ── GA4 conversion tracking ── safe no-op until the GA4 tag is loaded, so wiring
+   these events changes nothing until a real Measurement ID is present in <head>. */
+function gaEvent(name,params){
+  try{ if(typeof gtag==='function') gtag('event',name,params||{}); }catch(e){}
+}
+
 /* ── Mobile hamburger nav ── */
 function toggleMnav(){
   const m=document.getElementById('mnav');
@@ -3932,6 +3946,7 @@ function verifyOTP(){
     pendSU=null;OTP='';
     clearOTPTimer();
     toast('Welcome to AstroHand, '+CU.fn+'! 🌟','ok');
+    gaEvent('sign_up',{method:'email'});
     enterDash();
   }
 }
@@ -4459,6 +4474,7 @@ async function procPay(plan,amount){
           let verify={};
           try{verify=await verifyRes.json();}catch(e){}
           if(verify.success){
+            gaEvent('purchase',{transaction_id:response.razorpay_payment_id,value:amount,currency:'INR',items:[{item_name:plan+' plan'}]});
             CU.plan=plan;
             const sb=getSB();
             if(sb&&CU.id){
@@ -7298,6 +7314,7 @@ async function genKundli(){
       predLock.innerHTML=lockCardHTML('Your Full Prediction is Ready','Unlock your complete 360-word personalized reading covering soul purpose, love & marriage destiny, career trajectory, and specific remedies — written just for your chart.');
     }
     document.getElementById('k-cnt').style.display='block';
+    gaEvent('kundli_generated',{});
   }catch(err){
     // Any failure: stop the loader, show a clear retryable error, never leave the user stuck
     document.getElementById('k-cnt').style.display='none';
@@ -7458,6 +7475,7 @@ async function sendMsg(){
     return;
   }
   const btn=document.getElementById('c-send');btn.disabled=true;inp.value='';
+  gaEvent('astrologer_message',{astrologer:(ASTROs[curA]||{}).n||''});
   const a=ASTROs[curA],msgsEl=document.getElementById('c-msgs');
   msgsEl.innerHTML+=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(var(--gold-rgb),.13);border:1px solid rgba(var(--gold-rgb),.2);color:var(--g3);align-self:flex-end;border-bottom-right-radius:4px;margin-left:auto;"><div style="font-size:.58rem;letter-spacing:.08em;color:rgba(var(--gold-rgb),.5);margin-bottom:4px;font-family:'Cinzel',serif;text-align:right;">YOU</div>${esc(msg)}</div>`;
   const typ=document.createElement('div');
@@ -7568,6 +7586,7 @@ async function sendMsgLang(){
     return;
   }
   const btn=document.getElementById('c-send2');btn.disabled=true;inp.value='';
+  gaEvent('astrologer_message',{astrologer:(ASTROs_LANG[curALang]||{}).n||'',lang:true});
   const a=ASTROs_LANG[curALang],msgsEl=document.getElementById('c-msgs2');
   msgsEl.innerHTML+=`<div style="max-width:80%;padding:11px 14px;border-radius:16px;font-size:.84rem;line-height:1.58;background:rgba(var(--gold-rgb),.13);border:1px solid rgba(var(--gold-rgb),.2);color:var(--g3);align-self:flex-end;border-bottom-right-radius:4px;margin-left:auto;"><div style="font-size:.58rem;letter-spacing:.08em;color:rgba(var(--gold-rgb),.5);margin-bottom:4px;font-family:'Cinzel',serif;text-align:right;">YOU</div>${esc(msg)}</div>`;
   const typ=document.createElement('div');
