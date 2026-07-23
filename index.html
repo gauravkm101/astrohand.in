@@ -8043,10 +8043,20 @@ function exportKundliPDF(){
     const el=document.getElementById(id);
     if(!el)return [];
     const rows=[];
-    el.querySelectorAll('.bi-row').forEach(row=>{
+    // genKundli renders each row of k-basics/k-lucky/k-doshas/k-dasha as a direct
+    // child <div> holding a label <span> + a value <span>. The old '.bi-row' selector
+    // matched NOTHING (no element ever gets that class), so every section printed "—".
+    // Read the actual row divs; fall back to '.bi-row' for any legacy markup.
+    el.querySelectorAll(':scope > div').forEach(row=>{
       const spans=row.querySelectorAll('span');
       if(spans.length>=2)rows.push([spans[0].textContent.trim(),spans[1].textContent.trim()]);
     });
+    if(!rows.length){
+      el.querySelectorAll('.bi-row').forEach(row=>{
+        const spans=row.querySelectorAll('span');
+        if(spans.length>=2)rows.push([spans[0].textContent.trim(),spans[1].textContent.trim()]);
+      });
+    }
     return rows;
   }
   function readListItems(id){
