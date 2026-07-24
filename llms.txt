@@ -27,6 +27,7 @@ AstroHand's guiding principle is honesty: readings are for guidance and self-ref
 - [Kaal Sarp Yoga: What It Really Means When Planets Gather Between Rahu and Ketu](https://astrohand.in/blog/kaal-sarp-yoga-explained.html): A clear-eyed look at Kaal Sarp Yoga — how it forms, its supposed effects, why it is so widely exaggerated, and how to tell a genuine formation from fear-mongering.
 - [Mangal Dosha Explained: How Mars Placement Creates the Manglik Pattern](https://astrohand.in/blog/mangal-dosha-marriage-guide.html): The astronomy behind Mangal Dosha — which houses count, why it is measured from both Lagna and Moon, and how to read a Manglik result without fear.
 - [Manglik and Marriage: Matching, Cancellations, and the Myths Worth Dropping](https://astrohand.in/blog/manglik-dosha.html): How Manglik matching actually works, the real cancellations that nullify the dosha, why Manglik-to-Manglik is suggested, and the fear-based myths that deserve to be retired.
+- [Pitra Dosh: Symptoms, Causes and Honest Remedies](https://astrohand.in/blog/pitra-dosh-symptoms-remedies.html): Pitra Dosh is the karmic debt of the ancestors seen in a birth chart. Learn how it forms, the signs traditionally linked to it, and the grounded remedies of Tarpan, Shraddha and seva.
 
 ### Panchang
 - [Choghadiya and Muhurat: How to Choose an Auspicious Time the Vedic Way](https://astrohand.in/blog/choghadiya-muhurat-guide.html): A practical guide to Choghadiya — how the day is divided, which slots are favourable, and how muhurat selection uses real sunrise and sunset to time important beginnings.
@@ -64,9 +65,11 @@ AstroHand's guiding principle is honesty: readings are for guidance and self-ref
 
 ### Matchmaking
 - [Ashtakoota Guna Milan: How Vedic Astrology Scores Marriage Compatibility](https://astrohand.in/blog/ashtakoota-guna-milan-matching.html): The 36-guna matching system explained — the eight kootas, what each measures, what the score really means, and why Guna Milan is a starting point, not a verdict.
+- [How Many Gunas Should Match for Marriage? Guna Milan Explained](https://astrohand.in/blog/how-many-gunas-for-marriage.html): In Ashtakoota Guna Milan, marriage compatibility is scored out of 36. Learn how many gunas are considered good, why the raw score is not the whole story, and where Mangal Dosha fits in.
 
 ### Numerology
 - [Vedic Numerology: How Numbers Reflect Your Nature and Destiny](https://astrohand.in/blog/vedic-numerology-basics.html): An introduction to Vedic numerology — how the birth date and name generate core numbers, what the planetary rulers of 1 to 9 mean, and how to use numerology honestly.
+- [Lucky Number by Date of Birth: Find Your Moolank and Bhagyank](https://astrohand.in/blog/lucky-number-by-date-of-birth.html): Your date of birth hides two key numbers — the Moolank and the Bhagyank. Learn how to calculate them, what each number and its ruling planet mean, and your lucky number, colour and day.
 
 ## About & Policies
 - [About AstroHand](https://astrohand.in/about.html): Mission, team, and the real-astronomy engine behind every reading.
