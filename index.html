@@ -1819,7 +1819,7 @@ This single script enables ALL ad units on the page, including every
         </div>
         <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;">
           <button onclick="exportKundliPDF()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid rgba(124,58,237,.3);border-radius:12px;color:#c4b5fd;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">📄 Download PDF</button>
-          <button onclick="shareKundliWA()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid rgba(16,185,129,.28);border-radius:12px;color:#6ee7b7;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">💬 WhatsApp</button>
+          <button onclick="shareKundliWA()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid rgba(16,185,129,.28);border-radius:12px;color:#6ee7b7;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">📲 Share</button>
         </div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:17px;" id="k-tabs">
           <button class="tbtn on" onclick="kTab(this,'ov')">Overview</button>
@@ -1963,7 +1963,7 @@ This single script enables ALL ad units on the page, including every
         </div>
         <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;">
           <button onclick="exportNewbornPDF()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid rgba(124,58,237,.3);border-radius:12px;color:#c4b5fd;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">📄 Download PDF</button>
-          <button onclick="shareNewbornWA()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid rgba(16,185,129,.28);border-radius:12px;color:#6ee7b7;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">💬 WhatsApp</button>
+          <button onclick="shareNewbornWA()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid rgba(16,185,129,.28);border-radius:12px;color:#6ee7b7;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">📲 Share</button>
         </div>
         <!-- Quick facts grid -->
         <div id="nb-facts" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;"></div>
@@ -2010,7 +2010,7 @@ This single script enables ALL ad units on the page, including every
           <div><h3 style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--g2c);" id="fc-rname">Your Annual Forecast</h3><p style="color:var(--muted);font-size:.77rem;margin-top:2px;" id="fc-rsub">—</p></div>
         </div>
         <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;">
-          <button onclick="shareForecastWA()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid rgba(16,185,129,.28);border-radius:12px;color:#6ee7b7;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">💬 WhatsApp</button>
+          <button onclick="shareForecastWA()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid rgba(16,185,129,.28);border-radius:12px;color:#6ee7b7;cursor:pointer;font-family:Inter,sans-serif;font-size:.78rem;font-weight:600;">📲 Share</button>
         </div>
         <div id="fc-tr-bar"></div>
         <div id="fc-txt" style="font-size:.86rem;line-height:1.85;color:var(--text);white-space:pre-wrap;"></div>
@@ -2134,6 +2134,7 @@ This single script enables ALL ad units on the page, including every
             </div>
           </div>
           <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--g2c);margin-top:12px;" id="m-lbl">—</div>
+          <button onclick="shareMatch()" style="margin-top:13px;display:inline-flex;align-items:center;gap:7px;padding:10px 20px;background:linear-gradient(135deg,var(--gold),var(--violet));border:none;border-radius:100px;color:#fff;cursor:pointer;font-family:Inter,sans-serif;font-size:.8rem;font-weight:700;box-shadow:0 4px 14px rgba(var(--gold-rgb),.3);">📲 Share My Match</button>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px;" id="m-gunas"></div>
         <div class="lock-wrap"><div class="rbox" id="m-txt-wrap"><p class="rtxt" id="m-txt">—</p></div><div id="m-txt-lock" style="display:none;"></div></div>
@@ -6850,7 +6851,7 @@ async function genRashifal(){
   const today=new Date().toDateString();
   try{
     const txt=await callAI('You are AstroHand\'s senior Vedic astrologer. Today is '+today+'. Write the '+_rfPeriod+' horoscope (rashifal) for the sign '+sign+'. Structure: 2-3 sentences overall theme, then one short line each for Love, Career, Health and Finance (label them), then "Lucky tip:" one line. Warm, specific, grounded tone. End with a brief reminder that astrology guides rather than guarantees. Total under 220 words.',[{role:'user',content:_rfPeriod+' horoscope for '+sign}],700);
-    res.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:.85rem;color:var(--g2c);margin-bottom:8px;">'+esc(sign)+' — '+_rfPeriod+' Rashifal</div><div style="font-size:.82rem;color:var(--text);line-height:1.7;white-space:pre-line;">'+esc(txt||'The stars are quiet — please try again.')+'</div>';
+    res.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:.85rem;color:var(--g2c);margin-bottom:8px;">'+esc(sign)+' — '+_rfPeriod+' Rashifal</div><div style="font-size:.82rem;color:var(--text);line-height:1.7;white-space:pre-line;">'+esc(txt||'The stars are quiet — please try again.')+'</div>'+shareBtnHTML("shareRashifal()");
     if(CU)addRd({type:'rashifal',icon:'📆',title:_rfPeriod+' Rashifal — '+sign,sub:'Horoscope',preview:(txt||'').substring(0,160)+'…',text:txt||''});
   }catch(e){res.innerHTML='<p style="color:var(--muted);">The oracle meditates momentarily — please try again. ✦</p>';}
 }
@@ -6869,7 +6870,7 @@ function calcLove(){
     ['🌱','Every bond can grow with patience, honesty and shared laughter.'];
   const res=document.getElementById('lv-res');
   res.style.display='block';
-  res.innerHTML='<div style="text-align:center;padding:8px 0;"><div style="font-family:\'Cinzel Decorative\',serif;font-size:3rem;color:var(--gold);line-height:1;">'+score+'%</div><div style="font-size:1.4rem;margin:6px 0;">'+tier[0]+'</div><div style="font-size:.84rem;color:var(--text);max-width:340px;margin:0 auto;line-height:1.6;">'+esc(a)+' ✦ '+esc(b2)+'<br>'+tier[1]+'</div><p style="font-size:.62rem;color:var(--muted);margin-top:12px;">✦ Just for fun — real compatibility is measured with the 36-guna Kundli Match tool. ✦</p></div>';
+  res.innerHTML='<div style="text-align:center;padding:8px 0;"><div style="font-family:\'Cinzel Decorative\',serif;font-size:3rem;color:var(--gold);line-height:1;">'+score+'%</div><div style="font-size:1.4rem;margin:6px 0;">'+tier[0]+'</div><div style="font-size:.84rem;color:var(--text);max-width:340px;margin:0 auto;line-height:1.6;">'+esc(a)+' ✦ '+esc(b2)+'<br>'+tier[1]+'</div><p style="font-size:.62rem;color:var(--muted);margin-top:12px;">✦ Just for fun — real compatibility is measured with the 36-guna Kundli Match tool. ✦</p></div>'+shareBtnHTML("shareLove()");
 }
 
 function openForecast(){
@@ -6944,8 +6945,8 @@ Make it feel premium, personal, and hopeful — this is the flagship VIP feature
 
 function shareForecastWA(){
   const fc=window._lastForecast;
-  const txt=fc?`👑 ${fc.name}'s ${fc.year} Life Forecast 👑\n\n${fc.txt.substring(0,600)}...\n\n— via AstroHand VIP`:'Check out AstroHand VIP Annual Forecast!';
-  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+  const txt=fc?`👑 ${fc.name}'s ${fc.year} Life Forecast 👑\n\n${fc.txt.substring(0,500)}…`:'👑 My Annual Life Forecast from AstroHand VIP';
+  shareResult(txt,'forecast');
 }
 
 async function genNewborn(){
@@ -7069,9 +7070,8 @@ Keep it warm, hopeful, and around 400-450 words. End with a short blessing for t
 
 function shareNewbornWA(){
   const nb=window._lastNewborn;
-  if(!isPaid()){upgradePrompt();return;}
-  const txt=nb?`🌟 ${nb.name}'s Newborn Kundli 🌟\n\nNakshatra: ${nb.nak}\nMoon Sign: ${nb.rashi}\n\n${nb.txt.substring(0,600)}...\n\n— via AstroHand`:'Check out AstroHand Newborn Kundli!';
-  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+  const txt=nb?`🌟 ${nb.name}'s Newborn Kundli 🌟\nNakshatra: ${nb.nak} · Moon Sign: ${nb.rashi}`:'🌟 Newborn Baby Kundli from AstroHand';
+  shareResult(txt,'newborn'); // sharing is free — we WANT users to share
 }
 
 function exportNewbornPDF(){
@@ -8260,10 +8260,39 @@ function localizedRemedies(lang,ln,rp,day,col){
   };
   return (T[lang]||T.English).map(r=>'• '+r).join('<br>');
 }
+/* ── SHARE (viral loop): native share sheet on mobile (WhatsApp/Instagram/Telegram/
+   anything), WhatsApp fallback on desktop. Every shared result carries a link back to
+   astrohand.in — so every user who shares brings new visitors. ── */
+async function shareResult(text, slug){
+  const url = 'https://astrohand.in/' + (slug ? ('?tool=' + slug) : '');
+  try{ if(navigator.share){ await navigator.share({title:'AstroHand', text:text, url:url}); return; } }
+  catch(e){ if(e && e.name==='AbortError') return; } // user cancelled the share sheet
+  window.open('https://wa.me/?text='+encodeURIComponent(text+'\n\n'+url), '_blank');
+}
+function shareBtnHTML(onclick){
+  return '<div style="text-align:center;margin-top:14px;"><button onclick="'+onclick+'" style="display:inline-flex;align-items:center;gap:7px;padding:11px 22px;background:linear-gradient(135deg,var(--gold),var(--violet));border:none;border-radius:100px;color:#fff;cursor:pointer;font-family:Inter,sans-serif;font-size:.82rem;font-weight:700;box-shadow:0 4px 14px rgba(var(--gold-rgb),.3);">📲 Share My Result</button></div>';
+}
 function shareKundliWA(){
   const name=(document.getElementById('k-rname')||{}).textContent||'';
   const basics=(document.getElementById('k-basics')||{}).innerText||'';
-  window.open('https://wa.me/?text='+encodeURIComponent('My Vedic Kundli from AstroHand AI:\n\n'+basics.split('\n').slice(0,5).join('\n')+'\n\nGet yours free: astrohand.in'),'_blank');
+  const head=(name&&name!=='—')?('🔮 '+name+"'s Vedic Kundli"):'🔮 My Vedic Kundli';
+  shareResult(head+'\n\n'+basics.split('\n').slice(0,6).join('\n')+'\n\n✨ Made free on AstroHand','kundli');
+}
+function shareMatch(){
+  const sc=(document.getElementById('m-sn')||{}).textContent||'';
+  const lbl=(document.getElementById('m-lbl')||{}).textContent||'';
+  const head=(sc&&sc!=='—')?('💍 Our Kundli match: '+sc+'/36 Guna — '+lbl+' 💫'):'💍 We matched our Kundli on AstroHand 💫';
+  shareResult(head+'\n\nCheck your marriage compatibility free (36-guna + Mangal Dosha)','matching');
+}
+function shareRashifal(){
+  const sign=(typeof v==='function'?v('rf-sign'):'')||'';
+  const head=sign?('✨ Today\'s Rashifal for '+sign+' 🔮'):'✨ My daily Rashifal 🔮';
+  shareResult(head+'\n\nRead your free daily horoscope on AstroHand','rashifal');
+}
+function shareLove(){
+  const m=((document.getElementById('lv-res')||{}).innerText||'').match(/(\d+)%/);
+  const head=m?('💘 Our love score: '+m[1]+'% 😍'):'💘 We tried the AstroHand love calculator 😍';
+  shareResult(head+'\n\nCalculate yours free on AstroHand (just for fun!)','love');
 }
 
 /* ═══════════════════════════════════════════════════
