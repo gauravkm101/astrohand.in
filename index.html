@@ -59,6 +59,10 @@ window.GA4_ID='G-ML6JBG78CG';
 <style>
 
 :root{
+  /* color-scheme makes native controls (the <select> dropdown popup, date/time pickers,
+     scrollbars) render dark to match the theme — without it Windows Chrome drew a white
+     popup with our light option text = invisible white-on-white. White theme overrides it. */
+  color-scheme:dark;
   --gold-rgb:200,150,60;--ink-rgb:4,4,18;
   --ink:#040412;--deep:#07071a;--card:#0d0b27;--surface:#131032;
   --glass:rgba(13,11,39,.82);--g2:rgba(255,255,255,.04);
@@ -127,6 +131,7 @@ html[data-theme="rose"]{
   --grad-glass:linear-gradient(135deg,rgba(225,29,120,.08),rgba(124,58,237,.06));
 }
 html[data-theme="white"]{
+  color-scheme:light;
   --ink:#f7f3ea;--deep:#efe9db;--card:#fffdf8;--surface:#fbf7ee;
   --glass:rgba(255,253,248,.9);--g2:rgba(0,0,0,.03);
   --gold:#b8860b;--g2c:#8a6508;--g3:#6b4e06;--glow:rgba(184,134,11,.15);
@@ -250,7 +255,7 @@ nav.z{z-index:900;}
   outline:none;transition:all .2s;width:100%;}
 .fi:focus{border-color:var(--gold);background:rgba(var(--gold-rgb),.05);}
 .fi.e{border-color:#f87171;}
-.fi option{background:var(--card);}
+.fi option{background:var(--card);color:var(--text);}
 .fi::placeholder{color:var(--sub);}
 .fl{font-size:.66rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px;}
 .fg{display:flex;flex-direction:column;margin-bottom:13px;}
@@ -2150,8 +2155,8 @@ This single script enables ALL ad units on the page, including every
     <div class="mt">🔢 Numerology Calculator</div>
     <div class="ms">Discover your Life Path, Destiny & Soul Urge numbers.</div>
     <div class="fgrid two">
-      <div class="fg"><label class="fl">Full Birth Name</label><input class="fi" id="nm-n" placeholder="Your complete name"></div>
-      <div class="fg"><label class="fl">Date of Birth</label><input class="fi" type="date" id="nm-d"></div>
+      <div class="fg"><label class="fl">Full Birth Name *</label><input class="fi" id="nm-n" placeholder="Your complete name"></div>
+      <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="nm-d"></div>
       <div class="full"><button class="gbtn" onclick="calcNum()">Calculate My Numbers ✦</button></div>
     </div>
     <div id="nm-res" style="display:none;margin-top:18px;">
@@ -2365,9 +2370,9 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <div class="mt">💎 Gemstone Recommendation Engine</div>
     <div class="ms">AI analyzes your birth chart, current Dasha, and planetary strength to give a personalized gemstone prescription.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-      <div class="fg"><label class="fl">Date of Birth</label><input class="fi" type="date" id="gem-d"></div>
+      <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="gem-d"></div>
       <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="gem-t" value="06:00"></div>
-      <div class="fg"><label class="fl">Birth Place</label><input class="fi" id="gem-p" placeholder="City, Country"></div>
+      <div class="fg"><label class="fl">Birth Place *</label><input class="fi" id="gem-p" placeholder="City, Country"></div>
       <div class="fg"><label class="fl">Current Concern (optional)</label><input class="fi" id="gem-h" placeholder="e.g. Financial stress, Health"></div>
     </div>
     <button class="gbtn" onclick="runGemEngine()">✨ Analyze My Chart & Recommend Gemstones</button>
@@ -2388,8 +2393,8 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
       <div class="fg"><label class="fl">Date of Birth</label><input class="fi" type="date" id="rem-d"></div>
       <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="rem-t" value="06:00"></div>
-      <div class="fg"><label class="fl">Birth Place</label><input class="fi" id="rem-p" placeholder="City, Country"></div>
-      <div class="fg"><label class="fl">Current Concern</label>
+      <div class="fg"><label class="fl">Birth Place *</label><input class="fi" id="rem-p" placeholder="City, Country"></div>
+      <div class="fg"><label class="fl">Current Concern *</label>
         <select class="fi" id="rem-c">
           <option value="">Select your concern</option>
           <option>Career & Business Growth</option><option>Marriage & Relationships</option>
@@ -2528,7 +2533,7 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <div class="mt">🪐 Sade Sati Calculator</div>
     <div class="ms">Real Saturn transits vs your natal Moon — current phase and every window of your life.</div>
     <div class="fgrid two">
-      <div class="fg full"><label class="fl">Full Name</label><input class="fi" id="sd-n" placeholder="Your name" autocomplete="off"></div>
+      <div class="fg full"><label class="fl">Full Name *</label><input class="fi" id="sd-n" placeholder="Your name" autocomplete="off"></div>
       <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="sd-d"></div>
       <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="sd-t"></div>
       <div class="full"><button class="gbtn" onclick="genSade()">Check My Sade Sati ✦</button></div>
@@ -2543,7 +2548,7 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <div class="mt">🐍 Kaal Sarp Dosha Checker</div>
     <div class="ms">Are all seven planets trapped between Rahu and Ketu in your chart? Checked with real positions.</div>
     <div class="fgrid two">
-      <div class="fg full"><label class="fl">Full Name</label><input class="fi" id="kl-n" placeholder="Your name" autocomplete="off"></div>
+      <div class="fg full"><label class="fl">Full Name *</label><input class="fi" id="kl-n" placeholder="Your name" autocomplete="off"></div>
       <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="kl-d"></div>
       <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="kl-t"></div>
       <div class="full"><button class="gbtn" onclick="genKaal()">Check Kaal Sarp Dosha ✦</button></div>
@@ -2558,7 +2563,7 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <div class="mt">♂️ Mangal Dosha Checker</div>
     <div class="ms">Manglik or not — Mars checked from both your Lagna and your Moon, with real positions.</div>
     <div class="fgrid two">
-      <div class="fg full"><label class="fl">Full Name</label><input class="fi" id="mg-n" placeholder="Your name" autocomplete="off"></div>
+      <div class="fg full"><label class="fl">Full Name *</label><input class="fi" id="mg-n" placeholder="Your name" autocomplete="off"></div>
       <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="mg-d"></div>
       <div class="fg"><label class="fl">Time of Birth</label><input class="fi" type="time" id="mg-t"></div>
       <div class="full"><button class="gbtn" onclick="genMangal()">Check Mangal Dosha ✦</button></div>
@@ -2710,6 +2715,26 @@ const DB={
 /* ── Small helpers ── */
 function v(id){const e=document.getElementById(id);return e?e.value.trim():'';}
 function sv(id,val){const e=document.getElementById(id);if(e)e.value=val;}
+/* ── Shared required-field guard ──
+   pairs = [[id,'Label'], …]. Highlights every empty field in red (.e), scrolls to and
+   focuses the first missing one, and toasts it. Returns true ONLY when all are filled —
+   so a tool never produces a result from half-empty input. */
+function needFields(pairs){
+  let firstEl=null,firstLabel=null;
+  for(let i=0;i<pairs.length;i++){
+    const id=pairs[i][0],label=pairs[i][1];
+    const el=document.getElementById(id);
+    if(!el)continue;
+    if(!(el.value||'').trim()){el.classList.add('e');if(!firstEl){firstEl=el;firstLabel=label;}}
+    else{el.classList.remove('e');}
+  }
+  if(firstEl){
+    try{firstEl.scrollIntoView({behavior:'smooth',block:'center'});firstEl.focus({preventScroll:true});}catch(e){}
+    toast('⚠️ Please fill in: '+firstLabel,'');
+    return false;
+  }
+  return true;
+}
 function isEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
 function cap(s){return s?(s[0].toUpperCase()+s.slice(1)):'';}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -6648,7 +6673,8 @@ function _verdictBox(color,icon,title,body){
 /* ── SADE SATI (real Saturn transits vs real natal Moon) ── */
 function _satSignAt(y,m){return Math.floor(computeRealPositions(y,m,15,12,0,5.5).positions.Saturn/30);}
 function genSade(){
-  const b=parseBirthAH('sd-d','sd-t'); if(!b){toast('Please enter your date of birth.','');return;}
+  if(!needFields([['sd-n','Full Name'],['sd-d','Date of Birth']]))return;
+  const b=parseBirthAH('sd-d','sd-t'); if(!b){toast('Please enter a valid date of birth.','');return;}
   const natal=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5);
   const moonSign=Math.floor(natal.positions.Moon/30);
   const now=new Date();
@@ -6690,7 +6716,8 @@ function genSade(){
 
 /* ── KAAL SARP DOSHA (all 7 classical planets vs real Rahu-Ketu axis) ── */
 function genKaal(){
-  const b=parseBirthAH('kl-d','kl-t'); if(!b){toast('Please enter your date of birth.','');return;}
+  if(!needFields([['kl-n','Full Name'],['kl-d','Date of Birth']]))return;
+  const b=parseBirthAH('kl-d','kl-t'); if(!b){toast('Please enter a valid date of birth.','');return;}
   const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
   const seven=['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'];
   const side=seven.map(n=>((P[n]-P.Rahu+360)%360)<180?1:0);
@@ -6716,7 +6743,8 @@ function genKaal(){
 
 /* ── MANGAL DOSHA (real Mars vs Moon-lagna and approx Lagna) ── */
 function genMangal(){
-  const b=parseBirthAH('mg-d','mg-t'); if(!b){toast('Please enter your date of birth.','');return;}
+  if(!needFields([['mg-n','Full Name'],['mg-d','Date of Birth']]))return;
+  const b=parseBirthAH('mg-d','mg-t'); if(!b){toast('Please enter a valid date of birth.','');return;}
   const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
   const moonSign=Math.floor(P.Moon/30);
   const li=(moonSign+Math.floor((b.th*60+b.tm)/120))%12;
@@ -6951,7 +6979,7 @@ function shareForecastWA(){
 
 async function genNewborn(){
   const name=v('nb-n'),d=v('nb-d'),t=v('nb-t'),city=v('nb-p'),lang=v('nb-l')||'English';
-  if(!d||!t){toast('⚠️ Please enter date and time of birth (both needed for a baby chart).','');return;}
+  if(!needFields([['nb-d','Date of Birth'],['nb-t','Time of Birth'],['nb-p','Birth Place']]))return;
   const btn=document.getElementById('nb-btn');
   if(btn.dataset.busy==='1')return;
   btn.dataset.busy='1';btn.disabled=true;btn.textContent='⏳ Reading the stars…';
@@ -7159,7 +7187,7 @@ function exportNewbornPDF(){
 
 async function genKundli(){
   const n=v('kn'),d=v('kd');
-  if(!n||!d){toast('⚠️ Please enter name and date of birth.','');return;}
+  if(!needFields([['kn','Full Name'],['kd','Date of Birth'],['kp','Birth Place']]))return;
   const btn=document.getElementById('k-btn');
   // Guard against double-submission while a generation is already running
   if(btn.dataset.busy==='1')return;
@@ -7646,7 +7674,8 @@ async function doMatch(){
 /* ══ NUMEROLOGY ══ */
 const NM={1:'The Leader — Original, pioneering, independent.',2:'The Diplomat — Harmonious, cooperative, intuitive.',3:'The Creator — Expressive, joyful, communicative.',4:'The Builder — Stable, disciplined, grounded.',5:'The Freedom Seeker — Adventurous, versatile, magnetic.',6:'The Nurturer — Compassionate, responsible, healing.',7:'The Mystic — Introspective, analytical, seeker of truth.',8:'The Achiever — Ambitious, powerful, abundant.',9:'The Humanitarian — Wise, selfless, universal love.',11:'Master Illuminator — Rare spiritual insight.',22:'Master Builder — Manifests extraordinary visions.',33:'Master Teacher — Cosmic compassion.'};
 async function calcNum(){
-  const n=v('nm-n'),d=v('nm-d');if(!n&&!d){toast('⚠️ Enter name or date of birth.','');return;}
+  const n=v('nm-n'),d=v('nm-d');
+  if(!needFields([['nm-n','Full Birth Name'],['nm-d','Date of Birth']]))return;
   const lv={a:1,b:2,c:3,d:4,e:5,f:6,g:7,h:8,i:9,j:1,k:2,l:3,m:4,n:5,o:6,p:7,q:8,r:9,s:1,t:2,u:3,v:4,w:5,x:6,y:7,z:8};
   const red=x=>{while(x>9&&x!==11&&x!==22&&x!==33)x=String(x).split('').reduce((a,c)=>a+parseInt(c),0);return x;};
   let lp=d?red(d.replace(/-/g,'').split('').reduce((a,c)=>a+parseInt(c),0)):red(n.toLowerCase().replace(/[^a-z]/g,'').split('').reduce((a,c)=>a+(lv[c]||0),0));
@@ -7942,9 +7971,9 @@ const GEM_DATA=[
 /* ══ GEMSTONE ENGINE ══ */
 function runGemEngine(){
   const d=v('gem-d'),t=v('gem-t'),h=v('gem-h');
-  // Gemstone recommendations depend on the birth chart, so date of birth is required —
-  // otherwise the result would fall back to generic defaults, which isn't a real reading.
-  if(!d){toast('⚠️ Please enter your date of birth for an accurate gemstone recommendation.','');return;}
+  // Date of birth AND birth place are required so the result is genuinely chart-based, not a
+  // generic default. (Current Concern stays optional — it only refines the reading.)
+  if(!needFields([['gem-d','Date of Birth'],['gem-p','Birth Place']]))return;
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
   const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t):curKundliForGuru;
   const lagna=kd?kd.lagnaSign:'Aries',moon=kd?kd.moonSign:'Cancer',nak=kd?kd.nakshatra:'Rohini',rp=kd?kd.rulingPlanet:'Jupiter',seed=kd?(kd.seed||42):42;
@@ -7967,8 +7996,9 @@ function runGemEngine(){
 /* ══ REMEDIES ENGINE ══ */
 function runRemedies(){
   const d=v('rem-d'),t=v('rem-t'),c=v('rem-c');
-  // Remedies are derived from the birth chart, so date of birth is required.
-  if(!d){toast('⚠️ Please enter your date of birth for personalized remedies.','');return;}
+  // Every shown field is meaningful, so require them all — a real personalised result is
+  // only produced once the user has given their birth place and stated concern.
+  if(!needFields([['rem-d','Date of Birth'],['rem-p','Birth Place'],['rem-c','Current Concern']]))return;
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
   const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t):curKundliForGuru;
   const lagna=kd?kd.lagnaSign:'Aries',moon=kd?kd.moonSign:'Cancer',nak=kd?kd.nakshatra:'Rohini',rp=kd?kd.rulingPlanet:'Jupiter';
