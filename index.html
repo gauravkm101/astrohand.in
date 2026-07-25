@@ -2025,6 +2025,14 @@ This single script enables ALL ad units on the page, including every
 </div>
 
 <!-- AI ASTROLOGER -->
+<!-- ASTROLOGER PROFILE (opens on photo click; "Start Consultation" → chat) -->
+<div class="ov" id="mAstroProfile" onclick="cov(event,'mAstroProfile')">
+  <div class="mbox sm">
+    <button class="mc" onclick="closeOv('mAstroProfile')">✕</button>
+    <div id="astro-profile-body"></div>
+  </div>
+</div>
+
 <div class="ov" id="mAI" onclick="cov(event,'mAI')">
   <div class="mbox">
     <button class="mc" onclick="closeOv('mAI')">✕</button>
@@ -7441,12 +7449,57 @@ function initAList(){
   initChat(0);
   renderAstroStrip();
 }
-function openAstroChat(i){
+// Clicking an astrologer's photo/card now opens their PROFILE first (who they are,
+// expertise, experience) — then a "Start Consultation" button begins the chat.
+function startAstroChat(i){
   const a=ASTROs[i];
   if(isAstroLocked(a)){a.plan==='vip'?upgradePromptVip():upgradePromptGold();return;}
   const el=document.querySelectorAll('#a-list>div')[i];
   if(el)pickA(i,el);
   openTool('mAI');
+}
+function openAstroChat(i){ openAstroProfile(i,false); }
+// Build a clean, honest bio from the persona definition (no fabricated stats).
+function astroBio(a){
+  if(a.lang) return 'A warm, knowledgeable Vedic astrologer who consults entirely in '+a.lang+'. Deep command of the grahas, nakshatras, dashas, yogas, doshas and remedies — with clear, caring guidance in your own mother tongue for kundli, marriage, career and life questions.';
+  const stop=/^(Reply|Give|State|Note|All readings|Guidance|Sacred|Mention|CRITICAL|IMPORTANT|Weave|Palmistry provides|You )/i;
+  const out=[];
+  for(const part of a.sys.replace(/^You are /,'').split('. ')){
+    const t=part.trim(); if(!t)continue; if(stop.test(t))break; out.push(t); if(out.join('. ').length>270)break;
+  }
+  let bio=out.join('. '); if(bio&&!/[.!?]$/.test(bio))bio+='.';
+  return bio||a.sp;
+}
+function astroExp(a){ const m=(a.sys||'').match(/(\d{2})\s*years/); return m?m[1]+'+ yrs':''; }
+function openAstroProfile(i,isLang){
+  const a=(isLang?ASTROs_LANG:ASTROs)[i];
+  const locked=!isLang&&isAstroLocked(a);
+  const chips=(a.sp||'').split('·').map(s=>s.trim()).filter(Boolean).map(s=>'<span style="display:inline-block;padding:5px 12px;margin:3px;border-radius:20px;background:rgba(var(--gold-rgb),.12);border:1px solid var(--bdr);color:var(--g2c);font-size:.7rem;">'+s+'</span>').join('');
+  const exp=astroExp(a);
+  const badge=a.plan==='vip'?'<span style="font-size:.6rem;letter-spacing:.08em;padding:4px 12px;border-radius:20px;background:var(--grad-royal);color:#fff;">👑 VIP EXCLUSIVE</span>':a.plan==='gold'?'<span style="font-size:.6rem;letter-spacing:.08em;padding:4px 12px;border-radius:20px;background:rgba(var(--gold-rgb),.18);border:1px solid var(--bdr);color:var(--g2c);">GOLD</span>':'';
+  const langVal=isLang?a.lang:'12+';
+  const btn=locked
+    ? '<button class="bp" style="width:100%;" onclick="closeOv(\'mAstroProfile\');'+(a.plan==='vip'?'upgradePromptVip()':'upgradePromptGold()')+'">🔒 Unlock with '+(a.plan==='vip'?'VIP':'Gold')+'</button>'
+    : '<button class="bp" style="width:100%;" onclick="startAstroProfileChat('+i+','+(isLang?'true':'false')+')">💬 Start Consultation ✦</button>';
+  document.getElementById('astro-profile-body').innerHTML=
+    '<div style="text-align:center;">'+astroAvatarHTML(a,92)+
+    '<div style="font-family:\'Cinzel\',serif;font-size:1.35rem;color:var(--g3);margin-top:12px;line-height:1.25;">'+(isLang?(a.flag+' '):'')+a.n+'</div>'+
+    '<div style="font-size:.8rem;color:var(--gold);margin-top:5px;">'+a.rt+' · <span style="color:var(--green);">● Online</span></div>'+
+    (badge?'<div style="margin-top:9px;">'+badge+'</div>':'')+'</div>'+
+    '<div style="margin:16px 0 6px;text-align:center;">'+chips+'</div>'+
+    '<div style="font-size:.86rem;color:var(--text);line-height:1.7;text-align:center;padding:0 4px;">'+astroBio(a)+'</div>'+
+    '<div style="display:flex;gap:22px;margin:18px 0;justify-content:center;">'+
+      (exp?'<div style="text-align:center;"><div style="color:var(--g2c);font-size:1.05rem;font-weight:800;font-family:\'Cinzel\',serif;">'+exp+'</div><div style="color:var(--muted);font-size:.6rem;letter-spacing:.1em;">EXPERIENCE</div></div>':'')+
+      '<div style="text-align:center;"><div style="color:var(--g2c);font-size:1.05rem;font-weight:800;font-family:\'Cinzel\',serif;">'+langVal+'</div><div style="color:var(--muted);font-size:.6rem;letter-spacing:.1em;">'+(isLang?'LANGUAGE':'LANGUAGES')+'</div></div>'+
+    '</div>'+
+    '<div style="font-size:.64rem;color:var(--sub);text-align:center;margin-bottom:14px;">AI astrologer — guidance for reflection, not a guaranteed outcome.</div>'+
+    btn;
+  openTool('mAstroProfile');
+}
+function startAstroProfileChat(i,isLang){
+  closeOv('mAstroProfile');
+  if(isLang){ const el=document.querySelectorAll('#a-list2>div')[i]; if(el){pickALang(i,el);} else {openTool('mAILang');initALangList();} }
+  else { startAstroChat(i); }
 }
 function renderWorldStrip(){
   const el=document.getElementById('astro-world-cards');
@@ -7584,7 +7637,7 @@ ASTROs_LANG.forEach((a,i)=>{a.img='av/lang-'+(i+1)+'.jpg';});
 function initALangList(){
   const listEl=document.getElementById('a-list2');
   if(!listEl)return;
-  listEl.innerHTML=ASTROs_LANG.map((a,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r2);border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:pointer;transition:all .25s;${i===0?'border-color:rgba(var(--gold-rgb),.4);background:rgba(var(--gold-rgb),.06);':''}" onclick="pickALang(${i},this)">${astroAvatarHTML(a,40)}<div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${a.flag} ${a.n}</div><div style="font-size:.62rem;color:var(--muted);margin-top:1px;">${a.sp}</div><div style="font-size:.6rem;color:var(--gold);margin-top:2px;">${a.rt}</div></div></div>`).join('');
+  listEl.innerHTML=ASTROs_LANG.map((a,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r2);border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:pointer;transition:all .25s;${i===0?'border-color:rgba(var(--gold-rgb),.4);background:rgba(var(--gold-rgb),.06);':''}" onclick="openAstroProfile(${i},true)">${astroAvatarHTML(a,40)}<div><div style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${a.flag} ${a.n}</div><div style="font-size:.62rem;color:var(--muted);margin-top:1px;">${a.sp}</div><div style="font-size:.6rem;color:var(--gold);margin-top:2px;">${a.rt}</div></div></div>`).join('');
   curALang=0;cHistLang=[];
   initChatLang(0);
 }
