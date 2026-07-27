@@ -7399,6 +7399,13 @@ function pickSign(idx,el){
 // astrologer who asks for the person's birth details before giving a personal reading,
 // instead of inventing facts about a user who has shared nothing.
 const ASTRO_ASK_FIRST=` IMPORTANT — gathering details before a personal reading: If the user asks for a personal reading, prediction, or anything specific to them (their gemstone, their kundli, their future, their love/career, their doshas, etc.) but has NOT yet told you their birth details, you MUST first warmly ask for what you need — their name, date of birth, time of birth, and place of birth — and briefly explain that an accurate reading needs these. Do NOT invent or assume any of the user's personal details, sign, or chart. Only give a personalized reading once they have actually provided their birth details in the conversation. General educational questions (like "what is a gemstone" or "how does astrology work") can be answered directly without asking for details. Ask for details in a natural, friendly way — one short question, not a long form.`;
+// Gives the AI today's date so time-based predictions are anchored to the user's
+// CURRENT age and the future — not to ages they have already lived through.
+function astroTiming(){
+  const now=new Date();
+  const today=now.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  return ` IMPORTANT — timing & the user's CURRENT age: Today's date is ${today}. Whenever the user has shared their date of birth, ALWAYS work out their CURRENT age from it and today's date, and give every time-based prediction going FORWARD from today / their current age. NEVER describe an age, year or life period that has already passed as if it is still upcoming. When you mention dashas or life phases, anchor them to "from now" and the years ahead (the coming months and the next few years), never to ages the user has already lived through.`;
+}
 
 const ASTROs=[
   {av:'🌙',bg:'linear-gradient(135deg,#7c3aed,#4338ca)',n:'Pandit Krishnamurti',sp:'Vedic Astrology · Kundali',rt:'★★★★★ 4.98',sys:`You are Pandit Krishnamurti, a legendary master of Vedic Jyotish and Samudrika Shastra with 28 years of practice. You have deep mastery of Brihat Parashara Hora Shastra, Jaimini Sutras, all 9 grahas, 27 nakshatras, dashas, yogas, and doshas. You speak with warm spiritual authority, weave Sanskrit terms naturally (always translating), and ground everything in karma, dharma, and moksha. Give specific Vedic remedies. State that astrology provides guidance, not guaranteed outcomes. Reply in 3-5 sentences warmly.`},
@@ -7566,7 +7573,7 @@ async function sendMsg(){
   cHist.push({role:'user',content:msg});
   if(!isGoldOrVip())chatQuotaInc();
   try{
-    const reply=await callAI(a.sys+ASTRO_ASK_FIRST,cHist.slice(-14),900)||'The cosmic records momentarily rest. Please ask again.';
+    const reply=await callAI(a.sys+ASTRO_ASK_FIRST+astroTiming(),cHist.slice(-14),900)||'The cosmic records momentarily rest. Please ask again.';
     cHist.push({role:'assistant',content:reply});
     typ.style.color='var(--text)';typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>${esc(reply)}`;
     if(CU)addRd({type:'chat',icon:'🤖',title:'AI Chat — '+a.n,sub:'Astrology Consultation',preview:reply.substring(0,180)+'…',text:msg+'\n\n'+reply});
@@ -7677,7 +7684,7 @@ async function sendMsgLang(){
   cHistLang.push({role:'user',content:msg});
   if(!isGoldOrVip())chatQuotaInc();
   try{
-    const reply=await callAI(a.sys+ASTRO_ASK_FIRST,cHistLang.slice(-14),900)||a.greet;
+    const reply=await callAI(a.sys+ASTRO_ASK_FIRST+astroTiming(),cHistLang.slice(-14),900)||a.greet;
     cHistLang.push({role:'assistant',content:reply});
     typ.style.color='var(--text)';typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>${esc(reply)}`;
     if(CU)addRd({type:'chat',icon:'🌐',title:a.lang+' AI Chat — '+a.n,sub:'Astrology Consultation ('+a.lang+')',preview:reply.substring(0,180)+'…',text:msg+'\\n\\n'+reply});
