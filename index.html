@@ -3690,6 +3690,20 @@ function resetTranslation(targetId){
   delete _translateOriginals[targetId];
 }
 
+// One-call "🌐 Read in:" bar for ANY result container — auto-inserts the bar just
+// above the target (no HTML edit needed) and re-arms it for fresh content. Call it
+// once the reading text is actually in the container.
+function addTranslate(targetId){
+  const el=document.getElementById(targetId);
+  if(!el)return;
+  resetTranslation(targetId);
+  const barId=targetId+'-trbar';
+  let bar=document.getElementById(barId);
+  if(!bar){ bar=document.createElement('div'); bar.id=barId; bar.style.margin='0 0 10px'; el.parentNode.insertBefore(bar,el); }
+  else { const sel=bar.querySelector('select'); if(sel)sel.value='Original'; }
+  mountTranslateBar(barId,targetId);
+}
+
 // ── Per-modal wiring ────────────────────────────────────────
 // Puja: single container.
 function mountPujaTranslate(){mountTranslateBar('puja-tr-bar','puja-results');resetTranslation('puja-results');}
@@ -6713,6 +6727,7 @@ function genSade(){
   }).join('');
   const sdNm=(v('sd-n')||'').trim();
   document.getElementById('sd-res').style.display='block';
+  addTranslate('sd-res');
   document.getElementById('sd-res').innerHTML=
     (sdNm?'<div style="font-family:\'Cinzel\',serif;font-size:.92rem;color:var(--g3);text-align:center;margin-bottom:12px;">✦ Sade Sati Report — '+esc(sdNm)+' ✦</div>':'')+
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'+
@@ -6742,6 +6757,7 @@ function genKaal(){
     body='Your planets are well distributed on both sides of the Rahu–Ketu axis ('+inArc+' vs '+(7-inArc)+'). No Kaal Sarp formation exists in this chart — no remedy needed.';}
   const klNm=(v('kl-n')||'').trim();
   document.getElementById('kl-res').style.display='block';
+  addTranslate('kl-res');
   document.getElementById('kl-res').innerHTML=
     (klNm?'<div style="font-family:\'Cinzel\',serif;font-size:.92rem;color:var(--g3);text-align:center;margin-bottom:12px;">✦ Kaal Sarp Report — '+esc(klNm)+' ✦</div>':'')+
     '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">'+
@@ -6771,6 +6787,7 @@ function genMangal(){
     body='Mars sits in house '+hL+' from your Lagna and '+hM+' from your Moon — neither is a Manglik house. No Mangal dosha in this chart.';}
   const mgNm=(v('mg-n')||'').trim();
   document.getElementById('mg-res').style.display='block';
+  addTranslate('mg-res');
   document.getElementById('mg-res').innerHTML=
     (mgNm?'<div style="font-family:\'Cinzel\',serif;font-size:.92rem;color:var(--g3);text-align:center;margin-bottom:12px;">✦ Mangal Dosha Report — '+esc(mgNm)+' ✦</div>':'')+
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'+
@@ -6832,6 +6849,7 @@ function genMoonSign(){
   const nakIdx=Math.floor(P.Moon/(360/27)),pada=_padaOf(P.Moon);
   const nak=NAK[nakIdx];
   document.getElementById('msn-res').style.display='block';
+  addTranslate('msn-res');
   document.getElementById('msn-res').innerHTML=
     '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">'+
     _resCard('🌙 Moon Sign (Rashi)',RASHIS[Math.floor(P.Moon/30)],'Sidereal · Lahiri')+
@@ -6889,7 +6907,7 @@ async function genRashifal(){
   const today=new Date().toDateString();
   try{
     const txt=await callAI('You are AstroHand\'s senior Vedic astrologer. Today is '+today+'. Write the '+_rfPeriod+' horoscope (rashifal) for the sign '+sign+'. Structure: 2-3 sentences overall theme, then one short line each for Love, Career, Health and Finance (label them), then "Lucky tip:" one line. Warm, specific, grounded tone. End with a brief reminder that astrology guides rather than guarantees. Total under 220 words.',[{role:'user',content:_rfPeriod+' horoscope for '+sign}],700);
-    res.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:.85rem;color:var(--g2c);margin-bottom:8px;">'+esc(sign)+' — '+_rfPeriod+' Rashifal</div><div style="font-size:.82rem;color:var(--text);line-height:1.7;white-space:pre-line;">'+esc(txt||'The stars are quiet — please try again.')+'</div>'+shareBtnHTML("shareRashifal()");
+    res.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:.85rem;color:var(--g2c);margin-bottom:8px;">'+esc(sign)+' — '+_rfPeriod+' Rashifal</div><div style="font-size:.82rem;color:var(--text);line-height:1.7;white-space:pre-line;">'+esc(txt||'The stars are quiet — please try again.')+'</div>'+shareBtnHTML("shareRashifal()");addTranslate('rf-res');
     if(CU)addRd({type:'rashifal',icon:'📆',title:_rfPeriod+' Rashifal — '+sign,sub:'Horoscope',preview:(txt||'').substring(0,160)+'…',text:txt||''});
   }catch(e){res.innerHTML='<p style="color:var(--muted);">The oracle meditates momentarily — please try again. ✦</p>';}
 }
@@ -7343,7 +7361,7 @@ async function genKundli(){
       let txt;
       try{txt=await callAI("You are AstroHand's master Vedic astrologer. Be mystical yet precise.",[{role:'user',content:prompt}],1000);}catch(aiErr){txt=null;}
       if(!txt)txt=fallbackKundli(n,ri,li,ni,rp);
-      document.getElementById('k-pred').textContent=txt;
+      document.getElementById('k-pred').textContent=txt;addTranslate('k-pred');
       if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});
     }else{
       document.getElementById('k-pred').textContent=fallbackKundli(n,ri,li,ni,rp);
@@ -7722,7 +7740,7 @@ async function doMatch(){
     if(isPaid()){
       mWrap.classList.remove('lock-blurred');mLock.style.display='none';
       const prompt=`Provide a warm 200-word Kundali compatibility reading for ${gn} (groom) and ${bn} (bride). Guna Milan score: ${score}/36 (${pct}%), classified: "${lbl}". Cover: (1) Overall verdict, (2) Strengths, (3) Areas needing attention + remedy, (4) Marriage timing, (5) One specific remedy. Be encouraging yet realistic. Close with: "Even challenging charts lead to beautiful unions with awareness, effort, and remedies."`;
-      try{const txt=await callAI('You are AstroHand\'s Vedic compatibility expert. Be encouraging yet realistic.',[{role:'user',content:prompt}],600);document.getElementById('m-txt').textContent=txt||fallbackTxt;}
+      try{const txt=await callAI('You are AstroHand\'s Vedic compatibility expert. Be encouraging yet realistic.',[{role:'user',content:prompt}],600);document.getElementById('m-txt').textContent=txt||fallbackTxt;addTranslate('m-txt');}
       catch{document.getElementById('m-txt').textContent=fallbackTxt;}
     }else{
       document.getElementById('m-txt').textContent=fallbackTxt;
@@ -7895,7 +7913,7 @@ async function doPalm(){
   const userPrompt=`Hand: ${selH}.${dob?` DOB: ${dob}.`:''}${t?` Time: ${t}.`:''}${city?` Birth city: ${city}.`:''} The user has uploaded a photo of their palm. Provide a detailed Vedic and Western palmistry reading of the hand, describing the lines and mounts as observed.`;
   try{
     const txt=await callAI(sys,[{role:'user',content:userPrompt}],900)||'The oracle momentarily meditates. Please try again.';
-    document.getElementById('p-ldr').style.display='none';document.getElementById('p-cnt').style.display='block';document.getElementById('p-txt').textContent=txt;
+    document.getElementById('p-ldr').style.display='none';document.getElementById('p-cnt').style.display='block';document.getElementById('p-txt').textContent=txt;addTranslate('p-txt');
     if(CU)addRd({type:'palm',icon:'🤚',title:'Palm Reading',sub:selH.charAt(0).toUpperCase()+selH.slice(1)+' Hand',preview:txt.substring(0,200)+'…',text:txt});
   }catch{document.getElementById('p-ldr').style.display='none';document.getElementById('p-cnt').style.display='block';document.getElementById('p-txt').textContent='The oracle momentarily meditates. Please try again — your destiny is written and waiting.';}
   btn.disabled=false;btn.textContent='✨ Reveal My Palm Reading';
@@ -8079,7 +8097,7 @@ function runGemEngine(){
       const gd=GEM_DATA.find(x=>x.n.toLowerCase()===name.toLowerCase())||GEM_DATA[0],rec=g.recType||'wear';
       html+='<div class="gem-card"><div class="gem-top" style="background:'+gd.bg+'">'+gemSVG(gd.svgKey)+'<div class="gem-sc">'+(g.confScore||gd.conf)+'% Match</div></div><div class="gem-body"><div class="gem-nm">'+name+'</div><div class="gem-pl">Planet: '+planet+'</div><div class="gem-arow"><span class="gem-ak">Benefit</span><span class="gem-av">'+String(benefit).substring(0,50)+'</span></div><div class="gem-arow"><span class="gem-ak">Finger</span><span class="gem-av">'+(g.finger||gd.finger)+'</span></div><div class="gem-arow"><span class="gem-ak">Best Day</span><span class="gem-av">'+(g.day||gd.day)+'</span></div><div class="gem-arow"><span class="gem-ak">Metal</span><span class="gem-av">'+(g.metal||gd.metal)+'</span></div><div class="gem-arow"><span class="gem-ak">Mantra</span><span class="gem-av">'+(g.mantra||gd.mantra)+'</span></div><div class="gem-rec '+(rec==='avoid'?'gem-avoid':rec==='caution'?'gem-caut':'gem-wear')+'">'+( rec==='avoid'?'Avoid':rec==='caution'?'Consult first':'Recommended')+'</div></div></div>';
     }
-    outEl.innerHTML=html;ldrEl.style.display='none';outEl.style.display='grid';outEl.style.gridTemplateColumns='repeat(auto-fit,minmax(200px,1fr))';outEl.style.gap='12px';
+    outEl.innerHTML=html;ldrEl.style.display='none';outEl.style.display='grid';outEl.style.gridTemplateColumns='repeat(auto-fit,minmax(200px,1fr))';outEl.style.gap='12px';addTranslate(outEl.id);
   }
   showGems([GEM_DATA[seed%9],GEM_DATA[(seed+3)%9],GEM_DATA[(seed+6)%9]].map(g=>({name:g.n,planet:g.pl,benefit:'Ideal for '+lagna+' Lagna',finger:g.finger,day:g.day,metal:g.metal,mantra:g.mantra,confScore:g.conf,recType:'wear'})));
   callAI('Reply ONLY with a JSON array. No markdown.',[{role:'user',content:'Lagna:'+lagna+' Moon:'+moon+' Nakshatra:'+nak+' Planet:'+rp+(h?' Concern:'+h:'')+'. Top 3 gemstones JSON:[{"name":"","planet":"","benefit":"","finger":"","day":"","metal":"","mantra":"","confScore":85,"recType":"wear"}]'}],600).then(txt=>{try{const s=txt.indexOf('['),e=txt.lastIndexOf(']');if(s>=0&&e>s){const g=JSON.parse(txt.substring(s,e+1));if(g&&g.length>0){showGems(g);toast('AI gemstone analysis ready!','ok');}}}catch(ex){}}).catch(()=>{});
@@ -8110,7 +8128,7 @@ function runRemedies(){
   ];
   function showRems(rems){
     let html='';for(let i=0;i<rems.length;i++){const rem=rems[i];let items='';for(let j=0;j<(rem.remedies||[]).length;j++){items+='<li>'+rem.remedies[j]+'</li>';}html+='<div class="rem-card"><div class="rem-icon">'+(rem.icon||'&#128591;')+'</div><div class="rem-title">'+(rem.title||'Remedy')+'</div><ul class="rem-list">'+items+'</ul></div>';}
-    outEl.innerHTML=html;ldrEl.style.display='none';outEl.style.display='grid';outEl.style.gridTemplateColumns='repeat(auto-fit,minmax(200px,1fr))';outEl.style.gap='12px';
+    outEl.innerHTML=html;ldrEl.style.display='none';outEl.style.display='grid';outEl.style.gridTemplateColumns='repeat(auto-fit,minmax(200px,1fr))';outEl.style.gap='12px';addTranslate(outEl.id);
   }
   showRems(fallback);
   const upsellEl=document.getElementById('rem-upsell');
