@@ -2791,6 +2791,22 @@ function isPaid(){
   // Silver, Gold, and VIP are all paid tiers. Only 'free' (the arrival taste) is unpaid.
   return !!(CU&&(CU.plan==='silver'||CU.plan==='gold'||CU.plan==='vip'));
 }
+// One-time ₹99 "just this report" purchases add report_credits (see backend +
+// Supabase). A credit unlocks the full reading + one PDF, no subscription.
+function reportCredits(){ return (CU&&CU.report_credits)||0; }
+function canFullReport(){ return isPaid()||reportCredits()>0; }
+function buyReport(){
+  if(!CU){router('login');toast('Sign in to unlock your report.','');return;}
+  openPay('report','Kundli Report','₹99','one-time');
+}
+function spendReportCredit(){
+  if(!CU)return;
+  CU.report_credits=Math.max(0,reportCredits()-1);
+  try{DB.setU(CU.em,CU);}catch(e){}
+  try{syncPlanUI();}catch(e){}
+  const sb=getSB();
+  if(sb&&CU.id){ try{ sb.rpc('use_report_credit'); }catch(e){} }
+}
 function isGoldOrVip(){
   // Gold and VIP only — used for features above the Silver tier (e.g. PDF export).
   return !!(CU&&(CU.plan==='gold'||CU.plan==='vip'));
@@ -2837,7 +2853,7 @@ async function refreshPlanFromCloud(){
   try{
     const {data}=await sb.auth.getSession();
     if(!data||!data.session)return; // no verified session — keep the local view
-    const {data:profile}=await sb.from('profiles').select('plan,chat_n,chat_d,pdf_n,pdf_d,plan_since,plan_until').eq('id',data.session.user.id).maybeSingle();
+    const {data:profile}=await sb.from('profiles').select('plan,chat_n,chat_d,pdf_n,pdf_d,plan_since,plan_until,report_credits').eq('id',data.session.user.id).maybeSingle();
     if(profile&&profile.plan&&CU&&profile.plan!==CU.plan){
       CU.plan=profile.plan;
       DB.setU(CU.em,CU);
@@ -2850,6 +2866,7 @@ async function refreshPlanFromCloud(){
     if(profile&&CU){
       CU.planSince=profile.plan_since||null;
       CU.planUntil=profile.plan_until||null;
+      CU.report_credits=profile.report_credits||0;
       DB.setU(CU.em,CU);
     }
     // Merge today's chat quota from the cloud — highest count wins, so closing the
@@ -2905,10 +2922,14 @@ function pdfInc(){
 }
 /* Shared gate for every PDF download button. Returns true if allowed (and counts it). */
 function pdfGate(){
-  if(!isPaid()){toast('📄 PDF downloads are for Silver, Gold & VIP members.','');upgradePrompt();return false;}
-  if(!isGoldOrVip()&&pdfLeft()<=0){toast('📄 You have used today\'s '+PDF_FREE_PER_DAY+' PDF downloads. Unlimited with Gold — or return tomorrow.','');upgradePromptGold();return false;}
-  if(!isGoldOrVip())pdfInc();
-  return true;
+  if(isPaid()){
+    if(!isGoldOrVip()&&pdfLeft()<=0){toast('📄 You have used today\'s '+PDF_FREE_PER_DAY+' PDF downloads. Unlimited with Gold — or return tomorrow.','');upgradePromptGold();return false;}
+    if(!isGoldOrVip())pdfInc();
+    return true;
+  }
+  // One-time ₹99 report buyers: spend a credit and download.
+  if(reportCredits()>0){ spendReportCredit(); return true; }
+  toast('📄 Unlock your report to download.','');buyReport();return false;
 }
 function _fmtPlanDate(s){
   if(!s)return '—';
@@ -2925,10 +2946,11 @@ function lockCardHTML(title,sub){
     <div class="lock-icon">🔒</div>
     <div class="lock-title">${title}</div>
     <div class="lock-sub">${sub}</div>
-    <button class="lock-btn" onclick="upgradePrompt()">✦ Unlock My Full Reading ✦</button>
-    <div class="lock-note">From ₹499/mo · Cancel anytime</div>
-    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px 14px;justify-content:center;font-size:.63rem;color:var(--muted);line-height:1.5;">
-      <span>🛡️ 7-day money-back</span><span>🔒 Secure payment · Razorpay</span><span>✕ Cancel anytime</span>
+    <button class="lock-btn" onclick="buyReport()">📄 Get This Report — ₹99 <span style="opacity:.7;font-weight:500;font-size:.82em;">one-time</span></button>
+    <div class="lock-note" style="margin:9px 0 6px;">— or —</div>
+    <button class="lock-btn" style="background:transparent;border:1px solid rgba(var(--gold-rgb),.45);color:var(--g2c);box-shadow:none;" onclick="upgradePrompt()">✦ Unlock all tools · from ₹499/mo</button>
+    <div style="margin-top:11px;display:flex;flex-wrap:wrap;gap:5px 14px;justify-content:center;font-size:.63rem;color:var(--muted);line-height:1.5;">
+      <span>🛡️ 7-day money-back</span><span>🔒 Secure payment · Razorpay</span>
     </div>
   </div>`;
 }
@@ -4508,7 +4530,7 @@ async function procPay(plan,amount){
       amount:order.amount,
       currency:order.currency||'INR',
       name:'AstroHand',
-      description:cap(plan)+' Plan Subscription',
+      description:plan==='report'?'Kundli Report (one-time)':cap(plan)+' Plan Subscription',
       image:'https://astrohand.in/icon-192.png',
       order_id:order.id,
       handler:async function(response){
@@ -4527,6 +4549,16 @@ async function procPay(plan,amount){
           let verify={};
           try{verify=await verifyRes.json();}catch(e){}
           if(verify.success){
+            if(plan==='report'){
+              // One-time ₹99 report — a credit was granted server-side; do NOT touch the plan.
+              gaEvent('purchase',{transaction_id:response.razorpay_payment_id,value:99,currency:'INR',items:[{item_name:'Kundli report (one-time)'}]});
+              document.getElementById('pay-ov').classList.remove('open');
+              try{await refreshPlanFromCloud();}catch(e){CU.report_credits=reportCredits()+1;}
+              try{syncPlanUI();}catch(e){}
+              toast('✅ Report unlocked! Your full reading is ready.','ok');
+              try{if(document.getElementById('mKundli')&&document.getElementById('mKundli').classList.contains('open'))genKundli();}catch(e){}
+              return;
+            }
             gaEvent('purchase',{transaction_id:response.razorpay_payment_id,value:amount,currency:'INR',items:[{item_name:plan+' plan'}]});
             CU.plan=plan;
             const sb=getSB();
@@ -7358,7 +7390,7 @@ async function genKundli(){
     const lang=v('kl')||'English',gender=v('kg')||'person',place=v('kp');
     const prompt=`You are AstroHand's master Vedic astrologer. Write a deeply personalized 360-word reading in ${lang} for ${n} (${gender}), born ${dt.toDateString()}${place?' in '+place:''}. Moon sign: ${RASHIS[ri]}, Lagna: ${RASHIS[li]}, Nakshatra: ${NAK[ni]}, Ruling planet: ${rp}, Gemstone: ${ln}. Cover: (1) Soul purpose from Lagna+Moon, (2) Karmic gifts from ${NAK[ni]} Nakshatra, (3) Current ${rp} dasha insights, (4) Love & marriage destiny, (5) Career & financial trajectory, (6) One specific remedy. Be mystical yet precise. End with: "These stars illuminate possibilities — your free will determines the journey."`;
     const predWrap=document.getElementById('k-pred-wrap'),predLock=document.getElementById('k-pred-lock');
-    if(isPaid()){
+    if(canFullReport()){
       predWrap.classList.remove('lock-blurred');predLock.style.display='none';
       // AI call is allowed to fail — fall back to the deterministic reading, never block the report
       let txt;
