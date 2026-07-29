@@ -2925,8 +2925,11 @@ function lockCardHTML(title,sub){
     <div class="lock-icon">🔒</div>
     <div class="lock-title">${title}</div>
     <div class="lock-sub">${sub}</div>
-    <button class="lock-btn" onclick="upgradePrompt()">✦ Unlock with Gold ✦</button>
-    <div class="lock-note">Starting at ₹499/mo · Cancel anytime</div>
+    <button class="lock-btn" onclick="upgradePrompt()">✦ Unlock My Full Reading ✦</button>
+    <div class="lock-note">From ₹499/mo · Cancel anytime</div>
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px 14px;justify-content:center;font-size:.63rem;color:var(--muted);line-height:1.5;">
+      <span>🛡️ 7-day money-back</span><span>🔒 Secure payment · Razorpay</span><span>✕ Cancel anytime</span>
+    </div>
   </div>`;
 }
 function inlineUpsellHTML(text,handler){
