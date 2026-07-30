@@ -2881,6 +2881,19 @@ async function gateSubmit(){
         throw new Error(error.message);
       }
       user=data.user;session=data.session;
+      // Supabase returns NO session when "Confirm email" is enabled. Without a session
+      // the profile insert below is blocked by RLS and nothing ever syncs to the cloud
+      // (plan, report credits, saved readings) — so we must never fake a signed-in
+      // state here. Try to establish a real session, otherwise say so honestly.
+      if(!session){
+        try{
+          const {data:si}=await sb.auth.signInWithPassword({email:em,password:pw});
+          if(si&&si.session){session=si.session;user=si.user||user;}
+        }catch(e){}
+      }
+      if(!session){
+        throw new Error('Account created — please check your email to confirm it, then sign in. Or tap "Continue with Google" below for instant access.');
+      }
       try{
         const {data:created}=await sb.from('profiles').upsert({
           id:user.id,email:em,first_name:fn,last_name:'',
@@ -2899,6 +2912,9 @@ async function gateSubmit(){
         }
         if(error.message==='Invalid login credentials'){
           throw new Error('Incorrect email or password. New here? Tap "Create a free account".');
+        }
+        if(low.includes('not confirmed')||low.includes('email not confirmed')){
+          throw new Error('Please confirm your email first (check your inbox and spam), then sign in. Or tap "Continue with Google" below.');
         }
         throw new Error(error.message);
       }
@@ -4250,17 +4266,36 @@ async function doSignup(){
       });
       if(error)throw new Error(error.message);
 
+      let session=data.session,user=data.user;
+      // Same rule as the sign-in gate: no session means "Confirm email" is on, the
+      // profile insert would be blocked by RLS, and nothing would sync to the cloud.
+      // Never fake a signed-in state — get a real session or say so.
+      if(!session){
+        try{
+          const {data:si}=await sb.auth.signInWithPassword({email:em,password:pw});
+          if(si&&si.session){session=si.session;user=si.user||user;}
+        }catch(e){}
+      }
+      if(!session){
+        setBtnLoading('signup-btn',false);
+        showErr('su-err','Account created — please check your email to confirm it, then sign in. Or use "Continue with Google" for instant access.');
+        return;
+      }
+
+      // NOTE: `profiles` has no `phone` column — including one made the whole upsert
+      // fail, which left accounts with no profile row (so plan/credits never synced).
       const {error:profErr}=await sb.from('profiles').upsert({
-        id:data.user.id,email:em,first_name:fn,last_name:ln,
-        gender:gn,dob:db,phone:ph,plan:'free',joined_at:new Date().toISOString()
+        id:user.id,email:em,first_name:fn,last_name:ln,
+        gender:gn,dob:db,plan:'free',joined_at:new Date().toISOString()
       });
       if(profErr)console.warn('Profile creation warning:',profErr.message);
 
-      toast('Account created! Check your email to verify.','ok');
-      const localUser={id:data.user.id,fn,ln,em,ph,gn,dob:db,pw:hp(pw),plan:'free',joinedAt:new Date().toISOString()};
+      const localUser={id:user.id,fn,ln,em,ph,gn,dob:db,pw:hp(pw),plan:'free',joinedAt:new Date().toISOString()};
       DB.setU(em,localUser);
-      CU=localUser;DB.setSess({em,tok:data.session?.access_token||'sb-pending',at:Date.now(),rem:true});
+      CU=localUser;DB.setSess({em,tok:session.access_token,at:Date.now(),rem:true});
       setBtnLoading('signup-btn',false);
+      toast('Welcome to AstroHand, '+fn+'! ✨','ok');
+      gaEvent('sign_up',{method:'email'}); // this path never reported sign-ups to GA4
       enterDash();
       return;
     }catch(err){
@@ -4835,7 +4870,16 @@ async function procPay(plan,amount){
               // One-time ₹99 report — a credit was granted server-side; do NOT touch the plan.
               gaEvent('purchase',{transaction_id:response.razorpay_payment_id,value:99,currency:'INR',items:[{item_name:'Kundli report (one-time)'}]});
               document.getElementById('pay-ov').classList.remove('open');
-              try{await refreshPlanFromCloud();}catch(e){CU.report_credits=reportCredits()+1;}
+              // A paid credit MUST unlock the reading even if the cloud read-back
+              // fails. refreshPlanFromCloud() returns silently when there is no
+              // verified session, so a bare try/catch never fired and the reading
+              // stayed blurred after a real payment. Compare, then grant locally.
+              const creditsBefore=reportCredits();
+              try{await refreshPlanFromCloud();}catch(e){}
+              if(reportCredits()<=creditsBefore){
+                CU.report_credits=creditsBefore+1;
+                try{DB.setU(CU.em,CU);}catch(e){}
+              }
               try{syncPlanUI();}catch(e){}
               toast('✅ Report unlocked! Your full reading is ready.','ok');
               try{if(document.getElementById('mKundli')&&document.getElementById('mKundli').classList.contains('open'))genKundli();}catch(e){}
