@@ -509,6 +509,51 @@ footer{background:var(--ink);border-top:1px solid var(--bdr);padding:52px 36px 2
 .lock-btn:hover{box-shadow:0 0 24px var(--glow);transform:translateY(-1px);}
 .lock-note{font-size:.66rem;color:var(--sub);margin-top:2px;}
 
+/* ── Sign-in gate: pops OVER a tool modal, so the user never loses what they typed ── */
+.gate-ov{position:fixed;inset:0;background:rgba(4,3,15,.9);backdrop-filter:blur(18px);z-index:3200;
+  display:none;align-items:center;justify-content:center;padding:16px;overflow-y:auto;}
+.gate-ov.open{display:flex;}
+.gate-card{background:var(--grad-glass);border:var(--glass-border);border-radius:var(--r3);
+  padding:30px 26px;max-width:392px;width:100%;backdrop-filter:blur(22px);box-shadow:var(--shadow-deep);
+  position:relative;margin:auto;}
+.gate-x{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--muted);
+  font-size:1.35rem;cursor:pointer;line-height:1;z-index:10;transition:color .2s;}
+.gate-x:hover{color:var(--g2c);}
+.gate-ico{font-size:2rem;text-align:center;margin-bottom:6px;}
+.gate-t{font-family:'Cinzel',serif;font-size:1.24rem;color:var(--g3);text-align:center;margin-bottom:6px;}
+.gate-sub{font-size:.78rem;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:18px;}
+.gate-trust{display:flex;flex-wrap:wrap;gap:5px 13px;justify-content:center;font-size:.63rem;
+  color:var(--muted);line-height:1.5;margin-top:13px;}
+.gate-sw{text-align:center;font-size:.74rem;color:var(--muted);margin-top:14px;}
+.gate-sw a{color:var(--gold);cursor:pointer;text-decoration:none;font-weight:600;}
+
+/* ── 12-second free preview, then the reading locks (free users only) ── */
+.tz-pill{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:13px;
+  padding:8px 14px;border-radius:100px;font-size:.72rem;font-weight:600;letter-spacing:.02em;
+  background:rgba(var(--gold-rgb),.09);border:1px solid rgba(var(--gold-rgb),.26);color:var(--g2c);}
+.tz-pill.tz-out{background:rgba(220,38,38,.09);border-color:rgba(220,38,38,.26);color:#f87171;}
+.tz-bar{flex:1;max-width:132px;height:3px;border-radius:100px;background:rgba(var(--gold-rgb),.18);overflow:hidden;}
+.tz-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--g2c));
+  border-radius:100px;transition:width 1s linear;}
+.tz-wrap{position:relative;}
+/* Blur every direct child EXCEPT our own pill + gate card — no DOM restructuring needed */
+.tz-locked{max-height:352px;overflow:hidden;}
+.tz-locked > *:not(.tz-gate):not(.tz-pill){filter:blur(7px);pointer-events:none;user-select:none;}
+.tz-gate{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;gap:9px;padding:22px 18px;z-index:6;
+  background:linear-gradient(180deg,rgba(var(--ink-rgb),.42) 0%,rgba(var(--ink-rgb),.88) 62%);}
+.tz-gate .lock-btn{margin-top:2px;}
+.tz-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:2px;}
+.tz-ghost{padding:10px 20px;background:transparent;border:1px solid rgba(255,255,255,.16);
+  border-radius:var(--r2);color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .25s;}
+.tz-ghost:hover{border-color:rgba(var(--gold-rgb),.45);color:var(--g2c);}
+@media(max-width:680px){
+  .gate-card{padding:26px 19px;}
+  .tz-locked{max-height:300px;}
+  .tz-gate{padding:16px 13px;gap:7px;}
+}
+
 /* ── Inline upsell button (non-blur, e.g. for instant→personalized upgrade) ── */
 .upsell-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(var(--gold-rgb),.06);border:1px solid rgba(var(--gold-rgb),.18);border-radius:var(--r2);padding:13px 16px;margin-top:14px;flex-wrap:wrap;}
 .upsell-txt{font-size:.78rem;color:var(--muted);flex:1;min-width:200px;}
@@ -1799,6 +1844,41 @@ This single script enables ALL ad units on the page, including every
   </div>
 </div>
 
+<!-- ═══ SIGN-IN GATE ═══
+     Pops OVER whatever tool modal is open (z-index 3200 > .ov 2000), so the birth
+     details the user already typed stay right where they are. On success we close
+     this card and re-run the exact action they clicked. -->
+<div class="gate-ov" id="mGate" onclick="if(event.target===this)closeGate()">
+  <div class="gate-card">
+    <button class="gate-x" onclick="closeGate()">✕</button>
+    <div class="gate-ico">🤚</div>
+    <div class="gate-t" id="gate-t">Sign in to see your reading</div>
+    <div class="gate-sub" id="gate-sub">Your chart is ready. Create a free account to open it — takes 10 seconds, and your readings are saved for next time.</div>
+
+    <div class="fg" id="gate-fn-wrap" style="display:none;">
+      <label class="fl">First Name *</label>
+      <input class="fi" type="text" id="gate-fn" placeholder="Your first name" autocomplete="given-name">
+    </div>
+    <div class="fg"><label class="fl">Email Address *</label>
+      <input class="fi" type="email" id="gate-em" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="fg"><label class="fl">Password *</label>
+      <div class="pwr"><input class="fi" type="password" id="gate-pw" placeholder="At least 8 characters" autocomplete="current-password">
+      <button class="eye-btn" type="button" onclick="toggleEye('gate-pw',this)">👁</button></div>
+    </div>
+
+    <div class="gen-err" id="gate-err"></div>
+    <button class="asbtn" id="gate-btn" onclick="gateSubmit()">Sign In &amp; Show My Reading ✦</button>
+    <div class="adiv">or continue with</div>
+    <div class="sbts"><button class="sbt" onclick="gateGoogle()">🇬 Continue with Google</button></div>
+
+    <p class="gate-sw" id="gate-sw">New to AstroHand? <a onclick="gateMode('up')">Create a free account →</a></p>
+    <div class="gate-trust">
+      <span>🔒 We never share your details</span><span>✦ Free account, no card needed</span>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ TOOL MODALS ═══ -->
 <!-- KUNDLI -->
 <div class="ov" id="mKundli" onclick="cov(event,'mKundli')">
@@ -2744,6 +2824,284 @@ function needFields(pairs){
     return false;
   }
   return true;
+}
+
+/* ══════════════════ SIGN-IN GATE ══════════════════
+   Nothing gets generated anonymously. Every tool's handler calls needLogin(itself)
+   AFTER needFields() has passed — so the user has already done the work of entering
+   their details, and the ask lands as "your chart is ready, just sign in" rather than
+   a wall. The gate is a popup layered OVER the tool modal (z-index 3200 > .ov 2000),
+   so nothing they typed is lost, and on success we re-run the exact same handler. */
+let _gateResume=null;   // the handler to re-run once they're signed in
+let _gateMode='in';     // 'in' = sign in | 'up' = create account
+
+function needLogin(resume){
+  if(CU)return true;
+  _gateResume=(typeof resume==='function')?resume:null;
+  openGate();
+  return false;
+}
+function openGate(){
+  const el=document.getElementById('mGate');
+  if(!el)return;
+  clearErr('gate-err');
+  // Returning visitors are far more likely to already have an account, so default to
+  // Sign In; brand-new visitors get the "Create a free account" link right below it.
+  gateMode(DB.getSess()||localStorage.getItem('ah_seen_signup')?'in':'up');
+  el.classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>{const f=document.getElementById(_gateMode==='up'?'gate-fn':'gate-em');if(f)try{f.focus();}catch(e){}},120);
+}
+function closeGate(){
+  const el=document.getElementById('mGate');
+  if(el)el.classList.remove('open');
+  _gateResume=null;
+  // A tool modal is still open underneath — keep the page itself locked from scrolling.
+  const anyOpen=document.querySelector('.ov.open');
+  if(!anyOpen)document.body.style.overflow='';
+}
+function gateMode(m){
+  _gateMode=(m==='up')?'up':'in';
+  const up=_gateMode==='up';
+  const fnWrap=document.getElementById('gate-fn-wrap'),t=document.getElementById('gate-t'),
+        sub=document.getElementById('gate-sub'),btn=document.getElementById('gate-btn'),
+        sw=document.getElementById('gate-sw'),pw=document.getElementById('gate-pw');
+  if(fnWrap)fnWrap.style.display=up?'block':'none';
+  if(t)t.textContent=up?'Create your free account':'Sign in to see your reading';
+  if(sub)sub.textContent=up
+    ?'Your chart is ready. A free account opens it and saves every reading you generate — no card needed.'
+    :'Your chart is ready. Sign in to open it — your past readings are waiting too.';
+  if(btn)btn.textContent=up?'Create Account & Show My Reading ✦':'Sign In & Show My Reading ✦';
+  if(pw){pw.setAttribute('autocomplete',up?'new-password':'current-password');
+         pw.setAttribute('placeholder',up?'At least 8 characters':'Your password');}
+  if(sw)sw.innerHTML=up
+    ?'Already have an account? <a onclick="gateMode(\'in\')">Sign in instead →</a>'
+    :'New to AstroHand? <a onclick="gateMode(\'up\')">Create a free account →</a>';
+  clearErr('gate-err');
+}
+/* Runs the pending tool handler once the user is in. Small delay so the gate has
+   visually closed first and the result doesn't render behind a fading overlay. */
+function gateResumeNow(){
+  const f=_gateResume;_gateResume=null;
+  closeGate();
+  updNav();
+  if(f)setTimeout(()=>{try{f();}catch(e){console.warn('Resume failed:',e&&e.message);}},220);
+}
+async function gateSubmit(){
+  const up=_gateMode==='up';
+  const fn=(v('gate-fn')||'').trim(),em=(v('gate-em')||'').toLowerCase().trim(),pw=v('gate-pw');
+  clearErr('gate-err');
+  if(up&&!fn){showErr('gate-err','Please enter your first name.');return;}
+  if(!isEmail(em)){showErr('gate-err','Please enter a valid email address.');return;}
+  if(!pw){showErr('gate-err','Please enter your password.');return;}
+  if(up&&pw.length<8){showErr('gate-err','Password must be at least 8 characters.');return;}
+
+  const sb=getSB();
+  if(!sb){showErr('gate-err','Sign-in is unavailable right now. Please refresh and try again.');return;}
+  setBtnLoading('gate-btn',true,up?'Creating account…':'Signing in…');
+  try{
+    let user=null,session=null,profile=null;
+    if(up){
+      const {data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{first_name:fn,last_name:''}}});
+      if(error){
+        const low=(error.message||'').toLowerCase();
+        if(low.includes('already registered')||low.includes('already been registered')||low.includes('user already')){
+          throw new Error('This email already has an account. Tap "Sign in instead" above.');
+        }
+        throw new Error(error.message);
+      }
+      user=data.user;session=data.session;
+      try{
+        const {data:created}=await sb.from('profiles').upsert({
+          id:user.id,email:em,first_name:fn,last_name:'',
+          plan:'free',joined_at:new Date().toISOString()
+        }).select().maybeSingle();
+        profile=created;
+      }catch(e){console.warn('Gate profile create:',e&&e.message);}
+      try{localStorage.setItem('ah_seen_signup','1');}catch(e){}
+      gaEvent('sign_up',{method:'gate'});
+    }else{
+      const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
+      if(error){
+        const low=(error.message||'').toLowerCase();
+        if(error.status===429||low.includes('rate limit')||low.includes('too many')){
+          throw new Error('Too many attempts just now. Please wait about 30 seconds and try again.');
+        }
+        if(error.message==='Invalid login credentials'){
+          throw new Error('Incorrect email or password. New here? Tap "Create a free account".');
+        }
+        throw new Error(error.message);
+      }
+      user=data.user;session=data.session;
+      try{
+        const {data:pData}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+        profile=pData;
+      }catch(e){console.warn('Gate profile fetch:',e&&e.message);}
+      if(!profile){
+        // Self-heal a missing profile row, exactly like doLogin() does.
+        try{
+          const {data:created}=await sb.from('profiles').upsert({
+            id:user.id,email:em,first_name:em.split('@')[0],last_name:'',
+            plan:'free',joined_at:user.created_at||new Date().toISOString()
+          }).select().maybeSingle();
+          profile=created;
+        }catch(e){console.warn('Gate profile self-heal:',e&&e.message);}
+      }
+    }
+
+    CU={
+      id:user.id,em:user.email||em,
+      fn:(profile&&profile.first_name)||fn||em.split('@')[0],
+      ln:(profile&&profile.last_name)||'',
+      plan:(profile&&profile.plan)||'free',
+      report_credits:(profile&&profile.report_credits)||0,
+      joinedAt:(profile&&profile.joined_at)||user.created_at,
+      gen:(profile&&profile.gender)||'',dob:(profile&&profile.dob)||''
+    };
+    DB.setU(CU.em,CU);
+    DB.setSess({em:CU.em,tok:(session&&session.access_token)||'sb',at:Date.now(),rem:true});
+    setBtnLoading('gate-btn',false);
+    toast((up?'Welcome to AstroHand, ':'Welcome back, ')+CU.fn+'! ✨','ok');
+    if(typeof syncPlanUI==='function')try{syncPlanUI();}catch(e){}
+    gateResumeNow();
+  }catch(err){
+    setBtnLoading('gate-btn',false);
+    showErr('gate-err',(err&&err.message)||'Could not sign you in. Please try again.');
+  }
+}
+/* Google OAuth leaves the page entirely, so the typed birth details can't survive it.
+   Remember which tool they were in and reopen it on the way back (handleOAuthSignIn). */
+function gateGoogle(){
+  try{
+    const open=document.querySelector('.ov.open');
+    sessionStorage.setItem('ah_gate_tool',open?open.id:'');
+  }catch(e){}
+  socialLogin('Google');
+}
+function resumeToolAfterOAuth(){
+  let id='';
+  try{id=sessionStorage.getItem('ah_gate_tool')||'';sessionStorage.removeItem('ah_gate_tool');}catch(e){}
+  if(!id)return;
+  const el=document.getElementById(id);
+  if(!el)return;
+  router('home');
+  setTimeout(()=>{
+    openTool(id);
+    toast('Signed in ✨ Please enter your details once more to see your reading.','ok');
+  },420);
+}
+
+/* ══════════════ 12-SECOND FREE PREVIEW ══════════════
+   A free user's finished reading stays open for TEASER_SECS, then blurs behind a
+   plans card. Paid subscribers and ₹99 report-credit holders are NEVER timed out —
+   canFullReport() short-circuits the whole thing for them. */
+const TEASER_SECS=12;
+const _tzState={};   // resId -> {int, to}
+
+function startTeaser(resId,title,sub){
+  // Always tidy up first — a user who was locked and has since PAID must get a clean,
+  // fully visible result (including the translate bar we hid on the previous lock).
+  clearTeaser(resId);
+  if(canFullReport())return;          // they paid — the reading is theirs, no timer
+  const el=document.getElementById(resId);
+  if(!el)return;
+  el.classList.add('tz-wrap');
+  const pill=document.createElement('div');
+  pill.className='tz-pill';pill.setAttribute('data-tz','1');
+  pill.innerHTML='<span>⏳ Free preview —</span><b data-tzn="1">'+TEASER_SECS+'s</b>'
+    +'<span class="tz-bar"><i style="width:100%"></i></span>';
+  el.insertBefore(pill,el.firstChild);
+  let left=TEASER_SECS;
+  const st={};
+  st.int=setInterval(()=>{
+    left--;
+    const n=pill.querySelector('[data-tzn="1"]'),bar=pill.querySelector('.tz-bar i');
+    if(n)n.textContent=Math.max(0,left)+'s';
+    if(bar)bar.style.width=Math.max(0,(left/TEASER_SECS)*100)+'%';
+    if(left<=0){clearInterval(st.int);st.int=null;}
+  },1000);
+  st.to=setTimeout(()=>lockTeaser(resId,title,sub),TEASER_SECS*1000);
+  _tzState[resId]=st;
+}
+function lockTeaser(resId,title,sub){
+  const el=document.getElementById(resId);
+  if(!el)return;
+  const st=_tzState[resId];
+  if(st){if(st.int)clearInterval(st.int);st.int=null;st.to=null;}
+  const pill=el.querySelector('[data-tz="1"]');
+  if(pill){pill.classList.add('tz-out');pill.innerHTML='<span>🔒 Your free preview has ended</span>';}
+  // Hide the sibling translate bar — otherwise "Read in: Hindi" would rewrite the
+  // container's innerHTML and hand back the full reading in plain text.
+  const trbar=document.getElementById(resId+'-trbar');
+  if(trbar)trbar.style.display='none';
+  const gate=document.createElement('div');
+  gate.className='tz-gate';gate.setAttribute('data-tz-gate','1');
+  // The ₹99 product is specifically the Kundli report — only offer it on the Kundli.
+  const reportBtn=(resId==='k-res')
+    ? '<button class="lock-btn" onclick="buyReport()">📄 Get This Report — ₹99 <span style="opacity:.7;font-weight:500;font-size:.82em;">one-time</span></button><div class="lock-note" style="margin:7px 0 4px;">— or —</div>'
+    : '';
+  gate.innerHTML='<div class="lock-icon">🔒</div>'
+    +'<div class="lock-title">'+esc(title||'Your reading is locked')+'</div>'
+    +'<div class="lock-sub">'+esc(sub||'That was your free 12-second preview. Unlock a plan to keep your readings open as long as you like, download them, and save them to your account.')+'</div>'
+    +reportBtn
+    +'<button class="lock-btn"'+(reportBtn?' style="background:transparent;border:1px solid rgba(var(--gold-rgb),.45);color:var(--g2c);box-shadow:none;"':'')+' onclick="upgradePrompt()">✦ Unlock all tools · from ₹499/mo</button>'
+    +'<div class="tz-row"><button class="tz-ghost" onclick="tzHome(\''+resId+'\')">🏠 Back to Home</button></div>'
+    +'<div class="gate-trust"><span>🛡️ 7-day money-back</span><span>🔒 Secure payment · Razorpay</span></div>';
+  el.appendChild(gate);
+  el.classList.add('tz-locked');
+  try{gaEvent('teaser_locked',{tool:resId});}catch(e){}
+}
+/* Tears down pill, gate card and timers — leaves the container as it was found. */
+function clearTeaser(resId){
+  const st=_tzState[resId];
+  if(st){if(st.int)clearInterval(st.int);if(st.to)clearTimeout(st.to);delete _tzState[resId];}
+  const el=document.getElementById(resId);
+  if(!el)return;
+  el.classList.remove('tz-locked');
+  const junk=el.querySelectorAll('[data-tz="1"],[data-tz-gate="1"]');
+  for(let i=0;i<junk.length;i++)junk[i].remove();
+  // Un-hide the sibling translate bar that lockTeaser() hid (see note there).
+  const trbar=document.getElementById(resId+'-trbar');
+  if(trbar)trbar.style.display='';
+}
+/* "Back to Home" from a locked reading: wipe the result AND the details they typed, so
+   a fresh reading means fresh input (Gaurav's rule) rather than a re-blur loophole. */
+function tzHome(resId){
+  const el=document.getElementById(resId);
+  const modal=el?el.closest('.ov'):null;
+  clearTeaser(resId);
+  if(el)el.style.display='none';
+  if(modal){
+    resetToolInputs(modal);
+    closeOv(modal.id);
+  }
+  router('home');
+  toast('Enter your details again for a fresh reading — or unlock unlimited access. ✦','');
+}
+function resetToolInputs(modal){
+  const fields=modal.querySelectorAll('.fi');
+  for(let i=0;i<fields.length;i++){
+    const f=fields[i];
+    if(f.type==='checkbox'||f.type==='radio')f.checked=false;
+    else if(f.tagName==='SELECT')f.selectedIndex=0;
+    else f.value='';
+    f.classList.remove('e');
+  }
+}
+/* Closing a tool modal must not become a way around the lock: any container that was
+   mid-preview or already locked gets hidden, so reopening starts from a blank form.
+   Containers with no teaser (i.e. paid users) are left completely untouched. */
+function resetTeasersIn(modalId){
+  const el=document.getElementById(modalId);
+  if(!el)return;
+  const boxes=el.querySelectorAll('[id$="-res"]');
+  for(let i=0;i<boxes.length;i++){
+    const r=boxes[i];
+    if(_tzState[r.id]||r.querySelector('[data-tz-gate="1"]')){
+      clearTeaser(r.id);
+      r.style.display='none';
+    }
+  }
 }
 function isEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
 function cap(s){return s?(s[0].toUpperCase()+s.slice(1)):'';}
@@ -3880,6 +4238,9 @@ function dismissAdInterstitial(){
 
 function closeOv(id){
   const el=document.getElementById(id);
+  // Closing must not be a way around the 12-second lock — drop any previewed/locked
+  // result so reopening the tool starts from a blank form (paid users unaffected).
+  if(typeof resetTeasersIn==='function')try{resetTeasersIn(id);}catch(e){}
   if(el){el.classList.remove('open');document.body.style.overflow='';}
   if(AD_TOOL_IDS.includes(id)&&!isGoldOrVip()){
     showAdClosePopup();
@@ -4280,8 +4641,17 @@ async function handleOAuthSignIn(session){
   };
   DB.setU(CU.em,CU);
   DB.setSess({em:CU.em,tok:(session.access_token||'sb-oauth'),at:Date.now(),rem:true});
-  enterDash();
-  toast('✨ Welcome, '+CU.fn+'!','ok');
+  // If Google login was started from a tool's sign-in gate, go back to that tool
+  // instead of the dashboard — otherwise the user loses their place entirely.
+  let pendingTool='';
+  try{pendingTool=sessionStorage.getItem('ah_gate_tool')||'';}catch(e){}
+  if(pendingTool){
+    updNav();
+    resumeToolAfterOAuth();
+  }else{
+    enterDash();
+    toast('✨ Welcome, '+CU.fn+'!','ok');
+  }
   // Tidy the OAuth tokens out of the address bar (both hash-token and ?code= flows).
   try{
     if(window.history&&window.history.replaceState&&(location.hash.indexOf('access_token')>-1||location.search.indexOf('code=')>-1)){
@@ -6733,6 +7103,7 @@ function _verdictBox(color,icon,title,body){
 function _satSignAt(y,m){return Math.floor(computeRealPositions(y,m,15,12,0,5.5).positions.Saturn/30);}
 function genSade(){
   if(!needFields([['sd-n','Full Name'],['sd-d','Date of Birth']]))return;
+  if(!needLogin(genSade))return;
   const b=parseBirthAH('sd-d','sd-t'); if(!b){toast('Please enter a valid date of birth.','');return;}
   const natal=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5);
   const moonSign=Math.floor(natal.positions.Moon/30);
@@ -6772,11 +7143,13 @@ function genSade(){
     _verdictBox(color,'🪐',status,phase+' Sade Sati is a period of discipline and karmic settlement — challenging but ultimately maturing. Traditional remedies: Hanuman Chalisa on Saturdays, sesame-oil lamp to Shani Dev, service to elders and workers.')+
     '<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:14px 0 4px;">Your lifetime Sade Sati windows</div>'+rows+
     '<p style="font-size:.64rem;color:var(--muted);margin-top:10px;">Computed from real Saturn transits (Lahiri sidereal, month-level precision). Exact entry/exit dates can shift by a few weeks near sign boundaries.</p>';
+  startTeaser('sd-res','Your Sade Sati report is locked','Unlock a plan to keep your full Sade Sati analysis open — every phase, every lifetime window, and the remedies for each.');
 }
 
 /* ── KAAL SARP DOSHA (all 7 classical planets vs real Rahu-Ketu axis) ── */
 function genKaal(){
   if(!needFields([['kl-n','Full Name'],['kl-d','Date of Birth']]))return;
+  if(!needLogin(genKaal))return;
   const b=parseBirthAH('kl-d','kl-t'); if(!b){toast('Please enter a valid date of birth.','');return;}
   const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
   const seven=['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'];
@@ -6800,11 +7173,13 @@ function genKaal(){
     _resCard('☋ Ketu',RASHIS[Math.floor(P.Ketu/30)],'South node')+'</div>'+
     _verdictBox(color,'🐍',verdict,body)+
     '<p style="font-size:.64rem;color:var(--muted);">Checked with real computed positions of all 7 classical planets against the lunar-node axis. The traditional 12 sub-types need a precise Lagna degree, which requires exact birth time'+(b.timeGiven?'':' (you left time blank — noon was assumed)')+'.</p>';
+  startTeaser('kl-res','Your Kaal Sarp report is locked','Unlock a plan to keep your full Kaal Sarp analysis open — the Rahu–Ketu axis, which planets fall inside it, and the traditional shanti remedies.');
 }
 
 /* ── MANGAL DOSHA (real Mars vs Moon-lagna and approx Lagna) ── */
 function genMangal(){
   if(!needFields([['mg-n','Full Name'],['mg-d','Date of Birth']]))return;
+  if(!needLogin(genMangal))return;
   const b=parseBirthAH('mg-d','mg-t'); if(!b){toast('Please enter a valid date of birth.','');return;}
   const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
   const moonSign=Math.floor(P.Moon/30);
@@ -6831,6 +7206,7 @@ function genMangal(){
     _resCard('From Moon','House '+hM,'Chandra kundli')+'</div>'+
     _verdictBox(color,'♂️',verdict,body)+
     '<p style="font-size:.64rem;color:var(--muted);">Mars & Moon positions are real computed values. The Lagna uses an equal-house approximation — for marriage decisions, confirm with a full Kundli reading'+(b.timeGiven?'':' (birth time was left blank — noon assumed, which strongly affects the Lagna)')+'.</p>';
+  startTeaser('mg-res','Your Mangal Dosha report is locked','Unlock a plan to keep your full Manglik analysis open — Mars placement from both Lagna and Moon, severity, and the traditional remedies.');
 }
 
 /* ── CHOGHADIYA (traditional weekday sequences over real sun times) ── */
@@ -6848,6 +7224,7 @@ function _chgFmt(min){min=((min%1440)+1440)%1440;const h=Math.floor(min/60),m=Ma
 function genChogh(){
   const city=v('chg-city')||'New Delhi, Delhi';
   const dstr=v('chg-d'); if(!dstr){toast('Pick a date.','');return;}
+  if(!needLogin(genChogh))return;
   const coords=CITY_COORDS[city]||CITY_COORDS['New Delhi, Delhi']||{lat:28.6139,lng:77.2090};
   const date=new Date(dstr+'T12:00:00');
   const st=computeSunTimes(coords.lat,coords.lng,date,5.5);
@@ -6875,11 +7252,13 @@ function genChogh(){
     '<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:14px 0 4px;">☀️ Day Choghadiya</div>'+mkRows(CH_DAY_FIRST[wd],st.sunriseMin,dayLen,8)+
     '<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:14px 0 4px;">🌙 Night Choghadiya</div>'+mkRows(CH_NIGHT_FIRST[wd],st.sunsetMin,nightLen,8)+
     '<p style="font-size:.64rem;color:var(--muted);margin-top:10px;">Sun times are computed for '+esc(city)+' (NOAA algorithm). Sequences follow the traditional weekday Choghadiya tables. Amrit, Shubh, Labh & Char are favourable; Udveg, Kaal & Rog are avoided for new beginnings.</p>';
+  startTeaser('chg-res','Your Choghadiya table is locked','Unlock a plan to keep the full day and night Choghadiya open whenever you need it — for any date, any city.');
 }
 
 /* ── MOON SIGN & NAKSHATRA CALCULATOR ── */
 function genMoonSign(){
   const b=parseBirthAH('msn-d','msn-t'); if(!b){toast('Please enter your date of birth.','');return;}
+  if(!needLogin(genMoonSign))return;
   const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
   const nakIdx=Math.floor(P.Moon/(360/27)),pada=_padaOf(P.Moon);
   const nak=NAK[nakIdx];
@@ -6893,11 +7272,13 @@ function genMoonSign(){
     _resCard('🔱 Nakshatra Lord',NAKSHATRA_LORD[nak]||'—','Vimshottari dasha lord')+'</div>'+
     _verdictBox('gold','✦','Name syllables for '+nak,'Traditional auspicious starting syllables: <b>'+esc(NAKSHATRA_NAMESYLLABLES[nak]||'—')+'</b>. Your Moon sign (not your Sun sign) is what Vedic astrology uses for daily predictions and matching.')+
     (b.timeGiven?'':'<p style="font-size:.64rem;color:var(--muted);">Birth time was blank — noon assumed. The Moon moves ~13° a day, so on Moon-sign boundary days the exact time matters.</p>');
+  startTeaser('msn-res','Your Moon Sign details are locked','Unlock a plan to keep your Rashi, Nakshatra, pada, dasha lord and name syllables open any time you need them.');
 }
 
 /* ── BABY NAME LETTERS (Naamkaran by real nakshatra pada) ── */
 async function genBaby(){
   const b=parseBirthAH('bn-d','bn-t'); if(!b){toast('Please enter the baby\'s date of birth.','');return;}
+  if(!needLogin(genBaby))return;
   const P=computeRealPositions(b.yr,b.mo,b.dy,b.th,b.tm,5.5).positions;
   const nakIdx=Math.floor(P.Moon/(360/27)),pada=_padaOf(P.Moon);
   const nak=NAK[nakIdx];
@@ -6916,7 +7297,10 @@ async function genBaby(){
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l=>'<button onclick="genBabyNames(\''+l+'\')" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--bdr);background:rgba(var(--gold-rgb),.07);color:var(--g2c);cursor:pointer;font-size:.8rem;font-weight:700;">'+l+'</button>').join('')+
     '</div>'+
     '<div id="bn-ai" style="font-size:.8rem;color:var(--text);line-height:1.7;"></div>';
-  genBabyNames(padaSyl); // auto-suggest with the traditional pada syllable first
+  await genBabyNames(padaSyl); // auto-suggest with the traditional pada syllable first
+  // Start the countdown only once the names have actually arrived — the preview should
+  // never be spent watching a loader.
+  startTeaser('bn-res','Your baby-name list is locked','Unlock a plan to keep every nakshatra syllable and the full A–Z name suggestions with meanings open as long as you need.');
 }
 // Names + meanings for ANY chosen starting letter/syllable (A–Z or pada syllable).
 async function genBabyNames(letter){
@@ -6936,6 +7320,7 @@ let _rfPeriod='Weekly';
 function setRfPeriod(p,btn){_rfPeriod=p;document.querySelectorAll('.rf-tab').forEach(b=>{b.style.background='rgba(255,255,255,.05)';b.style.color='var(--muted)';});if(btn){btn.style.background='rgba(var(--gold-rgb),.16)';btn.style.color='var(--g3)';}}
 async function genRashifal(){
   const sign=v('rf-sign'); if(!sign){toast('Choose your zodiac sign.','');return;}
+  if(!needLogin(genRashifal))return;
   const res=document.getElementById('rf-res');
   res.style.display='block';
   res.innerHTML='<p class="rtxt">✦ Reading the '+_rfPeriod.toLowerCase()+' skies for '+esc(sign)+'…</p>';
@@ -6944,6 +7329,7 @@ async function genRashifal(){
     const txt=await callAI('You are AstroHand\'s senior Vedic astrologer. Today is '+today+'. Write the '+_rfPeriod+' horoscope (rashifal) for the sign '+sign+'. Structure: 2-3 sentences overall theme, then one short line each for Love, Career, Health and Finance (label them), then "Lucky tip:" one line. Warm, specific, grounded tone. End with a brief reminder that astrology guides rather than guarantees. Total under 220 words.',[{role:'user',content:_rfPeriod+' horoscope for '+sign}],700);
     res.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:.85rem;color:var(--g2c);margin-bottom:8px;">'+esc(sign)+' — '+_rfPeriod+' Rashifal</div><div style="font-size:.82rem;color:var(--text);line-height:1.7;white-space:pre-line;">'+esc(txt||'The stars are quiet — please try again.')+'</div>'+shareBtnHTML("shareRashifal()");addTranslate('rf-res');
     if(CU)addRd({type:'rashifal',icon:'📆',title:_rfPeriod+' Rashifal — '+sign,sub:'Horoscope',preview:(txt||'').substring(0,160)+'…',text:txt||''});
+    startTeaser('rf-res','Your Rashifal is locked','Unlock a plan to read your weekly, monthly and yearly Rashifal in full — as often as you like, in any of 12 languages.');
   }catch(e){res.innerHTML='<p style="color:var(--muted);">The oracle meditates momentarily — please try again. ✦</p>';}
 }
 
@@ -6951,6 +7337,7 @@ async function genRashifal(){
 function calcLove(){
   const a=(v('lv-a')||'').trim(),b2=(v('lv-b')||'').trim();
   if(!a||!b2){toast('Enter both names.','');return;}
+  if(!needLogin(calcLove))return;
   const norm=s=>s.toLowerCase().replace(/[^a-zऀ-ॿ]/g,'');
   const pair=[norm(a),norm(b2)].sort().join('❤');
   let h=0;for(let i=0;i<pair.length;i++){h=(h*31+pair.charCodeAt(i))>>>0;}
@@ -6962,6 +7349,7 @@ function calcLove(){
   const res=document.getElementById('lv-res');
   res.style.display='block';
   res.innerHTML='<div style="text-align:center;padding:8px 0;"><div style="font-family:\'Cinzel Decorative\',serif;font-size:3rem;color:var(--gold);line-height:1;">'+score+'%</div><div style="font-size:1.4rem;margin:6px 0;">'+tier[0]+'</div><div style="font-size:.84rem;color:var(--text);max-width:340px;margin:0 auto;line-height:1.6;">'+esc(a)+' ✦ '+esc(b2)+'<br>'+tier[1]+'</div><p style="font-size:.62rem;color:var(--muted);margin-top:12px;">✦ Just for fun — real compatibility is measured with the 36-guna Kundli Match tool. ✦</p></div>'+shareBtnHTML("shareLove()");
+  startTeaser('lv-res','Your love score is locked','Unlock a plan to keep your results open — and to run the real 36-guna Kundli Match for a proper compatibility reading.');
 }
 
 function openForecast(){
@@ -6982,6 +7370,7 @@ function openForecast(){
 }
 
 async function genForecast(){
+  if(!needLogin(genForecast))return;
   if(!isVip()){upgradePromptVip();return;}
   const name=v('fc-n'),d=v('fc-d'),t=v('fc-t'),city=v('fc-p'),year=v('fc-y')||new Date().getFullYear(),lang=v('fc-l')||'English';
   if(!name||!d){toast('⚠️ Please enter your name and date of birth.','');return;}
@@ -7043,6 +7432,7 @@ function shareForecastWA(){
 async function genNewborn(){
   const name=v('nb-n'),d=v('nb-d'),t=v('nb-t'),city=v('nb-p'),lang=v('nb-l')||'English';
   if(!needFields([['nb-d','Date of Birth'],['nb-t','Time of Birth'],['nb-p','Birth Place']]))return;
+  if(!needLogin(genNewborn))return;
   const btn=document.getElementById('nb-btn');
   if(btn.dataset.busy==='1')return;
   btn.dataset.busy='1';btn.disabled=true;btn.textContent='⏳ Reading the stars…';
@@ -7152,6 +7542,7 @@ Keep it warm, hopeful, and around 400-450 words. End with a short blessing for t
       nbTxtLock.innerHTML=lockCardHTML('Your Baby\'s Full Kundli Awaits','Unlock the complete personalized reading — birth-star qualities, hand-picked baby name ideas, lucky elements, and loving guidance for parents, plus a luxury PDF keepsake to treasure forever.');
       window._lastNewborn={name:name||'Baby',nak:nakName,rashi:rashiName,txt:nbFallback,dob:d,tob:t,locked:true};
     }
+    startTeaser('nb-res','Your baby\'s Kundli is locked','Unlock a plan to keep the whole birth chart open — nakshatra qualities, name syllables, planetary positions and the full parents\' reading, with a PDF keepsake.');
   }catch(e){
     document.getElementById('nb-ldr').style.display='none';document.getElementById('nb-cnt').style.display='block';
     document.getElementById('nb-txt').textContent='The cosmic nursery is momentarily clouded. Please check the birth details and try again.';
@@ -7251,6 +7642,7 @@ function exportNewbornPDF(){
 async function genKundli(){
   const n=v('kn'),d=v('kd');
   if(!needFields([['kn','Full Name'],['kd','Date of Birth'],['kp','Birth Place']]))return;
+  if(!needLogin(genKundli))return;
   const btn=document.getElementById('k-btn');
   // Guard against double-submission while a generation is already running
   if(btn.dataset.busy==='1')return;
@@ -7406,6 +7798,7 @@ async function genKundli(){
     }
     document.getElementById('k-cnt').style.display='block';
     gaEvent('kundli_generated',{});
+    startTeaser('k-res','Your Kundli is locked','Unlock your full birth chart to keep it open — all three charts, planetary positions, doshas, dashas, remedies and your complete personalised reading, downloadable any time.');
   }catch(err){
     // Any failure: stop the loader, show a clear retryable error, never leave the user stuck
     document.getElementById('k-cnt').style.display='none';
@@ -7758,6 +8151,7 @@ async function doMatch(){
   // score would be meaningless, so both names AND both dates of birth are required.
   if(!gn||!bn){toast('⚠️ Please enter both names.','');return;}
   if(!gd||!bd){toast('⚠️ Please enter date of birth for both people — matchmaking needs birth details.','');return;}
+  if(!needLogin(doMatch))return;
   const s1=gd?new Date(gd).getDate()+new Date(gd).getMonth()*3:15;
   const s2=bd?new Date(bd).getDate()+new Date(bd).getMonth()*3:12;
   const score=Math.min(34,Math.max(16,Math.round((s1+s2+37)%36)||24));
@@ -7783,6 +8177,7 @@ async function doMatch(){
       mLock.style.display='block';
       mLock.innerHTML=lockCardHTML('Full Compatibility Reading Locked','Unlock the complete 200-word analysis covering strengths, areas needing attention, marriage timing, and a specific remedy for '+gn+' & '+bn+'.');
     }
+    startTeaser('m-res','Your match report is locked','Unlock a plan to keep the full 36-guna Ashtakoota breakdown open — every guna score, the verdict, marriage timing and remedies for both charts.');
   },1800);
 }
 
@@ -7791,6 +8186,7 @@ const NM={1:'The Leader — Original, pioneering, independent.',2:'The Diplomat 
 async function calcNum(){
   const n=v('nm-n'),d=v('nm-d');
   if(!needFields([['nm-n','Full Birth Name'],['nm-d','Date of Birth']]))return;
+  if(!needLogin(calcNum))return;
   const lv={a:1,b:2,c:3,d:4,e:5,f:6,g:7,h:8,i:9,j:1,k:2,l:3,m:4,n:5,o:6,p:7,q:8,r:9,s:1,t:2,u:3,v:4,w:5,x:6,y:7,z:8};
   const red=x=>{while(x>9&&x!==11&&x!==22&&x!==33)x=String(x).split('').reduce((a,c)=>a+parseInt(c),0);return x;};
   let lp=d?red(d.replace(/-/g,'').split('').reduce((a,c)=>a+parseInt(c),0)):red(n.toLowerCase().replace(/[^a-z]/g,'').split('').reduce((a,c)=>a+(lv[c]||0),0));
@@ -7802,6 +8198,7 @@ async function calcNum(){
   document.getElementById('nm-res').style.display='block';document.getElementById('nm-read').textContent='Consulting the cosmic number matrix…';
   try{const txt=await callAI('You are a master numerologist trained in Pythagorean and Chaldean systems. Be mystical and uplifting.',[{role:'user',content:`${n?`Name: "${n}".`:''} ${d?`DOB: ${d}.`:''} Life Path: ${lp}, Destiny: ${dest}, Soul Urge: ${soul}. Write a poetic 130-word personalized numerology reading weaving all three numbers together. Speak to soul purpose, life direction, and current cycle insights. Note this is guidance for self-reflection.`}],500);document.getElementById('nm-read').textContent=txt||`Your Life Path ${lp}, Destiny ${dest}, and Soul Urge ${soul} form a sacred trinity of purpose.`;}
   catch{document.getElementById('nm-read').textContent=`Your Life Path ${lp}, Destiny ${dest}, and Soul Urge ${soul} together reveal a unique cosmic signature. ${NM[lp]} The interplay of these three numbers creates a powerful framework for understanding your soul's journey and deepest calling in this lifetime.`;}
+  startTeaser('nm-res','Your numerology reading is locked','Unlock a plan to keep your Life Path, Destiny and Soul Urge numbers — plus the full personalised reading — open whenever you want them.');
 }
 
 /* ══ PALM READING ══ */
@@ -7916,6 +8313,8 @@ async function doPalm(){
     toast('⚠️ Please enter your date of birth as well for an accurate palm reading.','');
     return;
   }
+  // Gate before the vision API call — no anonymous reading, and no wasted API quota.
+  if(!needLogin(doPalm))return;
   // Check the uploaded image actually looks like a palm (skin-tone analysis, browser-only).
   // This stops obvious non-hand photos (animals, objects, scenery) from getting a reading.
   const imgEl=document.getElementById('p-img');
@@ -7950,6 +8349,7 @@ async function doPalm(){
     const txt=await callAI(sys,[{role:'user',content:userPrompt}],900)||'The oracle momentarily meditates. Please try again.';
     document.getElementById('p-ldr').style.display='none';document.getElementById('p-cnt').style.display='block';document.getElementById('p-txt').textContent=txt;addTranslate('p-txt');
     if(CU)addRd({type:'palm',icon:'🤚',title:'Palm Reading',sub:selH.charAt(0).toUpperCase()+selH.slice(1)+' Hand',preview:txt.substring(0,200)+'…',text:txt});
+    startTeaser('p-res','Your palm reading is locked','Unlock a plan to keep your full Samudrika Shastra reading open — every line, mount and marking on your hand, read in detail.');
   }catch{document.getElementById('p-ldr').style.display='none';document.getElementById('p-cnt').style.display='block';document.getElementById('p-txt').textContent='The oracle momentarily meditates. Please try again — your destiny is written and waiting.';}
   btn.disabled=false;btn.textContent='✨ Reveal My Palm Reading';
 }
@@ -8119,6 +8519,7 @@ function runGemEngine(){
   // Date of birth AND birth place are required so the result is genuinely chart-based, not a
   // generic default. (Current Concern stays optional — it only refines the reading.)
   if(!needFields([['gem-d','Date of Birth'],['gem-p','Birth Place']]))return;
+  if(!needLogin(runGemEngine))return;
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
   const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t):curKundliForGuru;
   const lagna=kd?kd.lagnaSign:'Aries',moon=kd?kd.moonSign:'Cancer',nak=kd?kd.nakshatra:'Rohini',rp=kd?kd.rulingPlanet:'Jupiter',seed=kd?(kd.seed||42):42;
@@ -8135,6 +8536,7 @@ function runGemEngine(){
     outEl.innerHTML=html;ldrEl.style.display='none';outEl.style.display='grid';outEl.style.gridTemplateColumns='repeat(auto-fit,minmax(200px,1fr))';outEl.style.gap='12px';addTranslate(outEl.id);
   }
   showGems([GEM_DATA[seed%9],GEM_DATA[(seed+3)%9],GEM_DATA[(seed+6)%9]].map(g=>({name:g.n,planet:g.pl,benefit:'Ideal for '+lagna+' Lagna',finger:g.finger,day:g.day,metal:g.metal,mantra:g.mantra,confScore:g.conf,recType:'wear'})));
+  startTeaser('gem-res','Your gemstone report is locked','Unlock a plan to keep your full gemstone recommendations open — the right stone, finger, metal, day and mantra for your chart.');
   callAI('Reply ONLY with a JSON array. No markdown.',[{role:'user',content:'Lagna:'+lagna+' Moon:'+moon+' Nakshatra:'+nak+' Planet:'+rp+(h?' Concern:'+h:'')+'. Top 3 gemstones JSON:[{"name":"","planet":"","benefit":"","finger":"","day":"","metal":"","mantra":"","confScore":85,"recType":"wear"}]'}],600).then(txt=>{try{const s=txt.indexOf('['),e=txt.lastIndexOf(']');if(s>=0&&e>s){const g=JSON.parse(txt.substring(s,e+1));if(g&&g.length>0){showGems(g);toast('AI gemstone analysis ready!','ok');}}}catch(ex){}}).catch(()=>{});
 }
 
@@ -8144,6 +8546,7 @@ function runRemedies(){
   // Every shown field is meaningful, so require them all — a real personalised result is
   // only produced once the user has given their birth place and stated concern.
   if(!needFields([['rem-d','Date of Birth'],['rem-p','Birth Place'],['rem-c','Current Concern']]))return;
+  if(!needLogin(runRemedies))return;
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
   const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t):curKundliForGuru;
   const lagna=kd?kd.lagnaSign:'Aries',moon=kd?kd.moonSign:'Cancer',nak=kd?kd.nakshatra:'Rohini',rp=kd?kd.rulingPlanet:'Jupiter';
@@ -8175,6 +8578,7 @@ function runRemedies(){
     upsellEl.innerHTML=inlineUpsellHTML('remedies tailored to your exact dosha, Mahadasha, and stated concern instead of general guidance.','unlockPersonalizedRemedies()');
     window._remGateArgs={lagna,moon,nak,rp,dasha,manglik,c,showRems};
   }
+  startTeaser('rem-res','Your remedies are locked','Unlock a plan to keep your full remedy set open — daily practices, weekly rituals, mantras, pujas, gemstone and lifestyle guidance for your chart.');
 }
 function fetchPersonalizedRemedies(lagna,moon,nak,rp,dasha,manglik,c,showRems){
   callAI('Reply ONLY with a JSON array. No markdown.',[{role:'user',content:'Lagna:'+lagna+' Moon:'+moon+' Nakshatra:'+nak+' Planet:'+rp+' Mahadasha:'+dasha+' Manglik:'+(manglik?'Yes':'No')+' Concern:'+(c||'general')+'. 6 remedy categories JSON:[{"icon":"emoji","title":"Name","remedies":["r1","r2","r3","r4"]}]'}],900).then(txt=>{try{const s=txt.indexOf('['),e=txt.lastIndexOf(']');if(s>=0&&e>s){const r=JSON.parse(txt.substring(s,e+1));if(r&&r.length>=4){showRems(r);toast('AI remedies ready!','ok');}}}catch(ex){}}).catch(()=>{});
