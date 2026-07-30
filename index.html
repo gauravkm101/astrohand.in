@@ -12,8 +12,9 @@
 <meta name="apple-mobile-web-app-title" content="AstroHand">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png">
-<!-- Google AdSense -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8378418372848919" crossorigin="anonymous"></script>
+<!-- AdSense: served on /blog articles only (see gen_blog head + each blog/*.html).
+     Homepage + tools are deliberately kept AD-FREE so the conversion funnel
+     (sign-in gate → 12s preview → plans / ₹99 report) stays clean. Decision 2026-07-30. -->
 <!-- Google Analytics 4 — active. GA4_ID holds the Measurement ID; loader stays dormant if it's ever unset/placeholder. -->
 <script>
 window.GA4_ID='G-ML6JBG78CG';
@@ -952,15 +953,6 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<!-- ═══ GOOGLE ADSENSE ═══
-Once your AdSense account is approved, uncomment the line below and replace
-ca-pub-XXXXXXXXXXXXXXXX with your real Publisher ID (find it in your AdSense
-dashboard under Account > Settings > Account information).
-This single script enables ALL ad units on the page, including every
-.ad-slot and .ad-slot-sm placeholder inside the 9 tool modals.
-
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
--->
 </head>
 <body>
 
@@ -1818,31 +1810,9 @@ This single script enables ALL ad units on the page, including every
   </div>
 </footer>
 
-<!-- ═══ AD INTERSTITIAL (shown briefly when any tool opens) ═══ -->
-<div class="ad-interstitial" id="adInterstitial">
-  <div class="ad-int-box">
-    <span class="ad-int-label">Advertisement</span>
-    <button class="ad-int-close" onclick="dismissAdInterstitial()">✕</button>
-    <div class="ad-slot" id="adInterstitialSlot">
-      <!-- AdSense unit goes here once approved. Example:
-      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="auto" data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-      -->
-      Ad space — 300×250 or responsive unit
-    </div>
-    <div class="ad-int-cd" id="adInterstitialCd">Continuing in 5s…</div>
-  </div>
-</div>
-
-<!-- ═══ AD CARD (shown briefly after closing any tool) ═══ -->
-<div class="ad-card-popup" id="adClosePopup">
-  <button class="ad-card-close" onclick="document.getElementById('adClosePopup').classList.remove('show')">✕</button>
-  <span class="ad-int-label">Advertisement</span>
-  <div class="ad-slot-sm" id="adClosePopupSlot">
-    <!-- AdSense unit goes here once approved -->
-    Ad space — 300×100 unit
-  </div>
-</div>
+<!-- Ad interstitial + ad-close card REMOVED 2026-07-30: they showed a 5s fake
+     "Advertisement" screen before every tool (AdSense not approved) which hurt UX
+     and conversion. Ads now live on /blog articles only. -->
 
 <!-- ═══ SIGN-IN GATE ═══
      Pops OVER whatever tool modal is open (z-index 3200 > .ov 2000), so the birth
@@ -4181,59 +4151,11 @@ function openArticle(id){
   router('article');
 }
 
-const AD_TOOL_IDS=['mKundli','mNewborn','mAI','mAILang','mHoro','mSade','mKaal','mMangal','mChogh','mMoonSign','mBabyName','mRashifal','mLove','mMatch','mNum','mPalm','mPanch','mGem','mRem','mTarot','mMuhurat','mPuja','mVaastu'];
-let _adInterstitialTimer=null;
-
-function shouldShowAd(){
-  if(isGoldOrVip())return false; // Gold & VIP are ad-free; Silver and free users see ads
-  return true; // free + Silver: show ad when a tool is opened
-}
-
+// Tools open directly — no ad interstitial. AdSense runs on /blog articles only,
+// so the homepage/tools conversion flow stays clean (decision 2026-07-30).
 function openTool(id){
-  if(!AD_TOOL_IDS.includes(id)){
-    const el=document.getElementById(id);
-    if(el){el.classList.add('open');document.body.style.overflow='hidden';}
-    return;
-  }
-  if(shouldShowAd()){
-    showAdInterstitial(id);
-  }else{
-    const el=document.getElementById(id);
-    if(el){el.classList.add('open');document.body.style.overflow='hidden';}
-  }
-}
-
-function showAdInterstitial(toolId){
-  const intEl=document.getElementById('adInterstitial');
-  const cdEl=document.getElementById('adInterstitialCd');
-  intEl.dataset.pendingTool=toolId;
-  intEl.classList.add('open');
-  let secs=5;
-  cdEl.textContent='Continuing in '+secs+'s…';
-  clearInterval(_adInterstitialTimer);
-  _adInterstitialTimer=setInterval(()=>{
-    secs--;
-    if(secs<=0){
-      clearInterval(_adInterstitialTimer);
-      proceedAfterAdInterstitial();
-    }else{
-      cdEl.textContent='Continuing in '+secs+'s…';
-    }
-  },1000);
-}
-
-function proceedAfterAdInterstitial(){
-  clearInterval(_adInterstitialTimer);
-  const intEl=document.getElementById('adInterstitial');
-  const toolId=intEl.dataset.pendingTool;
-  intEl.classList.remove('open');
-  if(toolId){
-    const el=document.getElementById(toolId);
-    if(el){el.classList.add('open');document.body.style.overflow='hidden';}
-  }
-}
-function dismissAdInterstitial(){
-  proceedAfterAdInterstitial();
+  const el=document.getElementById(id);
+  if(el){el.classList.add('open');document.body.style.overflow='hidden';}
 }
 
 function closeOv(id){
@@ -4242,16 +4164,6 @@ function closeOv(id){
   // result so reopening the tool starts from a blank form (paid users unaffected).
   if(typeof resetTeasersIn==='function')try{resetTeasersIn(id);}catch(e){}
   if(el){el.classList.remove('open');document.body.style.overflow='';}
-  if(AD_TOOL_IDS.includes(id)&&!isGoldOrVip()){
-    showAdClosePopup();
-  }
-}
-function showAdClosePopup(){
-  const el=document.getElementById('adClosePopup');
-  if(!el)return;
-  el.classList.add('show');
-  clearTimeout(el._hideTimer);
-  el._hideTimer=setTimeout(()=>{el.classList.remove('show');},6000);
 }
 function cov(ev,id){
   if(ev.target===document.getElementById(id))closeOv(id);
