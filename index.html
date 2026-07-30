@@ -1512,11 +1512,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
       <div class="gen-err" id="li-err"></div>
       <button class="asbtn" id="login-btn" onclick="doLogin()">Sign In ✦</button>
       <div class="adiv">or continue with</div>
-      <div class="sbts">
-        <button class="sbt" onclick="socialLogin('Google')">🇬 Google</button>
-        <button class="sbt" onclick="socialLogin('Apple')">Apple</button>
-        <button class="sbt" onclick="socialLogin('Facebook')">f Facebook</button>
-      </div>
+      <button class="asbtn" onclick="socialLogin('Google')" style="background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;"><span style="font-size:1.15em;">🇬</span> Continue with Google</button>
       <p class="asw">New to AstroHand? <a onclick="router('signup')">Create free account →</a></p>
     </div>
   </div>
@@ -1528,6 +1524,8 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
       <div class="alogo"><div class="alogo-icon">✨</div><h1>AstroHand</h1></div>
       <div class="at">Begin Your Journey</div>
       <div class="asub">Free account. No card needed. Start reading the cosmos today.</div>
+      <button class="asbtn" onclick="socialLogin('Google')" style="background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;margin-bottom:4px;"><span style="font-size:1.15em;">🇬</span> Sign up with Google — instant</button>
+      <div class="adiv">or fill in your details</div>
       <div class="frm2">
         <div class="fg"><label class="fl">First Name *</label><input class="fi" type="text" id="su-fn" placeholder="Rahul" autocomplete="given-name"></div>
         <div class="fg"><label class="fl">Last Name *</label><input class="fi" type="text" id="su-ln" placeholder="Mehta" autocomplete="family-name"></div>
@@ -1551,12 +1549,6 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
       <div class="chk-row"><input type="checkbox" id="su-tc"><label for="su-tc">I agree to the <a onclick="polPage('terms')">Terms & Conditions</a> and <a onclick="polPage('privacy')">Privacy Policy</a>. I understand astrology readings are for guidance only.</label></div>
       <div class="gen-err" id="su-err"></div>
       <button class="asbtn" id="signup-btn" onclick="doSignup()">Create Free Account ✦</button>
-      <div class="adiv">or sign up with</div>
-      <div class="sbts">
-        <button class="sbt" onclick="socialLogin('Google')">🇬 Google</button>
-        <button class="sbt" onclick="socialLogin('Apple')">Apple</button>
-        <button class="sbt" onclick="socialLogin('Facebook')">f Facebook</button>
-      </div>
       <p class="asw">Already have an account? <a onclick="router('login')">Sign in →</a></p>
     </div>
   </div>
@@ -1825,12 +1817,19 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
     <div class="gate-t" id="gate-t">Sign in to see your reading</div>
     <div class="gate-sub" id="gate-sub">Your chart is ready. Create a free account to open it — takes 10 seconds, and your readings are saved for next time.</div>
 
+    <!-- PRIMARY path: Google — a real, verified account in one tap, no password,
+         no fake emails. Most users have Gmail, so this is the fastest + safest. -->
+    <button class="asbtn" id="gate-google-btn" onclick="gateGoogle()" style="background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;">
+      <span style="font-size:1.15em;">🇬</span> Continue with Google
+    </button>
+    <div class="adiv">or use your email</div>
+
     <div class="fg" id="gate-fn-wrap" style="display:none;">
       <label class="fl">First Name *</label>
       <input class="fi" type="text" id="gate-fn" placeholder="Your first name" autocomplete="given-name">
     </div>
     <div class="fg"><label class="fl">Email Address *</label>
-      <input class="fi" type="email" id="gate-em" placeholder="your@email.com" autocomplete="email">
+      <input class="fi" type="email" id="gate-em" placeholder="your@email.com" autocomplete="email" inputmode="email">
     </div>
     <div class="fg"><label class="fl">Password *</label>
       <div class="pwr"><input class="fi" type="password" id="gate-pw" placeholder="At least 8 characters" autocomplete="current-password">
@@ -1838,9 +1837,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
     </div>
 
     <div class="gen-err" id="gate-err"></div>
-    <button class="asbtn" id="gate-btn" onclick="gateSubmit()">Sign In &amp; Show My Reading ✦</button>
-    <div class="adiv">or continue with</div>
-    <div class="sbts"><button class="sbt" onclick="gateGoogle()">🇬 Continue with Google</button></div>
+    <button class="asbtn" id="gate-btn" onclick="gateSubmit()" style="background:transparent;border:1px solid rgba(var(--gold-rgb),.4);color:var(--g2c);box-shadow:none;">Sign In &amp; Show My Reading ✦</button>
 
     <p class="gate-sw" id="gate-sw">New to AstroHand? <a onclick="gateMode('up')">Create a free account →</a></p>
     <div class="gate-trust">
@@ -2863,6 +2860,7 @@ async function gateSubmit(){
   clearErr('gate-err');
   if(up&&!fn){showErr('gate-err','Please enter your first name.');return;}
   if(!isEmail(em)){showErr('gate-err','Please enter a valid email address.');return;}
+  if(up&&isDisposableEmail(em)){showErr('gate-err','Please use a real email you can access — or just tap "Continue with Google" above.');return;}
   if(!pw){showErr('gate-err','Please enter your password.');return;}
   if(up&&pw.length<8){showErr('gate-err','Password must be at least 8 characters.');return;}
 
@@ -3089,7 +3087,30 @@ function resetTeasersIn(modalId){
     }
   }
 }
-function isEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
+function isEmail(e){
+  e=String(e||'').trim().toLowerCase();
+  // Tighter than before: the TLD must be 2–24 letters (blocks a@b.c / asdf@asdf),
+  // no spaces, and no consecutive/edge dots.
+  if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,24}$/.test(e))return false;
+  if(/\.\./.test(e))return false;
+  const dom=e.split('@')[1]||'';
+  if(dom.startsWith('.')||dom.endsWith('.')||dom.startsWith('-')||dom.endsWith('-'))return false;
+  return true;
+}
+// Obvious placeholder / disposable / throwaway domains — refused at SIGN-UP only
+// (never at login, so an existing account is never locked out). This can't verify
+// an email truly exists, but it stops the "andazi koi bhi email" fakes.
+const FAKE_EMAIL_DOMAINS=['test.com','test.co','example.com','example.org','example.net','asdf.com','aaa.com','abc.com','abcd.com','xyz.com','fake.com','fakemail.com','email.com','mail.com','demo.com','sample.com','none.com','no.com','a.com','mailinator.com','10minutemail.com','10minutemail.net','guerrillamail.com','guerrillamail.info','tempmail.com','temp-mail.org','tempmail.net','yopmail.com','trashmail.com','sharklasers.com','getnada.com','nada.email','maildrop.cc','throwaway.email','dispostable.com','fakeinbox.com','mvrht.com','tempr.email','1secmail.com','mohmal.com','emailondeck.com','discard.email','spam4.me','grr.la','trbvm.com'];
+function isDisposableEmail(e){
+  e=String(e||'').toLowerCase().trim();
+  const dom=e.split('@')[1]||'', local=e.split('@')[0]||'';
+  if(FAKE_EMAIL_DOMAINS.includes(dom))return true;
+  // asdf@asdf.com, test@test.in etc. — name equals the domain root ⇒ almost always fake.
+  const domRoot=dom.split('.')[0]||'';
+  const realProviders=['gmail','yahoo','ymail','outlook','hotmail','live','icloud','me','proton','protonmail','rediff','zoho','aol','gmx'];
+  if(local&&local===domRoot&&!realProviders.includes(domRoot))return true;
+  return false;
+}
 function cap(s){return s?(s[0].toUpperCase()+s.slice(1)):'';}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function hp(p){let h=0;for(let i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0;}return 'ah'+Math.abs(h)+p.length;}
@@ -4250,6 +4271,7 @@ async function doSignup(){
   if(!fn){showErr('su-err','Please enter your first name.');return;}
   if(!ln){showErr('su-err','Please enter your last name.');return;}
   if(!isEmail(em)){showErr('su-err','Please enter a valid email address.');return;}
+  if(isDisposableEmail(em)){showErr('su-err','Please use a real email you can access — or sign up with Google instead.');return;}
   if(!db){showErr('su-err','Please enter your date of birth.');return;}
   if(pw.length<8){showErr('su-err','Password must be at least 8 characters.');return;}
   if(pw!==cp){showErr('su-err','Passwords do not match.');return;}
