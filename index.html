@@ -2414,7 +2414,11 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.13em;color:var(--gold);text-transform:uppercase;margin:18px 0 11px;">✦ Muhurat (Auspicious Timings)</div>
     <div id="panch-muh"></div>
     <p style="font-size:.63rem;color:var(--sub);text-align:center;margin-top:14px;line-height:1.6;">🌅 Sunrise & sunset are calculated for your selected city's exact location. Tithi, Nakshatra, Yoga & Karana (marked ~) are approximate reference values — for these, a full ephemeris Panchang or local almanac is recommended.</p>
-    <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.13em;color:var(--gold);text-transform:uppercase;margin:22px 0 6px;">✦ This Month — Important Days</div>
+    <div style="display:flex;gap:8px;align-items:center;margin:22px 0 10px;">
+      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.13em;color:var(--gold);text-transform:uppercase;white-space:nowrap;">✦ Important Days</div>
+      <select class="fi" id="panch-monthsel" onchange="renderPanchMonth()" style="flex:1;padding:8px 10px;"></select>
+    </div>
+    <div id="panch-tr-bar"></div>
     <div id="panch-month"></div>
   </div>
 </div>
@@ -2529,9 +2533,13 @@ html[data-theme="white"] .kwheel-side{opacity:.5;}
     <button class="mc" onclick="closeOv('mPuja')">✕</button>
     <div class="mt">🙏 Puja Tithi &amp; Samagri</div>
     <div class="ms">Festival dates and the items you'll need for each puja, in one place.</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+      <label class="fl" style="margin:0;white-space:nowrap;">Month</label>
+      <select class="fi" id="puja-month" onchange="renderPujaResults()" style="flex:1;"></select>
+    </div>
     <div id="puja-tr-bar"></div>
     <div id="puja-results"></div>
-    <p style="font-size:.64rem;color:var(--sub);text-align:center;margin-top:16px;line-height:1.6;">Dates shown for 2026 (New Delhi, India). Regional practices vary — this reflects widely-followed practice.</p>
+    <p style="font-size:.64rem;color:var(--sub);text-align:center;margin-top:16px;line-height:1.6;">Every date is computed from real tithis for the month you pick (sunrise at New Delhi) — no year is hardcoded. When a tithi spans two sunrises, regional almanacs can differ by a day; for vrat timing follow your local panchang or family tradition.</p>
   </div>
 </div>
 
@@ -6042,6 +6050,7 @@ function revealTarotResults(){
   renderTarotResults();
   document.getElementById('tarot-selection').style.display='none';
   document.getElementById('tarot-results').style.display='block';
+  try{addTranslate('tarot-results');}catch(e){}
 }
 
 function renderTarotResults(){
@@ -6727,32 +6736,168 @@ function renderMuhuratResults(){
    cited). Holi/Dussehra Samagri reflect well-established,
    non-contested standard practice.
 ═══════════════════════════════════════════════════ */
-const PUJA_FESTIVALS=[
-  {name:'Holi',date:'2026-03-04',subtitle:'Festival of Colors · Holika Dahan eve: Mar 3',
-    samagri:['Holika Dahan: dried wood, cow-dung cakes (Holika/Prahlad figures), coconut, roli, raw cotton thread, water, sweets as offering','Main day: Gulal/colors, water guns (pichkari), sweets (gujiya), fresh clothes for the color-play']},
-  {name:'Ram Navami',date:'2026-03-26',subtitle:'Birth of Lord Rama',
-    samagri:['Idol/picture of Lord Rama','Roli, akshata (rice), flowers, incense, diya, fruits and sweets as Naivedhya','Tulsi leaves']},
-  {name:'Raksha Bandhan',date:'2026-08-28',subtitle:'Bond between siblings',
-    samagri:['Rakhi thread','Roli and rice (for tilak)','Diya','Sweets']},
-  {name:'Krishna Janmashtami',date:'2026-08-25',subtitle:'Birth of Lord Krishna',
-    samagri:['Idol of baby Krishna (Laddu Gopal)','Panchamrit (milk, curd, ghee, honey, sugar) for Abhishek','New clothes/jewelry for the idol','Tulsi leaves, flowers, makhan-mishri (butter-sugar) offering']},
-  {name:'Ganesh Chaturthi',date:'2026-09-14',subtitle:'Installation of Lord Ganesha',
-    samagri:['Ganesha idol (clay/eco-friendly preferred)','Red flowers, especially Hibiscus','Durva grass (21 blades)','Modak or laddoo as Naivedhya','Roli, akshata, incense, diya']},
-  {name:'Navratri (Sharad) begins',date:'2026-10-11',subtitle:'9 nights of Goddess Durga · ends Oct 19',
-    samagri:['Kalash (pitcher) with water, mango leaves, coconut on top','Akhand Jyoti (continuous lamp)','Barley/wheat seeds for Jawara sowing','Red chunri, bangles, flowers for the Goddess','Durga idol or picture']},
-  {name:'Dussehra (Vijayadashami)',date:'2026-10-19',subtitle:'Victory of good over evil',
-    samagri:['Ravana/Kumbhakarna/Meghnad effigies (for the burning ceremony)','Shami tree leaves (exchanged as a blessing)','Akshata, roli, flowers for Ayudha/Shastra Puja','Sweets for distribution']},
-  {name:'Karva Chauth',date:'2026-10-29',subtitle:'Fasting ritual for marital wellbeing',
-    samagri:['Karva (small earthen pot) with spout','Sieve (chalni) for viewing the moon','Mathi and sweets','Bindi, sindoor, and other solah shringar items','Henna (mehendi)']},
-  {name:'Dhanteras',date:'2026-11-05',subtitle:'Start of Diwali · Wealth & health worship',
-    samagri:['New utensils or gold/silver item (traditionally purchased this day)','Idol of Dhanvantari and Goddess Lakshmi','Diya, roli, akshata, flowers']},
-  {name:'Diwali · Lakshmi Puja',date:'2026-11-08',subtitle:'Main Diwali day · Amavasya',
-    samagri:['New idols of Lord Ganesha and Goddess Lakshmi','Bahi-Khata (account books), inkpot and pen','Red silk cloth for the Goddess; yellow cloth; red cloth for the seating (Aasan)','Wooden stool for the idols','5 large earthen Deepak + at least 25 small earthen Deepak','1 fresh earthen Kalash (pitcher)','Fresh flowers and at least 3 garlands','Bilva leaves and Tulsi leaves','Naivedhya: sweets, fruits, sugarcane, Lava (parched rice)','At least 3 sweet Paan (betel leaf)','Durva grass (Duba)','Pancha Pallav: twigs of Mango, Palash, Banyan, Peepal, Bakul','Note: if any item is unavailable, Akshata (rice) may be substituted']},
-  {name:'Govardhan Puja',date:'2026-11-10',subtitle:'Worship of Govardhan Hill',
-    samagri:['Cow dung to make a small Govardhan hill replica','Flowers, diya, incense','Milk and sweets as offering']},
-  {name:'Bhai Dooj',date:'2026-11-11',subtitle:'Closing day of Diwali · sibling bond',
-    samagri:['Roli, rice, and diya for tilak','Sweets','Coconut']}
+/* ═══════════ HINDU FESTIVAL / VRAT ENGINE (real tithi-based, any month) ═══════════
+   Festival dates are NOT hardcoded per year. Each festival is defined the way a
+   traditional panchang (e.g. Thakur Prasad) defines it — lunar month + paksha +
+   tithi — and the actual date is computed from the same real ephemeris the rest of
+   the site uses. That means every month of every year resolves correctly.
+
+   Lunar month (amanta): the month that begins at the new moon is named from the
+   sidereal sign the Sun occupies at that new moon (Sun in Meena → Chaitra, etc.). */
+const MASA_NAMES=['Chaitra','Vaishakha','Jyeshtha','Ashadha','Shravana','Bhadrapada','Ashwin','Kartik','Margashirsha','Pausha','Magha','Phalguna'];
+
+function _elongAt(y,mo,dy){
+  try{
+    const P=computeRealPositions(y,mo,dy,6,0,5.5).positions;
+    return (P.Moon-P.Sun+360)%360;
+  }catch(e){ return null; }
+}
+function _sunLongAt(y,mo,dy){
+  try{ return computeRealPositions(y,mo,dy,6,0,5.5).positions.Sun; }catch(e){ return null; }
+}
+
+/* Lunar-month + paksha + tithi for a civil date. tIdx: 0-14 Shukla, 15-29 Krishna. */
+function lunarInfoAt(y,mo,dy){
+  const e=_elongAt(y,mo,dy);
+  if(e==null)return null;
+  const tIdx=Math.floor(e/12);
+  // Walk back to the new moon that started this lunar month.
+  const d=new Date(y,mo-1,dy);
+  let masaIdx=null;
+  for(let i=0;i<32;i++){
+    const cur=new Date(d); cur.setDate(cur.getDate()-i);
+    const prev=new Date(cur); prev.setDate(prev.getDate()-1);
+    const ec=_elongAt(cur.getFullYear(),cur.getMonth()+1,cur.getDate());
+    const ep=_elongAt(prev.getFullYear(),prev.getMonth()+1,prev.getDate());
+    if(ec==null||ep==null)break;
+    if(ep>ec){ // elongation wrapped past 360 → new moon fell between prev and cur
+      const sl=_sunLongAt(cur.getFullYear(),cur.getMonth()+1,cur.getDate());
+      if(sl!=null)masaIdx=(Math.floor(sl/30)+1)%12;
+      break;
+    }
+  }
+  // Festival rules below use PURNIMANTA month names (the North-Indian / Thakur
+  // Prasad convention). Shukla paksha carries the same month name in both systems;
+  // a Krishna paksha belongs to the NEXT month under purnimanta. Without this shift
+  // every Krishna-paksha festival (Diwali, Karva Chauth, Shivratri…) lands a month late.
+  const paksha=tIdx<15?'Shukla':'Krishna';
+  const pMasaIdx=masaIdx==null?null:(paksha==='Krishna'?(masaIdx+1)%12:masaIdx);
+  return {tIdx,paksha,tithi:TITHI_NAMES[tIdx],masaIdx,masa:masaIdx==null?'':MASA_NAMES[masaIdx],
+          pMasaIdx,pMasa:pMasaIdx==null?'':MASA_NAMES[pMasaIdx]};
+}
+
+/* masa: amanta lunar month index · p: 'S' shukla / 'K' krishna · t: tithi number 1-15
+   (15 = Purnima in shukla, Amavasya in krishna). solar: fixed-date solar festivals. */
+const FESTIVAL_RULES=[
+  {n:'Makar Sankranti',solar:'01-14',ic:'🪁',s:'Sun enters Capricorn · harvest & til-gud',
+   sam:['Til (sesame) and gud (jaggery) — laddoo and tilkut','Khichdi ingredients (rice, urad dal) for daan','New clothes, kites','Donation items: blanket, til, ghee']},
+  {n:'Vasant Panchami',masa:10,p:'S',t:5,ic:'📚',s:'Saraswati Puja · learning & the arts',
+   sam:['Saraswati idol or picture','Yellow flowers and yellow cloth','Books, pen or instrument to place before the Goddess','Boondi/kesar sweets, saffron rice']},
+  {n:'Maha Shivratri',masa:11,p:'K',t:14,ic:'🔱',s:'The great night of Lord Shiva',
+   sam:['Shivling or Shiva picture','Milk, curd, ghee, honey, sugar (Panchamrit) for Abhishek','Bel patra (3-leaf), dhatura, bhang, white flowers','Gangajal, chandan, akshata, dhoop, diya']},
+  {n:'Holika Dahan',masa:11,p:'S',t:15,ic:'🔥',s:'Holika bonfire on Phalguna Purnima eve',
+   sam:['Dried wood and cow-dung cakes','Cow-dung figures of Holika and Prahlad','Coconut, roli, raw cotton thread','Water, gud, whole grains to offer the fire']},
+  {n:'Holi (Dhulandi)',masa:0,p:'K',t:1,ic:'🎨',s:'Festival of colours',
+   sam:['Gulal and natural colours','Pichkari (water guns), water balloons','Gujiya, thandai, sweets','Old/white clothes for the colour play']},
+  {n:'Chaitra Navratri begins',masa:0,p:'S',t:1,ic:'🪔',s:'9 nights of Goddess Durga',
+   sam:['Kalash with water, mango leaves, coconut','Akhand Jyoti (continuous lamp) and ghee','Barley seeds for Jawara sowing','Red chunri, bangles, flowers, Durga idol']},
+  {n:'Ram Navami',masa:0,p:'S',t:9,ic:'🏹',s:'Birth of Lord Rama',
+   sam:['Idol or picture of Lord Rama','Roli, akshata, flowers, incense, diya','Fruits, panchamrit and sweets as Naivedhya','Tulsi leaves, Ramayana/Sundarkand for paath']},
+  {n:'Hanuman Jayanti',masa:0,p:'S',t:15,ic:'🐒',s:'Birth of Lord Hanuman',
+   sam:['Hanuman idol or picture','Sindoor and chameli (jasmine) oil','Boondi laddoo, banana as Naivedhya','Red flag, red cloth, Hanuman Chalisa']},
+  {n:'Akshaya Tritiya',masa:1,p:'S',t:3,ic:'🪙',s:'Ever-lasting prosperity · auspicious for new starts',
+   sam:['Gold/silver or any new purchase (traditional)','Lakshmi-Narayan puja items: roli, akshata, flowers','Sattu, barley, cucumber as offering','Items for daan: water pot, fan, sandal']},
+  {n:'Buddha Purnima',masa:1,p:'S',t:15,ic:'☸️',s:'Birth, enlightenment & nirvana of the Buddha',
+   sam:['White flowers, incense, lamp','Kheer as offering','Bodhi tree watering','Charity/daan to the needy']},
+  {n:'Vat Savitri Vrat',masa:2,p:'K',t:15,ic:'🌳',s:'Fast for the husband\'s long life',
+   sam:['Banyan (vat) tree to circumambulate','Raw cotton thread (to wind the tree)','Bhigo chana, fruits, gud','Sindoor, bangles, red cloth, hand fan']},
+  {n:'Ganga Dussehra',masa:2,p:'S',t:10,ic:'🌊',s:'Descent of the Ganga',
+   sam:['Gangajal','Flowers, diya to float','Til, gud and grains for daan','Fruits and sweets as offering']},
+  {n:'Jagannath Rath Yatra',masa:3,p:'S',t:2,ic:'🛕',s:'Lord Jagannath\'s chariot festival',
+   sam:['Jagannath, Balabhadra, Subhadra images','Flowers, tulsi, coconut','Khichdi/poda pitha as bhog','Diya, incense, chandan']},
+  {n:'Guru Purnima',masa:3,p:'S',t:15,ic:'🙏',s:'Honouring the Guru · Vyasa Purnima',
+   sam:['Offering (dakshina), fruits, sweets for the Guru','Flowers, garland, shawl','Diya and incense','Guru Gita or scripture for paath']},
+  {n:'Nag Panchami',masa:4,p:'S',t:5,ic:'🐍',s:'Worship of the serpent deities',
+   sam:['Nag idol or picture (or an anthill/snake image)','Milk, lava (puffed rice), til','Flowers, haldi, roli, akshata','Doob grass, sweets']},
+  {n:'Raksha Bandhan',masa:4,p:'S',t:15,ic:'🧵',s:'Bond between siblings · Shravana Purnima',
+   sam:['Rakhi thread','Roli and akshata for tilak','Diya, thali for aarti','Sweets and a gift']},
+  {n:'Krishna Janmashtami',masa:5,p:'K',t:8,ic:'🦚',s:'Birth of Lord Krishna',
+   sam:['Laddu Gopal (baby Krishna) idol and cradle','Panchamrit (milk, curd, ghee, honey, sugar) for Abhishek','New clothes, jewellery, peacock feather, flute','Tulsi leaves, makhan-mishri, dhaniya panjiri']},
+  {n:'Hartalika Teej',masa:5,p:'S',t:3,ic:'💚',s:'Fast of Parvati for marital wellbeing',
+   sam:['Clay Shiva-Parvati idols','Green bangles, green saree, mehndi, sindoor','Flowers, bel patra, dhatura','Fruits and sweets for the vrat katha']},
+  {n:'Ganesh Chaturthi',masa:5,p:'S',t:4,ic:'🐘',s:'Installation of Lord Ganesha',
+   sam:['Ganesha idol (clay/eco-friendly preferred)','Red flowers, especially hibiscus','Durva grass — 21 blades','Modak or laddoo as Naivedhya','Roli, akshata, incense, diya']},
+  {n:'Anant Chaturdashi',masa:5,p:'S',t:14,ic:'🌀',s:'Ganesh Visarjan · Anant Vrat',
+   sam:['Anant sutra (14-knot thread)','Vishnu picture, flowers, tulsi','Kheer/puri as bhog','Items for the visarjan procession']},
+  {n:'Pitru Paksha begins',masa:5,p:'S',t:15,ic:'🕯️',s:'Fortnight of ancestral offerings',
+   sam:['Til (black sesame), water, kush grass for tarpan','Rice balls (pind), barley','Food for brahmin/crow/cow offerings','White flowers, plain cloth']},
+  {n:'Mahalaya Amavasya (Sarva Pitru)',masa:6,p:'K',t:15,ic:'🕯️',s:'Final shraddh day for all ancestors',
+   sam:['Til, jau (barley), water for tarpan','Pind daan materials','Anna-daan (food donation)','Kush grass, white flowers']},
+  {n:'Sharad Navratri begins',masa:6,p:'S',t:1,ic:'🪔',s:'9 nights of Goddess Durga',
+   sam:['Kalash with water, mango leaves, coconut','Akhand Jyoti and ghee','Barley seeds for Jawara','Red chunri, bangles, flowers, Durga idol']},
+  {n:'Durga Ashtami',masa:6,p:'S',t:8,ic:'🗡️',s:'Mahashtami · Kanya Pujan',
+   sam:['Items for Kanya Pujan: halwa, puri, kale chane','Red chunri, bangles, coins for the girls','Flowers, dhoop, diya','Havan samagri if performing havan']},
+  {n:'Dussehra (Vijayadashami)',masa:6,p:'S',t:10,ic:'🏹',s:'Victory of good over evil',
+   sam:['Shami tree leaves (exchanged as blessing)','Akshata, roli, flowers for Shastra/Ayudha Puja','Sweets for distribution','Ravana effigy for the burning ceremony']},
+  {n:'Sharad Purnima',masa:6,p:'S',t:15,ic:'🌕',s:'Kojagari · moonlight kheer',
+   sam:['Kheer to keep in the moonlight','Lakshmi picture, lotus flowers','Diya, incense','Fruits and batasha']},
+  {n:'Karva Chauth',masa:7,p:'K',t:4,ic:'🌙',s:'Fast for the husband\'s long life',
+   sam:['Karva (clay pot) with lid and water','Sieve (channi), diya','Sindoor, bangles, mehndi, red saree','Sargi thali: fenia, dry fruits, fruits','Karva Chauth vrat katha book']},
+  {n:'Dhanteras',masa:7,p:'K',t:13,ic:'🪙',s:'Dhanvantari Jayanti · buying metal',
+   sam:['New utensil, gold/silver coin','Dhanvantari & Lakshmi-Kubera puja items','13 diyas for the evening','Roli, akshata, flowers, dhania seeds']},
+  {n:'Narak Chaturdashi (Choti Diwali)',masa:7,p:'K',t:14,ic:'🪔',s:'Abhyang snan · Yama deepdaan',
+   sam:['Til oil and ubtan for the ritual bath','Diya for Yama-deepdaan (facing south)','Flowers, roli, akshata','Sweets']},
+  {n:'Diwali (Lakshmi Puja)',masa:7,p:'K',t:15,ic:'🪔',s:'Kartik Amavasya · Lakshmi-Ganesh Puja',
+   sam:['Lakshmi and Ganesha idols (new, facing east)','Diyas, ghee, cotton wicks, candles','Kamal gatta, batasha, kheel, lava','Roli, akshata, coins, account books (bahi-khata)','Flowers, kalash, chowki with red cloth']},
+  {n:'Govardhan Puja (Annakut)',masa:7,p:'S',t:1,ic:'⛰️',s:'Krishna lifting Govardhan · Annakut bhog',
+   sam:['Cow-dung to make the Govardhan mound','Annakut: many varieties of cooked food','Flowers, diya, roli','Milk, curd, batasha']},
+  {n:'Bhai Dooj',masa:7,p:'S',t:2,ic:'🤝',s:'Sister\'s tilak for the brother\'s long life',
+   sam:['Roli, akshata, chandan for tilak','Thali, diya for aarti','Sweets and a gift','Coconut/dry fruits']},
+  {n:'Chhath Puja (Sandhya Arghya)',masa:7,p:'S',t:6,ic:'🌅',s:'Offering to the setting & rising Sun',
+   sam:['Bamboo soop and daura (basket)','Thekua, rice laddoo, seasonal fruits','Sugarcane, coconut, banana','Diya, sindoor, new clothes']},
+  {n:'Dev Uthani Ekadashi',masa:7,p:'S',t:11,ic:'🛕',s:'Vishnu awakens · wedding season begins',
+   sam:['Tulsi plant and Shaligram for Tulsi Vivah','Sugarcane, amla branch, seasonal fruits','Red chunri, bangles for Tulsi','Diya, flowers, incense']},
+  {n:'Kartik Purnima (Dev Diwali)',masa:7,p:'S',t:15,ic:'🌕',s:'Ganga snan · lamps on the ghats',
+   sam:['Diyas to float on the river','Gangajal, flowers','Til, gud for daan','Fruits and sweets']},
+  {n:'Mokshada Ekadashi / Gita Jayanti',masa:8,p:'S',t:11,ic:'📖',s:'The day the Gita was spoken',
+   sam:['Bhagavad Gita for paath','Tulsi leaves, flowers','Diya, incense, chandan','Fruits for the vrat']},
+  {n:'Makar Sankranti eve · Lohri',solar:'01-13',ic:'🔥',s:'Bonfire harvest festival (North India)',
+   sam:['Firewood for the bonfire','Til, gud, rewri, gajak, popcorn','Peanuts and jaggery','Sarson ka saag & makki di roti (traditional meal)']},
+  {n:'Mauni Amavasya',masa:10,p:'K',t:15,ic:'🤫',s:'Silent fast · Magha holy bath',
+   sam:['Gangajal / holy river bath','Til, blanket, food for daan','Diya, flowers','Observance of silence (maun)']},
+  {n:'Magha Purnima',masa:10,p:'S',t:15,ic:'🌕',s:'Magha snan concludes',
+   sam:['Holy bath items','Til, gud, blanket for daan','Satyanarayan katha items','Flowers, diya, panchamrit']},
 ];
+
+/* Every Ekadashi/Purnima/Amavasya/Pradosh/Sankashti of the month, plus every
+   festival rule that lands in it — all from real tithis. */
+function pujaMonthData(y,mo){
+  const dim=new Date(y,mo,0).getDate();
+  const fests=[],vrats=[];
+  const mm=String(mo).padStart(2,'0');
+  for(let dd=1;dd<=dim;dd++){
+    const li=lunarInfoAt(y,mo,dd);
+    if(!li)continue;
+    const tNum=li.tIdx<15?li.tIdx+1:li.tIdx-14; // 1..15 within the paksha
+    const pk=li.paksha==='Shukla'?'S':'K';
+    // Solar (fixed-date) festivals
+    const ds=mm+'-'+String(dd).padStart(2,'0');
+    FESTIVAL_RULES.forEach(f=>{
+      if(f.solar){ if(f.solar===ds)fests.push({...f,dd}); return; }
+      if(f.masa===li.pMasaIdx&&f.p===pk&&f.t===tNum)fests.push({...f,dd,masaName:li.pMasa});
+    });
+    // Recurring monthly vrats
+    const t=li.tithi;
+    if(t==='Purnima')vrats.push({dd,ic:'🌕',ti:'Purnima',no:'Full moon · Satyanarayan Puja & fasting'});
+    else if(t==='Amavasya')vrats.push({dd,ic:'🌑',ti:'Amavasya',no:'New moon · Pitru tarpan'});
+    else if(t==='Ekadashi')vrats.push({dd,ic:'🌓',ti:li.paksha+' Ekadashi',no:'Vishnu vrat — fasting day'});
+    else if(t==='Trayodashi')vrats.push({dd,ic:'🔱',ti:'Pradosh Vrat',no:'Evening Shiva worship'});
+    else if(t==='Chaturthi'&&li.paksha==='Krishna')vrats.push({dd,ic:'🐘',ti:'Sankashti Chaturthi',no:'Ganesha vrat · moonrise fast'});
+    else if(t==='Chaturthi'&&li.paksha==='Shukla')vrats.push({dd,ic:'🐘',ti:'Vinayak Chaturthi',no:'Ganesha vrat'});
+    else if(t==='Ashtami'&&li.paksha==='Krishna')vrats.push({dd,ic:'🗡️',ti:'Kalashtami',no:'Bhairav worship'});
+  }
+  return {fests,vrats,dim};
+}
 
 /* ═══════════════════════════════════════════════════
    VAASTU SHASTRA REFERENCE GUIDE
@@ -6890,25 +7035,73 @@ function initVaastu(){
   if(typeof mountVaastuTranslate==='function')mountVaastuTranslate();
 }
 
+function pujaSelYM(){
+  const sel=document.getElementById('puja-month');
+  if(sel&&sel.value){const [y,m]=sel.value.split('-').map(Number);return {y,m};}
+  const n=new Date();return {y:n.getFullYear(),m:n.getMonth()+1};
+}
+function initPujaMonth(){
+  const sel=document.getElementById('puja-month');
+  if(!sel||sel.dataset.built)return;
+  const now=new Date();
+  const monN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  let out='';
+  // 12 months back to 24 months forward — every date is computed, so any range works.
+  for(let k=-12;k<=24;k++){
+    const d=new Date(now.getFullYear(),now.getMonth()+k,1);
+    const val=d.getFullYear()+'-'+(d.getMonth()+1);
+    const cur=(k===0)?' selected':'';
+    out+='<option value="'+val+'"'+cur+'>'+monN[d.getMonth()]+' '+d.getFullYear()+'</option>';
+  }
+  sel.innerHTML=out;sel.dataset.built='1';
+}
 function renderPujaResults(){
   const wrap=document.getElementById('puja-results');
   if(!wrap)return;
-  wrap.innerHTML=PUJA_FESTIVALS.map(f=>{
-    const dt=new Date(f.date+'T00:00:00');
-    const dateStr=dt.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
-    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:16px 18px;margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;flex-wrap:wrap;gap:6px;">
-        <div style="font-family:'Cinzel',serif;font-size:1.05rem;color:var(--g2c);">${f.name}</div>
-        <div style="font-size:.7rem;color:var(--gold);white-space:nowrap;">${dateStr}</div>
-      </div>
-      <div style="font-size:.72rem;color:var(--sub);margin-bottom:10px;">${f.subtitle}</div>
-      <div style="font-size:.66rem;letter-spacing:.06em;color:var(--gold);text-transform:uppercase;margin-bottom:6px;">Puja Samagri</div>
-      <ul style="margin:0;padding-left:18px;font-size:.76rem;color:var(--text);line-height:1.7;">
-        ${f.samagri.map(s=>`<li>${s}</li>`).join('')}
-      </ul>
-    </div>`;
-  }).join('');
-  if(typeof mountPujaTranslate==='function')mountPujaTranslate();
+  initPujaMonth();
+  const {y,m}=pujaSelYM();
+  const monN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  wrap.innerHTML='<div style="text-align:center;padding:20px;"><div class="lorb"></div><p style="color:var(--muted);font-size:.77rem;">Computing '+monN[m-1]+' '+y+' tithis…</p></div>';
+  // Let the loader paint before the ephemeris loop runs.
+  setTimeout(()=>{
+    let data;
+    try{ data=pujaMonthData(y,m); }catch(e){ wrap.innerHTML='<div style="text-align:center;color:var(--sub);font-size:.78rem;">Could not compute this month. Please try another.</div>'; return; }
+    const today=new Date(), isThisMonth=(today.getFullYear()===y&&today.getMonth()+1===m);
+    const wd=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    let html='<div style="font-size:.62rem;color:var(--muted);text-align:center;margin-bottom:12px;">'+monN[m-1]+' '+y+' · computed from real tithis (New Delhi)</div>';
+    if(data.fests.length){
+      html+='<div style="font-family:\'Cinzel\',serif;font-size:.65rem;letter-spacing:.13em;color:var(--gold);text-transform:uppercase;margin:4px 0 10px;">✦ Festivals &amp; Puja Days</div>';
+      html+=data.fests.map(f=>{
+        const dt=new Date(y,m-1,f.dd);
+        const isToday=isThisMonth&&f.dd===today.getDate();
+        const isPast=isThisMonth&&f.dd<today.getDate();
+        return '<div style="background:rgba(255,255,255,.03);border:1px solid '+(isToday?'var(--gold)':'var(--bdr2)')+';border-radius:var(--r2);padding:15px 17px;margin-bottom:11px;'+(isPast?'opacity:.5;':'')+'">'
+          +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;flex-wrap:wrap;gap:6px;">'
+          +'<div style="font-family:\'Cinzel\',serif;font-size:1.02rem;color:var(--g2c);">'+f.ic+' '+f.n+'</div>'
+          +'<div style="font-size:.7rem;color:var(--gold);white-space:nowrap;">'+f.dd+' '+monN[m-1]+' · '+wd[dt.getDay()]+(isToday?' · TODAY':'')+'</div></div>'
+          +'<div style="font-size:.71rem;color:var(--sub);margin-bottom:9px;">'+f.s+(f.masaName?' · '+f.masaName+' '+(f.p==='S'?'Shukla':'Krishna')+' '+f.t:'')+'</div>'
+          +'<div style="font-size:.64rem;letter-spacing:.06em;color:var(--gold);text-transform:uppercase;margin-bottom:5px;">Puja Samagri</div>'
+          +'<ul style="margin:0;padding-left:18px;font-size:.75rem;color:var(--text);line-height:1.7;">'+f.sam.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
+      }).join('');
+    }else{
+      html+='<div style="text-align:center;color:var(--sub);font-size:.75rem;padding:10px 0 16px;">No major festival falls in this month — the vrat days below still apply.</div>';
+    }
+    if(data.vrats.length){
+      html+='<div style="font-family:\'Cinzel\',serif;font-size:.65rem;letter-spacing:.13em;color:var(--gold);text-transform:uppercase;margin:18px 0 10px;">✦ Vrat &amp; Parva Days</div>';
+      html+=data.vrats.map(r=>{
+        const dt=new Date(y,m-1,r.dd);
+        const isToday=isThisMonth&&r.dd===today.getDate();
+        const isPast=isThisMonth&&r.dd<today.getDate();
+        return '<div style="display:flex;align-items:center;gap:12px;padding:9px 12px;margin-bottom:6px;border-radius:14px;border:1px solid '+(isToday?'var(--gold)':'var(--bdr2)')+';background:rgba(255,255,255,.03);'+(isPast?'opacity:.45;':'')+'">'
+          +'<div style="text-align:center;min-width:26px;"><div style="font-family:\'Cinzel\',serif;font-size:1rem;font-weight:800;color:var(--g3);line-height:1;">'+r.dd+'</div><div style="font-size:.54rem;color:var(--sub);">'+wd[dt.getDay()]+'</div></div>'
+          +'<div style="font-size:1.15rem;">'+r.ic+'</div>'
+          +'<div style="flex:1;"><div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);">'+r.ti+(isToday?' · <span style="color:var(--gold);">TODAY</span>':'')+'</div>'
+          +'<div style="font-size:.65rem;color:var(--muted);">'+r.no+'</div></div></div>';
+      }).join('');
+    }
+    wrap.innerHTML=html;
+    if(typeof mountPujaTranslate==='function')mountPujaTranslate();
+  },30);
 }
 
 
@@ -7230,6 +7423,7 @@ function genChogh(){
     '<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:14px 0 4px;">☀️ Day Choghadiya</div>'+mkRows(CH_DAY_FIRST[wd],st.sunriseMin,dayLen,8)+
     '<div style="font-family:\'Cinzel\',serif;font-size:.8rem;color:var(--g2c);margin:14px 0 4px;">🌙 Night Choghadiya</div>'+mkRows(CH_NIGHT_FIRST[wd],st.sunsetMin,nightLen,8)+
     '<p style="font-size:.64rem;color:var(--muted);margin-top:10px;">Sun times are computed for '+esc(city)+' (NOAA algorithm). Sequences follow the traditional weekday Choghadiya tables. Amrit, Shubh, Labh & Char are favourable; Udveg, Kaal & Rog are avoided for new beginnings.</p>';
+  addTranslate('chg-res');
   startTeaser('chg-res','Your Choghadiya table is locked','Unlock a plan to keep the full day and night Choghadiya open whenever you need it — for any date, any city.');
 }
 
@@ -7278,6 +7472,7 @@ async function genBaby(){
   await genBabyNames(padaSyl); // auto-suggest with the traditional pada syllable first
   // Start the countdown only once the names have actually arrived — the preview should
   // never be spent watching a loader.
+  addTranslate('bn-res');
   startTeaser('bn-res','Your baby-name list is locked','Unlock a plan to keep every nakshatra syllable and the full A–Z name suggestions with meanings open as long as you need.');
 }
 // Names + meanings for ANY chosen starting letter/syllable (A–Z or pada syllable).
@@ -7327,6 +7522,7 @@ function calcLove(){
   const res=document.getElementById('lv-res');
   res.style.display='block';
   res.innerHTML='<div style="text-align:center;padding:8px 0;"><div style="font-family:\'Cinzel Decorative\',serif;font-size:3rem;color:var(--gold);line-height:1;">'+score+'%</div><div style="font-size:1.4rem;margin:6px 0;">'+tier[0]+'</div><div style="font-size:.84rem;color:var(--text);max-width:340px;margin:0 auto;line-height:1.6;">'+esc(a)+' ✦ '+esc(b2)+'<br>'+tier[1]+'</div><p style="font-size:.62rem;color:var(--muted);margin-top:12px;">✦ Just for fun — real compatibility is measured with the 36-guna Kundli Match tool. ✦</p></div>'+shareBtnHTML("shareLove()");
+  addTranslate('lv-res');
   startTeaser('lv-res','Your love score is locked','Unlock a plan to keep your results open — and to run the real 36-guna Kundli Match for a proper compatibility reading.');
 }
 
@@ -8176,6 +8372,7 @@ async function calcNum(){
   document.getElementById('nm-res').style.display='block';document.getElementById('nm-read').textContent='Consulting the cosmic number matrix…';
   try{const txt=await callAI('You are a master numerologist trained in Pythagorean and Chaldean systems. Be mystical and uplifting.',[{role:'user',content:`${n?`Name: "${n}".`:''} ${d?`DOB: ${d}.`:''} Life Path: ${lp}, Destiny: ${dest}, Soul Urge: ${soul}. Write a poetic 130-word personalized numerology reading weaving all three numbers together. Speak to soul purpose, life direction, and current cycle insights. Note this is guidance for self-reflection.`}],500);document.getElementById('nm-read').textContent=txt||`Your Life Path ${lp}, Destiny ${dest}, and Soul Urge ${soul} form a sacred trinity of purpose.`;}
   catch{document.getElementById('nm-read').textContent=`Your Life Path ${lp}, Destiny ${dest}, and Soul Urge ${soul} together reveal a unique cosmic signature. ${NM[lp]} The interplay of these three numbers creates a powerful framework for understanding your soul's journey and deepest calling in this lifetime.`;}
+  addTranslate('nm-res');
   startTeaser('nm-res','Your numerology reading is locked','Unlock a plan to keep your Life Path, Destiny and Soul Urge numbers — plus the full personalised reading — open whenever you want them.');
 }
 
@@ -8354,11 +8551,39 @@ function loadPanch(){
   }catch(e){}
   document.getElementById('panch-grid').innerHTML=[['Tithi',rl?rl.tithi:p.ti,rl?'At sunrise · computed':'Lunar day ~'],['Vara',now.toLocaleDateString('en-IN',{weekday:'long'}),'Weekday · computed'],['Nakshatra',rl?rl.nak:p.na,rl?'Moon\'s star · computed':'Moon\'s star ~'],['Yoga',rl?rl.yoga:p.yo,rl?'Nitya yoga · computed':'Nitya yoga ~'],['Karana',rl?rl.karana:p.ka,rl?'Half-tithi · computed':'Half-tithi ~'],['Sunrise',sunrise,'For this city'],['Sunset',sunset,'For this city'],['Moonrise',p.mr,'Lunar timing ~'],['Moonset',p.ms,'Lunar timing ~']].map(([l,val,s])=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px;"><div style="font-size:.6rem;letter-spacing:.09em;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">${l}</div><div style="font-family:'Cinzel',serif;font-size:.86rem;color:var(--g2c);">${val}</div><div style="font-size:.66rem;color:var(--muted);margin-top:1px;">${s}</div></div>`).join('');
   document.getElementById('panch-muh').innerHTML=p.muh.map(m=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bdr2);font-size:.8rem;"><span style="color:var(--text);">${m.n}</span><span style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${m.t}</span><span style="${m.q?'background:rgba(22,163,74,.12);color:#4ade80;border:1px solid rgba(22,163,74,.18);':'background:rgba(220,38,38,.12);color:#f87171;border:1px solid rgba(220,38,38,.18);'}padding:2px 8px;border-radius:100px;font-size:.62rem;">${m.q?'Auspicious':'Avoid'}</span></div>`).join('');
-  // ── This month's important vrat/parva days — same ephemeris, real tithis ──
-  try{
-    const y=now.getFullYear(), mo=now.getMonth(), dim=new Date(y,mo+1,0).getDate(), today=now.getDate();
-    const monN=['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const wd=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  // Important days now live in renderPanchMonth() so the month dropdown drives them.
+  try{ renderPanchMonth(); }catch(e){}
+}
+
+/* ── Vrat / parva days for ANY month, from the same real ephemeris ──
+   Festivals with their samagri live in the Puja Tithi tool; this is the
+   recurring lunar calendar (Ekadashi, Purnima, Amavasya, Pradosh, Sankashti). */
+function initPanchMonthSel(){
+  const sel=document.getElementById('panch-monthsel');
+  if(!sel||sel.dataset.built)return;
+  const now=new Date();
+  const monN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  let out='';
+  for(let k=-12;k<=24;k++){
+    const d=new Date(now.getFullYear(),now.getMonth()+k,1);
+    out+='<option value="'+d.getFullYear()+'-'+(d.getMonth()+1)+'"'+(k===0?' selected':'')+'>'+monN[d.getMonth()]+' '+d.getFullYear()+'</option>';
+  }
+  sel.innerHTML=out;sel.dataset.built='1';
+}
+function renderPanchMonth(){
+  const mel=document.getElementById('panch-month');
+  if(!mel)return;
+  initPanchMonthSel();
+  const sel=document.getElementById('panch-monthsel');
+  const now=new Date();
+  let y=now.getFullYear(), mo=now.getMonth();
+  if(sel&&sel.value){const parts=sel.value.split('-');y=+parts[0];mo=(+parts[1])-1;}
+  const monN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const wd=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  mel.innerHTML='<div style="text-align:center;padding:14px;"><div class="lorb"></div><p style="color:var(--muted);font-size:.74rem;">Computing '+monN[mo]+' '+y+'…</p></div>';
+  setTimeout(()=>{
+    const dim=new Date(y,mo+1,0).getDate();
+    const isThisMonth=(now.getFullYear()===y&&now.getMonth()===mo), today=now.getDate();
     const rows=[];
     for(let dd=1;dd<=dim;dd++){
       let r=null; try{ r=realPanchangAt(y,mo+1,dd,6,0); }catch(e){}
@@ -8367,23 +8592,23 @@ function loadPanch(){
       let ic,ti,no;
       if(t.includes('Purnima')){ic='🌕';ti='Purnima';no='Full moon · fasting & Satyanarayan Puja';}
       else if(t.includes('Amavasya')){ic='🌑';ti='Amavasya';no='New moon · Pitru tarpan';}
-      else if(t.includes('Ekadashi')){ic='🌓';ti='Ekadashi';no='Vishnu vrat — fasting day';}
-      else if(t.includes('Trayodashi')){ic='🔱';ti='Pradosh';no='Evening Shiva worship';}
-      else if(t.includes('Krishna')&&t.includes('Chaturthi')){ic='🐘';ti='Sankashti Chaturthi';no='Ganesha vrat';}
+      else if(t.includes('Ekadashi')){ic='🌓';ti=(t.includes('Krishna')?'Krishna':'Shukla')+' Ekadashi';no='Vishnu vrat — fasting day';}
+      else if(t.includes('Trayodashi')){ic='🔱';ti='Pradosh Vrat';no='Evening Shiva worship';}
+      else if(t.includes('Krishna')&&t.includes('Chaturthi')){ic='🐘';ti='Sankashti Chaturthi';no='Ganesha vrat · moonrise fast';}
+      else if(t.includes('Shukla')&&t.includes('Chaturthi')){ic='🐘';ti='Vinayak Chaturthi';no='Ganesha vrat';}
+      else if(t.includes('Krishna')&&t.includes('Ashtami')){ic='🗡️';ti='Kalashtami';no='Bhairav worship';}
       else continue;
       rows.push({dd,ic,ti,no});
     }
-    const mel=document.getElementById('panch-month');
-    if(mel){
-      mel.innerHTML=`<div style="font-size:.6rem;color:var(--muted);text-align:center;margin-bottom:10px;">${monN[mo]} ${y} · vrat & parva (New Delhi)</div>`+
-        (rows.length?rows.map(r=>{
-          const isToday=r.dd===today, isPast=r.dd<today;
-          const dow=wd[(new Date(y,mo,r.dd).getDay()+6)%7];
-          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:7px;border-radius:14px;border:1px solid ${isToday?'var(--gold)':'var(--bdr2)'};background:rgba(255,255,255,.03);${isPast?'opacity:.45;':''}"><div style="text-align:center;min-width:28px;"><div style="font-family:'Cinzel',serif;font-size:1.05rem;font-weight:800;color:var(--g3);line-height:1;">${r.dd}</div><div style="font-size:.55rem;color:var(--sub);">${dow}</div></div><div style="font-size:1.3rem;">${r.ic}</div><div style="flex:1;"><div style="font-family:'Cinzel',serif;font-size:.84rem;color:var(--g2c);">${r.ti}${isToday?' · <span style="color:var(--gold);">TODAY</span>':''}</div><div style="font-size:.66rem;color:var(--muted);">${r.no}</div></div></div>`;
-        }).join(''):'<div style="text-align:center;color:var(--sub);font-size:.75rem;">No major vrat days flagged this month.</div>')+
-        `<div style="text-align:center;color:var(--sub);font-size:.6rem;margin-top:8px;">Festival dates & samagri → Puja Tithi tool.</div>`;
-    }
-  }catch(e){}
+    mel.innerHTML='<div style="font-size:.6rem;color:var(--muted);text-align:center;margin-bottom:10px;">'+monN[mo]+' '+y+' · vrat & parva (New Delhi)</div>'+
+      (rows.length?rows.map(r=>{
+        const isToday=isThisMonth&&r.dd===today, isPast=isThisMonth&&r.dd<today;
+        const dow=wd[new Date(y,mo,r.dd).getDay()];
+        return '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:7px;border-radius:14px;border:1px solid '+(isToday?'var(--gold)':'var(--bdr2)')+';background:rgba(255,255,255,.03);'+(isPast?'opacity:.45;':'')+'"><div style="text-align:center;min-width:28px;"><div style="font-family:\'Cinzel\',serif;font-size:1.05rem;font-weight:800;color:var(--g3);line-height:1;">'+r.dd+'</div><div style="font-size:.55rem;color:var(--sub);">'+dow+'</div></div><div style="font-size:1.3rem;">'+r.ic+'</div><div style="flex:1;"><div style="font-family:\'Cinzel\',serif;font-size:.84rem;color:var(--g2c);">'+r.ti+(isToday?' · <span style="color:var(--gold);">TODAY</span>':'')+'</div><div style="font-size:.66rem;color:var(--muted);">'+r.no+'</div></div></div>';
+      }).join(''):'<div style="text-align:center;color:var(--sub);font-size:.75rem;">No major vrat days flagged this month.</div>')+
+      '<div style="text-align:center;color:var(--sub);font-size:.6rem;margin-top:8px;">Festival dates &amp; samagri → Puja Tithi tool.</div>';
+    if(typeof mountTranslateBar==='function'){try{mountTranslateBar('panch-tr-bar','panch-month');resetTranslation('panch-month');}catch(e){}}
+  },30);
 }
 
 /* ══ FAQ ══ */
