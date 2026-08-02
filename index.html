@@ -8109,8 +8109,57 @@ async function genKundli(){
       }
     }
 
-    const manglik=seed%3===0,kaal=seed%5===0,pitra=seed%4===0,sade=seed%7===0;
-    document.getElementById('k-doshas').innerHTML=[['Manglik Dosha',manglik?'Yes — Mars in 7th':'No — Clean Chart',manglik],['Kaal Sarp Dosha',kaal?'Yes — Partial (Ananta)':'No',kaal],['Pitra Dosha',pitra?'Yes — Mild':'No',pitra],['Sade Sati',sade?'Active — 2nd Phase':'Not Active Currently',sade],['Grah Dosha','No Major Dosha',false]].map(([k,val,bad])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8px"><span style="color:var(--muted);font-size:.8rem;">${k}</span><span style="${bad?'color:#f87171':'color:#4ade80'};font-size:.76rem;background:${bad?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};padding:2px 9px;border-radius:100px;border:1px solid ${bad?'rgba(220,38,38,.2)':'rgba(22,163,74,.2)'};">${val}</span></div>`).join('');
+    /* ═══ DOSHAS — computed from the REAL chart ═══
+       These used to be `seed % 3`, `seed % 5` … i.e. arithmetic on the birth DATE,
+       not the sky. That contradicted the dedicated Mangal/Kaal Sarp/Sade Sati
+       tools, which have always computed properly — the same person could be told
+       "No — Clean Chart" here and "Manglik (strong indication)" there. Now both
+       use the same real positions. */
+    const _P=realPos.positions;
+    const _sign=x=>Math.floor(_P[x]/30);
+
+    // Manglik: Mars in 1/2/4/7/8/12 from the Lagna or from the Moon.
+    const _marsL=(_sign('Mars')-li+12)%12+1, _marsM=(_sign('Mars')-ri+12)%12+1;
+    const _mBad=[1,2,4,7,8,12];
+    const _mL=_mBad.includes(_marsL), _mM=_mBad.includes(_marsM);
+    const manglik=_mL||_mM;
+    const manglikTxt=(_mL&&_mM)?'Yes — Mars in house '+_marsL+' from Lagna & '+_marsM+' from Moon'
+                     :manglik?'Partial — Mars in house '+(_mL?_marsL+' from Lagna':_marsM+' from Moon')
+                     :'No — Mars in house '+_marsL+' from Lagna';
+
+    // Kaal Sarp: all seven classical planets on one side of the Rahu–Ketu axis.
+    const _rahu=_P.Rahu;
+    const _arc=x=>((_P[x]-_rahu)+360)%360;
+    const _seven=['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'];
+    const _inside=_seven.filter(p=>_arc(p)<180).length;
+    const kaal=_inside===7||_inside===0;
+    const _partial=!kaal&&(_inside>=6||_inside<=1);
+    const kaalTxt=kaal?'Yes — all 7 planets on one side of the Rahu–Ketu axis'
+                 :_partial?'Partial (Anshik) — '+Math.min(_inside,7-_inside)+' planet outside the axis'
+                 :'No — planets spread on both sides ('+_inside+' vs '+(7-_inside)+')';
+
+    // Sade Sati: Saturn transiting the 12th, 1st or 2nd from the natal Moon, now.
+    const _satNow=(function(){ try{ const n=new Date();
+      return Math.floor(computeRealPositions(n.getFullYear(),n.getMonth()+1,n.getDate(),12,0,5.5).positions.Saturn/30);
+    }catch(e){ return null; } })();
+    const _rel=_satNow==null?null:(_satNow-ri+12)%12;
+    const sade=_rel===11||_rel===0||_rel===1;
+    const sadeTxt=_rel==null?'Could not compute'
+                 :_rel===11?'Active — Rising phase (Saturn in 12th from Moon)'
+                 :_rel===0?'Active — Peak phase (Saturn over your Moon)'
+                 :_rel===1?'Active — Setting phase (Saturn in 2nd from Moon)'
+                 :(_rel===3||_rel===7)?'Not Sade Sati — Dhaiya (small panoti) running'
+                 :'Not active — Saturn is '+(_rel+1)+' signs from your Moon';
+
+    // Pitra Dosha: the classical indicator is Sun afflicted by Rahu/Ketu/Saturn
+    // in the 9th house (house of the father and ancestors).
+    const _sunH=(_sign('Sun')-li+12)%12+1;
+    const _ninth=(li+8)%12;
+    const _afflict=['Rahu','Ketu','Saturn'].filter(p=>_sign(p)===_sign('Sun')||_sign(p)===_ninth);
+    const pitra=(_sunH===9&&_afflict.length>0)||(_sign('Sun')===_ninth&&_afflict.length>0);
+    const pitraTxt=pitra?'Indicated — Sun with '+_afflict.join('/')+' near the 9th house'
+                   :'No — Sun in house '+_sunH+', 9th house clear';
+    document.getElementById('k-doshas').innerHTML=[['Manglik Dosha',manglikTxt,manglik],['Kaal Sarp Dosha',kaalTxt,kaal||_partial],['Pitra Dosha',pitraTxt,pitra],['Sade Sati',sadeTxt,sade]].map(([k,val,bad])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8px"><span style="color:var(--muted);font-size:.8rem;">${k}</span><span style="${bad?'color:#f87171':'color:#4ade80'};font-size:.76rem;background:${bad?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};padding:2px 9px;border-radius:100px;border:1px solid ${bad?'rgba(220,38,38,.2)':'rgba(22,163,74,.2)'};">${val}</span></div>`).join('');
     document.getElementById('k-rem').innerHTML=localizedRemedies(v('kl')||'English',ln,rp,day,col);
     document.getElementById('k-dasha').innerHTML=_vseq.map((seg,i)=>{const s=Math.floor(seg.s),e=Math.floor(seg.e);const nowY=new Date().getFullYear()+new Date().getMonth()/12;const active=nowY>=seg.s&&nowY<seg.e;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;${active?'color:var(--g2c);font-weight:600':''}"><span style="color:${active?'var(--g2c)':'var(--muted)'};">${seg.p} Mahadasha${i===0?' (balance)':''}${active?' ← Current':''}</span><span style="color:${active?'var(--g2c)':'var(--text)'};">${s}–${e} (${seg.yrs.toFixed(i===0?1:0)} yrs)</span></div>`;}).join('');
     const lang=v('kl')||'English',gender=v('kg')||'person',place=v('kp');
