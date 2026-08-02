@@ -1649,6 +1649,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
           <div class="d-nav-i on" onclick="showPanel('home')"><span class="di">🏠</span> Dashboard</div>
           <div class="d-nav-i" onclick="showPanel('readings')"><span class="di">📜</span> My Readings</div>
           <div class="d-nav-i" onclick="showPanel('profile')"><span class="di">👤</span> Edit Profile</div>
+          <div class="d-nav-i" onclick="showPanel('refer')"><span class="di">🎁</span> Refer &amp; Earn</div>
           <div class="d-nav-i" onclick="showPanel('plans')"><span class="di">💎</span> Subscription</div>
           <div class="d-nav-i" onclick="showPanel('security')"><span class="di">🔒</span> Security</div>
           <div class="d-nav-i" style="border-top:1px solid var(--bdr);" onclick="showSO()"><span class="di">🚪</span> Sign Out</div>
@@ -1685,6 +1686,27 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
           <div><div class="dpt">My Readings & Reports</div><div class="dps">All saved Kundlis, palm readings, and AI consultations.</div></div>
           <div class="dc"><div class="dct">📚 Saved Readings</div><div id="rd-list"></div></div>
         </div>
+        <!-- REFER & EARN PANEL -->
+        <div class="dpnl" id="dp-refer">
+          <div><div class="dpt">Refer &amp; Earn</div><div class="dps">Invite friends — unlock every tool, free.</div></div>
+          <div id="ref-bonus"></div>
+          <div class="dc">
+            <div style="text-align:center;padding:6px 0 2px;">
+              <div style="font-size:.6rem;letter-spacing:.16em;color:var(--sub);text-transform:uppercase;margin-bottom:8px;">Your Code</div>
+              <div id="ref-code" style="font-family:'Cinzel',serif;font-size:2rem;font-weight:800;letter-spacing:.28em;color:var(--g3);">…</div>
+              <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+                <button class="gbtn" style="width:auto;padding:11px 20px;" onclick="shareReferral()">📲 Invite Friends</button>
+                <button class="gbtn" style="width:auto;padding:11px 20px;background:transparent;border:1px solid rgba(var(--gold-rgb),.45);color:var(--g2c);box-shadow:none;" onclick="copyReferral()">Copy code</button>
+              </div>
+              <div style="font-size:.66rem;color:var(--sub);margin-top:12px;line-height:1.6;">
+                A friend counts once they sign up <strong>and</strong> take their first reading.
+              </div>
+            </div>
+          </div>
+          <div class="dc"><div class="dct">🎯 Your Progress</div><div id="ref-progress"></div></div>
+          <div class="dc"><div class="dct">🏆 Rewards</div><div id="ref-ladder"></div></div>
+        </div>
+
         <!-- PROFILE PANEL -->
         <div class="dpnl" id="dp-profile">
           <div><div class="dpt">Edit Profile</div><div class="dps">Update your details for accurate readings.</div></div>
@@ -2909,6 +2931,7 @@ async function gateSubmit(){
       }catch(e){console.warn('Gate profile create:',e&&e.message);}
       try{localStorage.setItem('ah_seen_signup','1');}catch(e){}
       gaEvent('sign_up',{method:'gate'});
+      try{setTimeout(redeemPendingRef,600);}catch(e){}
     }else{
       const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
       if(error){
@@ -3095,6 +3118,137 @@ function resetTeasersIn(modalId){
     }
   }
 }
+/* ═══════════ REFERRALS ═══════════
+   Shares carry astrohand.in/?ref=CODE. We stash the code the moment someone
+   lands, then redeem it as soon as they have an account — the visitor never
+   has to type anything. Milestones: 3 friends → 1 day, 5 → +3, 10 → +7,
+   25 → +30. All grants happen server-side (see the Supabase migration). */
+const REF_MILESTONES=[[3,1],[5,3],[10,7],[25,30]];
+
+function captureRefCode(){
+  try{
+    const c=(new URLSearchParams(location.search).get('ref')||'').trim().toUpperCase();
+    if(c)localStorage.setItem('ah_ref_code',c);
+  }catch(e){}
+}
+function pendingRefCode(){ try{ return localStorage.getItem('ah_ref_code')||''; }catch(e){ return ''; } }
+
+/* Redeem a stashed code once the user is signed in. Never blocks anything —
+   a bad or already-used code just clears quietly. */
+async function redeemPendingRef(){
+  const code=pendingRefCode();
+  if(!code||!CU)return;
+  const sb=getSB(); if(!sb)return;
+  try{
+    const {data}=await sb.rpc('apply_referral_code',{p_code:code});
+    if(data==='OK'){ toast('🎁 Referral code applied — your friend gets credit once you take a reading!','ok'); }
+    // Clear on any definitive answer so we don't retry forever.
+    if(['OK','SELF','ALREADY_REFERRED','INVALID_CODE'].indexOf(data)>-1){
+      try{localStorage.removeItem('ah_ref_code');}catch(e){}
+    }
+  }catch(e){}
+}
+
+/* The qualifying action: the user got a real reading. Fires once per session. */
+let _refQualified=false;
+async function qualifyReferral(){
+  if(_refQualified||!CU)return;
+  _refQualified=true;
+  const sb=getSB(); if(!sb)return;
+  try{ await sb.rpc('qualify_referral'); }catch(e){}
+}
+
+function refCode(){ return (CU&&CU.referral_code)||''; }
+function refShareText(){
+  return '🔮 AstroHand pe apni asli Janam Kundli FREE banao — Vedic astrology + AI.\n\n'
+    +'Mera code: '+refCode()+'\n'
+    +'https://astrohand.in/?ref='+refCode();
+}
+function shareReferral(){
+  const t=refShareText();
+  if(navigator.share){ navigator.share({title:'AstroHand',text:t}).catch(()=>{}); }
+  else{ window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank'); }
+}
+function copyReferral(){
+  try{ navigator.clipboard.writeText(refCode()); toast('Code copied ✦','ok'); }catch(e){}
+}
+function bonusDaysLeft(){
+  if(!CU||!CU.bonus_until)return 0;
+  const ms=new Date(CU.bonus_until)-new Date();
+  return ms>0?Math.ceil(ms/86400000):0;
+}
+function hasBonus(){ return bonusDaysLeft()>0; }
+
+async function renderReferPanel(){
+  const codeEl=document.getElementById('ref-code');
+  if(!codeEl)return;
+  if(!CU){ codeEl.textContent='—'; return; }
+  const sb=getSB();
+  // Make sure this account actually has a code before showing the panel.
+  if(!refCode()&&sb){
+    try{ const {data}=await sb.rpc('ensure_referral_code'); if(data)CU.referral_code=data; }catch(e){}
+  }
+  codeEl.textContent=refCode()||'—';
+
+  let qualified=0,pending=0;
+  if(sb&&CU.id){
+    try{
+      const {data}=await sb.from('referrals').select('status').eq('referrer_id',CU.id);
+      (data||[]).forEach(r=>{ r.status==='qualified'?qualified++:pending++; });
+    }catch(e){}
+  }
+
+  const bEl=document.getElementById('ref-bonus');
+  if(bEl){
+    bEl.innerHTML=hasBonus()
+      ? '<div class="dc" style="border-color:rgba(22,163,74,.4);background:rgba(22,163,74,.08);text-align:center;">'
+        +'<div style="font-size:1.6rem;">🎉</div>'
+        +'<div style="font-family:\'Cinzel\',serif;font-size:1rem;color:#4ade80;font-weight:800;margin-top:4px;">Unlimited access is ON</div>'
+        +'<div style="font-size:.78rem;color:var(--text);margin-top:3px;">'+bonusDaysLeft()+' day'+(bonusDaysLeft()===1?'':'s')+' left — every tool unlocked.</div></div>'
+      : '';
+  }
+
+  let next=null;
+  for(let i=0;i<REF_MILESTONES.length;i++){ if(qualified<REF_MILESTONES[i][0]){ next=REF_MILESTONES[i]; break; } }
+
+  const pEl=document.getElementById('ref-progress');
+  if(pEl){
+    let h='<div style="display:flex;justify-content:space-around;text-align:center;padding:4px 0 10px;">'
+      +'<div><div style="font-family:\'Cinzel\',serif;font-size:1.7rem;font-weight:800;color:var(--g3);">'+qualified+'</div>'
+      +'<div style="font-size:.58rem;letter-spacing:.12em;color:var(--sub);">JOINED</div></div>'
+      +'<div><div style="font-family:\'Cinzel\',serif;font-size:1.7rem;font-weight:800;color:var(--muted);">'+pending+'</div>'
+      +'<div style="font-size:.58rem;letter-spacing:.12em;color:var(--sub);">SIGNED UP</div></div></div>';
+    if(pending>0){
+      h+='<div style="font-size:.68rem;color:var(--sub);text-align:center;margin-bottom:10px;line-height:1.5;">'
+        +pending+' friend'+(pending===1?'':'s')+' signed up but haven\'t taken a reading yet — nudge them!</div>';
+    }
+    if(next){
+      const pct=Math.min(100,Math.round((qualified/next[0])*100));
+      h+='<div style="height:9px;background:rgba(var(--gold-rgb),.12);border-radius:5px;overflow:hidden;">'
+        +'<div style="height:100%;width:'+pct+'%;background:var(--gold);"></div></div>'
+        +'<div style="text-align:center;font-size:.8rem;color:var(--g2c);font-weight:700;margin-top:8px;">'
+        +(next[0]-qualified)+' more friend'+((next[0]-qualified)===1?'':'s')+' → '+next[1]+' day'+(next[1]===1?'':'s')+' unlimited free</div>';
+    }else{
+      h+='<div style="text-align:center;font-size:.8rem;color:var(--g2c);font-weight:700;">🏆 Every milestone unlocked — thank you!</div>';
+    }
+    pEl.innerHTML=h;
+  }
+
+  const lEl=document.getElementById('ref-ladder');
+  if(lEl){
+    lEl.innerHTML=REF_MILESTONES.map(m=>{
+      const done=qualified>=m[0];
+      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 13px;margin-bottom:7px;border-radius:12px;'
+        +'border:1px solid '+(done?'rgba(22,163,74,.4)':'var(--bdr2)')+';background:'+(done?'rgba(22,163,74,.08)':'rgba(255,255,255,.03)')+';">'
+        +'<span>'+(done?'✅':'🔒')+'</span>'
+        +'<span style="flex:1;font-size:.82rem;color:'+(done?'#4ade80':'var(--text)')+';font-weight:600;">'+m[0]+' friends</span>'
+        +'<span style="font-size:.8rem;color:'+(done?'#4ade80':'var(--g2c)')+';font-weight:700;">'+m[1]+' day'+(m[1]===1?'':'s')+' free</span></div>';
+    }).join('')
+      +'<div style="font-size:.62rem;color:var(--sub);text-align:center;margin-top:10px;line-height:1.6;">'
+      +'Rewards stack — all four milestones add up to 41 days. Self-referrals and duplicate accounts don\'t count.</div>';
+  }
+}
+
 function isEmail(e){
   e=String(e||'').trim().toLowerCase();
   // Tighter than before: the TLD must be 2–24 letters (blocks a@b.c / asdf@asdf),
@@ -3162,7 +3316,8 @@ function setBtnLoading(id,isLoading,loadingText,normalText){
 /* ── Premium gating: free vs paid feature access ── */
 function isPaid(){
   // Silver, Gold, and VIP are all paid tiers. Only 'free' (the arrival taste) is unpaid.
-  return !!(CU&&(CU.plan==='silver'||CU.plan==='gold'||CU.plan==='vip'));
+  // A live referral bonus unlocks everything too, exactly like VIP.
+  return !!(CU&&(CU.plan==='silver'||CU.plan==='gold'||CU.plan==='vip'))||hasBonus();
 }
 // One-time ₹99 "just this report" purchases add report_credits (see backend +
 // Supabase). A credit unlocks the full reading + one PDF, no subscription.
@@ -3182,11 +3337,11 @@ function spendReportCredit(){
 }
 function isGoldOrVip(){
   // Gold and VIP only — used for features above the Silver tier (e.g. PDF export).
-  return !!(CU&&(CU.plan==='gold'||CU.plan==='vip'));
+  return !!(CU&&(CU.plan==='gold'||CU.plan==='vip'))||hasBonus();
 }
 function isVip(){
   // VIP exclusive — the very top tier.
-  return !!(CU&&CU.plan==='vip');
+  return !!(CU&&CU.plan==='vip')||hasBonus();
 }
 // Prompt tuned for the tier a feature needs (so the unlock card points at the right plan).
 function upgradePromptGold(){
@@ -3226,7 +3381,7 @@ async function refreshPlanFromCloud(){
   try{
     const {data}=await sb.auth.getSession();
     if(!data||!data.session)return; // no verified session — keep the local view
-    const {data:profile}=await sb.from('profiles').select('plan,chat_n,chat_d,pdf_n,pdf_d,plan_since,plan_until,report_credits').eq('id',data.session.user.id).maybeSingle();
+    const {data:profile}=await sb.from('profiles').select('plan,chat_n,chat_d,pdf_n,pdf_d,plan_since,plan_until,report_credits,referral_code,bonus_until,ref_milestone').eq('id',data.session.user.id).maybeSingle();
     if(profile&&profile.plan&&CU&&profile.plan!==CU.plan){
       CU.plan=profile.plan;
       DB.setU(CU.em,CU);
@@ -3617,6 +3772,7 @@ function showPanel(p){
   if(p==='readings'&&typeof renderReadings==='function'){renderReadings();if(typeof syncReadingsFromCloud==='function')syncReadingsFromCloud();}
   if(p==='profile'&&typeof fillProfile==='function')fillProfile();
   if(p==='plans'&&typeof renderPlans==='function')renderPlans();
+  if(p==='refer'&&typeof renderReferPanel==='function')renderReferPanel();
   if(p==='home'&&typeof renderHome==='function')renderHome();
 }
 
@@ -4326,6 +4482,7 @@ async function doSignup(){
       setBtnLoading('signup-btn',false);
       toast('Welcome to AstroHand, '+fn+'! ✨','ok');
       gaEvent('sign_up',{method:'email'}); // this path never reported sign-ups to GA4
+      try{setTimeout(redeemPendingRef,600);}catch(e){}
       enterDash();
       return;
     }catch(err){
@@ -4622,6 +4779,8 @@ async function handleOAuthSignIn(session){
   // instead of the dashboard — otherwise the user loses their place entirely.
   let pendingTool='';
   try{pendingTool=sessionStorage.getItem('ah_gate_tool')||'';}catch(e){}
+  // New Google accounts arrive here too — redeem any referral code they landed with.
+  try{setTimeout(redeemPendingRef,600);}catch(e){}
   if(pendingTool){
     updNav();
     resumeToolAfterOAuth();
@@ -5296,6 +5455,7 @@ window.addEventListener('DOMContentLoaded',async function(){
   // Don't fall back to home if we're mid password-reset — the reset screen must stay put.
   if(!CU&&!window._recoveryActive)router('home');
   // Deep-link into a specific free tool if the URL carries ?tool=<slug>
+  try{captureRefCode();}catch(e){}
   try{openToolFromURL();}catch(e){console.warn('Tool deep-link:',e);}
 });
 
@@ -7971,7 +8131,8 @@ async function genKundli(){
       predLock.innerHTML=lockCardHTML('Your Full Prediction is Ready','Unlock your complete 360-word personalized reading covering soul purpose, love & marriage destiny, career trajectory, and specific remedies — written just for your chart.');
     }
     document.getElementById('k-cnt').style.display='block';
-    gaEvent('kundli_generated',{});
+    try{qualifyReferral();}catch(e){}
+  gaEvent('kundli_generated',{});
     startTeaser('k-res','Your Kundli is locked','Unlock your full birth chart to keep it open — all three charts, planetary positions, doshas, dashas, remedies and your complete personalised reading, downloadable any time.');
   }catch(err){
     // Any failure: stop the loader, show a clear retryable error, never leave the user stuck
