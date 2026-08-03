@@ -3471,6 +3471,13 @@ async function callAI(systemPrompt,messages,maxTokens,opts){
     });
     if(!r.ok){
       const e=await r.json().catch(()=>({}));
+      // The AI provider rejects short bursts with a 429 that clears in seconds.
+      // One quiet retry turns a spurious failure into a reading. translateLongText
+      // does its own waiting, so it opts out with opts.noRetry.
+      if(r.status===429&&!opts.noRetry){
+        await new Promise(res=>setTimeout(res,4000));
+        return callAI(systemPrompt,messages,maxTokens,Object.assign({},opts,{noRetry:true}));
+      }
       const err=new Error(e.error||'HTTP '+r.status);
       err.status=r.status;                 // 429 is retryable; the rest are not
       throw err;
@@ -4166,7 +4173,7 @@ async function translateChunk(chunk,lang){
   let lastErr=null;
   for(let attempt=0;attempt<3;attempt++){
     try{
-      const r=await callAI(sys,[{role:'user',content:chunk}],budget,{temperature:0.2,meta:true});
+      const r=await callAI(sys,[{role:'user',content:chunk}],budget,{temperature:0.2,meta:true,noRetry:true});
       if(r.text&&r.text.trim())return r.text.trim();
       lastErr=new Error('empty');
     }catch(e){
@@ -5798,6 +5805,31 @@ function computeRealPositions(year,month,day,hour,minute,utcOffsetHours){
 const SIGN_CATEGORY={Aries:'movable',Cancer:'movable',Libra:'movable',Capricorn:'movable',
   Taurus:'fixed',Leo:'fixed',Scorpio:'fixed',Aquarius:'fixed',
   Gemini:'dual',Virgo:'dual',Sagittarius:'dual',Pisces:'dual'};
+
+/* Divisional (varga) charts, classical Parashari rules. Each divides a sign
+   into equal parts and counts the result from a starting sign that depends on
+   the sign nature — which is why they cannot share one formula. Mirrors the
+   Dart versions in the app so both print the same chart. */
+function vargaPart(lon,divisions){return Math.floor((lon%30)/(30/divisions));}
+// D3 Drekkana — 10° each: 1st third stays, 2nd counts the 5th, 3rd the 9th.
+function drekkanaSignIndex(lon){
+  const s=Math.floor(lon/30);
+  return (s+[0,4,8][vargaPart(lon,3)])%12;
+}
+// D7 Saptamsa — odd signs count from themselves, even signs from the 7th.
+function saptamsaSignIndex(lon){
+  const s=Math.floor(lon/30);
+  return ((s%2===0?s:(s+6)%12)+vargaPart(lon,7))%12;
+}
+// D10 Dasamsa — odd signs count from themselves, even signs from the 9th.
+function dasamsaSignIndex(lon){
+  const s=Math.floor(lon/30);
+  return ((s%2===0?s:(s+8)%12)+vargaPart(lon,10))%12;
+}
+// D12 Dwadasamsa — always counted from the sign itself.
+function dwadasamsaSignIndex(lon){
+  return (Math.floor(lon/30)+vargaPart(lon,12))%12;
+}
 
 function navamsaSignIndex(siderealLongitude){
   const signIdx = Math.floor(siderealLongitude/30);
@@ -7965,11 +7997,15 @@ async function genKundli(){
       {s:'☋',n:'Ketu',lon:realPos.positions.Ketu},{s:'⛢',n:'Uranus',lon:realPos.positions.Uranus},
       {s:'♆',n:'Neptune',lon:realPos.positions.Neptune}
     ].map(p=>({...p, sg:RASHIS[Math.floor(p.lon/30)], dg:(Math.floor(p.lon%30))+"°"+Math.round((p.lon%1)*60)+"'"}));
+    // exportKundliPDF runs later, in its own scope, and could never see this
+    // block-scoped const — its `typeof REAL_PLANETS` guard always failed, so
+    // the planet analysis silently never printed. Hand the data over.
+    window.LAST_KUNDLI={planets:REAL_PLANETS,lagnaIdx:li,moonIdx:ri};
 
     // Render North Indian Kundli chart with computed Lagna + REAL planetary positions
     const kcWrap=document.getElementById('kundli-chart-wrap');
     if(kcWrap){
-      const planetSigns=REAL_PLANETS.map(p=>({glyph:p.s,signIdx:RASHIS.indexOf(p.sg)})).filter(p=>p.signIdx>=0);
+      const planetSigns=RP.map(p=>({glyph:p.s,signIdx:RASHIS.indexOf(p.sg)})).filter(p=>p.signIdx>=0);
       kcWrap.innerHTML=northIndianChartSVG(li,ri,planetSigns);
     }
 
@@ -7981,7 +8017,7 @@ async function genKundli(){
        commonly-used simplification, not a fabricated precise ascendant. */
     const d9Wrap=document.getElementById('navamsa-chart-wrap');
     if(d9Wrap){
-      const d9PlanetSigns=REAL_PLANETS.map(p=>({glyph:p.s,signIdx:navamsaSignIndex(p.lon)}));
+      const d9PlanetSigns=RP.map(p=>({glyph:p.s,signIdx:navamsaSignIndex(p.lon)}));
       d9Wrap.innerHTML=northIndianChartSVG(li,ri,d9PlanetSigns);
     }
 
@@ -7994,7 +8030,7 @@ async function genKundli(){
     document.getElementById('k-rdob').textContent='Born: '+dt.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+(v('kp')?' · '+v('kp'):'');
     document.getElementById('k-basics').innerHTML=[['Ascendant (Lagna)',RASHIS[li]+' '+RSYM[li]],['Moon Sign (Rashi)',RASHIS[ri]+' '+RSYM[ri]],['Sun Sign (Vedic)',RASHIS[vsiV]+' '+RSYM[vsiV]],['Nakshatra',NAK[ni]],['Nakshatra Pada',(Math.floor((realPos.positions.Moon%(360/27))/((360/27)/4))+1)+'th Pada'],['Yoga',YOGAS[(Math.floor(yr/100)+dy)%10]]].map(([k,val])=>`<div><span class="kk">${k}</span><span class="kv">${val}</span></div>`).join('');
     document.getElementById('k-lucky').innerHTML=[['Lucky Number',lnum],['Lucky Color',col],['Lucky Day',day],['Lucky Gemstone',ln],['Ruling Planet',rp],['Element',['Fire','Earth','Air','Water'][ri%4]]].map(([k,val])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;"><span style="color:var(--muted);">${k}</span><span style="color:var(--text);font-weight:500;">${val}</span></div>`).join('');
-    document.getElementById('k-planets').innerHTML=REAL_PLANETS.map(p=>{
+    document.getElementById('k-planets').innerHTML=RP.map(p=>{
       const dig=planetDignity(p.n,p.sg);
       const note=planetSignNote(p.n,p.sg);
       const digColor=dig==='Exalted'?'#4ade80':dig==='Debilitated'?'#f87171':dig==='Own Sign'?'#e8c46a':'var(--sub)';
@@ -9079,16 +9115,76 @@ function exportKundliPDF(){
   // so parse by <br> and strip the bullet — reading <li> would miss them entirely.
   const remEl=document.getElementById('k-rem');
   const remItems=remEl?(remEl.innerHTML.split(/<br\s*\/?>/i).map(s=>s.replace(/<[^>]*>/g,'').replace(/^[•\-\s]+/,'').trim()).filter(Boolean)):[];
-  const chartSVG=(document.getElementById('kundli-chart-wrap')||{}).innerHTML||'';
-  const navamsaSVG=(document.getElementById('navamsa-chart-wrap')||{}).innerHTML||'';
+  // Whatever genKundli last computed. Empty means no chart has been generated
+  // yet, and the guards below skip those sections rather than print blanks.
+  const LK=(window.LAST_KUNDLI||{});
+  const RP=LK.planets||[];
+  // Draw these from the computed data rather than scraping the page: closing or
+  // reopening the tool empties those wrappers, and the report then silently
+  // printed with no birth chart at all.
+  const d1Signs=RP.map(p=>({glyph:p.s,signIdx:RASHIS.indexOf(p.sg)})).filter(p=>p.signIdx>=0);
+  const chartSVG=RP.length?northIndianChartSVG(LK.lagnaIdx,LK.moonIdx,d1Signs):((document.getElementById('kundli-chart-wrap')||{}).innerHTML||'');
+  const navamsaSVG=RP.length?northIndianChartSVG(LK.lagnaIdx,LK.moonIdx,RP.map(p=>({glyph:p.s,signIdx:navamsaSignIndex(p.lon)}))):((document.getElementById('navamsa-chart-wrap')||{}).innerHTML||'');
 
-  // Full planet analysis (sign, dignity, note) — computed fresh here from REAL_PLANETS
+  /* Every divisional chart the report prints, drawn from the same real
+     longitudes as the on-screen chart. The Chandra chart re-reads the D1
+     placements from the Moon, which is how emotional life is judged. */
+  let vargaChartsHTML='', houseTableHTML='', antarTableHTML='';
+  if(typeof RP!=='undefined'&&RP.length){
+    // The exact indices genKundli used, so the printed charts match the screen.
+    const li2=LK.lagnaIdx!=null?LK.lagnaIdx:Math.floor((RP[0].lon||0)/30);
+    const moonIdx=LK.moonIdx!=null?LK.moonIdx:0;
+    const build=(fn)=>RP.map(p=>({glyph:p.s,signIdx:fn(p.lon)}));
+    const d1=RP.map(p=>({glyph:p.s,signIdx:RASHIS.indexOf(p.sg)})).filter(p=>p.signIdx>=0);
+    const extra=[
+      ['Chandra Chart','The same planets read from the Moon — the emotional life',moonIdx,d1],
+      ['Dasamsa (D10)','Career, standing and action in the world',li2,build(dasamsaSignIndex)],
+      ['Drekkana (D3)','Siblings, courage and self-effort',li2,build(drekkanaSignIndex)],
+      ['Saptamsa (D7)','Children and creative continuation',li2,build(saptamsaSignIndex)],
+      ['Dwadasamsa (D12)','Parents and inherited nature',li2,build(dwadasamsaSignIndex)]
+    ];
+    vargaChartsHTML=extra.map(([title,sub,lag,signs])=>
+      `<div class="rpt-varga"><div class="rpt-chart">${northIndianChartSVG(lag,moonIdx,signs)}</div>`+
+      `<div class="rpt-varga-t">${esc(title)}</div><div class="rpt-varga-s">${esc(sub)}</div></div>`).join('');
+
+    /* House-by-house table — whole-sign houses counted from the Lagna. */
+    const HOUSE_MEANING=[
+      'Self, body, vitality, how you meet the world','Wealth, family, speech, what you value',
+      'Courage, siblings, effort, short journeys','Home, mother, land, inner peace',
+      'Intelligence, children, creativity, past merit','Obstacles, debts, health, service',
+      'Marriage, partnership, contracts, the other','Longevity, upheaval, inheritance, the hidden',
+      'Fortune, dharma, father, higher learning','Career, status, action in the world',
+      'Gains, networks, elder siblings, fulfilment','Loss, expense, foreign lands, liberation'];
+    const SIGN_LORD=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+    houseTableHTML='<table class="rpt-tbl"><tr><th>#</th><th>Sign</th><th>Lord</th><th>Planets</th><th>What it governs</th></tr>'+
+      Array.from({length:12},(_,i)=>{
+        const sIdx=(li2+i)%12;
+        const here=RP.filter(p=>RASHIS.indexOf(p.sg)===sIdx).map(p=>p.n).join(', ')||'—';
+        return `<tr><td>${i+1}</td><td>${esc(RASHIS[sIdx])}</td><td>${esc(SIGN_LORD[sIdx])}</td><td>${esc(here)}</td><td>${esc(HOUSE_MEANING[i])}</td></tr>`;
+      }).join('')+'</table>';
+
+    /* Antardasha — the sub-periods inside whichever Mahadasha is running. */
+    const DORD=['Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury'];
+    const DYRS={Ketu:7,Venus:20,Sun:6,Moon:10,Mars:7,Rahu:18,Jupiter:16,Saturn:19,Mercury:17};
+    const dRows=(document.getElementById('k-dasha')||{}).textContent||'';
+    const running=DORD.find(p=>new RegExp(p+"[^A-Za-z]*[^]{0,40}(running|current|now)","i").test(dRows));
+    const mahaLord=running||DORD[0];
+    let idx=DORD.indexOf(mahaLord); if(idx<0)idx=0;
+    const total=DYRS[mahaLord];
+    antarTableHTML='<table class="rpt-tbl"><tr><th>Sub-period</th><th>Length</th></tr>'+
+      DORD.map((_,k)=>{const p=DORD[(idx+k)%9];
+        const yrs=(total*DYRS[p]/120);
+        const months=Math.round(yrs*12);
+        return `<tr><td>${esc(mahaLord)} / ${esc(p)}</td><td>${months} months</td></tr>`;}).join('')+'</table>';
+  }
+
+  // Full planet analysis (sign, dignity, note) — computed fresh here from RP
   // (the last-generated Kundli's real data, still in scope) rather than re-parsing the
   // rendered HTML cards, so the report always reflects the precise computed positions.
   let planetAnalysisHTML='';
   let vargottamaList=[];
-  if(typeof REAL_PLANETS!=='undefined'&&REAL_PLANETS.length){
-    planetAnalysisHTML=REAL_PLANETS.map(p=>{
+  if(typeof RP!=='undefined'&&RP.length){
+    planetAnalysisHTML=RP.map(p=>{
       const dig=planetDignity(p.n,p.sg);
       const note=planetSignNote(p.n,p.sg);
       const d9sign=RASHIS[navamsaSignIndex(p.lon)];
@@ -9147,6 +9243,14 @@ body{font-family:'Inter','Noto Sans Devanagari','Noto Sans Bengali','Noto Sans T
 .rpt-sec-h{display:flex;align-items:center;gap:10px;font-family:'Cinzel',serif;font-size:1.15rem;font-weight:700;color:#9c2538;padding-bottom:8px;margin-bottom:14px;border-bottom:2px solid transparent;border-image:linear-gradient(90deg,#e8762c,#c8963c,transparent) 1;}
 .rpt-sec-icon{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#e8762c,#c8963c);display:flex;align-items:center;justify-content:center;font-size:.95rem;color:#fff;flex-shrink:0;}
 .rpt-card{background:linear-gradient(135deg,#fff8ee,#fff4e0);border:1px solid #f0d9a8;border-radius:14px;padding:18px 20px;}
+.rpt-break{break-before:page;page-break-before:always;}
+.rpt-varga-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;justify-items:center;}
+.rpt-varga{text-align:center;break-inside:avoid;}
+.rpt-varga-t{font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:#9c2538;margin-top:6px;}
+.rpt-varga-s{font-size:.68rem;color:#8a6a2a;line-height:1.4;}
+.rpt-tbl{width:100%;border-collapse:collapse;font-size:.76rem;}
+.rpt-tbl th{background:#fff4e0;color:#9c2538;font-weight:700;text-align:left;padding:6px 7px;border:1px solid #f0d9a8;}
+.rpt-tbl td{padding:5px 7px;border:1px solid #f0d9a8;color:#2a1a05;}
 .rpt-kv{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px dashed #ecd9b0;font-size:.9rem;}
 .rpt-kv:last-child{border-bottom:none;}
 .rpt-k{color:#8a6a2a;font-weight:500;}
@@ -9209,28 +9313,31 @@ body{font-family:'Inter','Noto Sans Devanagari','Noto Sans Bengali','Noto Sans T
       <div class="rpt-kv"><span class="rpt-k">${esc(L.place)}</span><span class="rpt-v">${esc(place||'—')}</span></div>
     </div></div>
   </div>
-  ${chartSVG?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">🔯</span>${esc(L.chart)}</div><div class="rpt-card"><div class="rpt-chart">${chartSVG}</div></div></div>`:''}
+  ${chartSVG?`<div class="rpt-sec rpt-break"><div class="rpt-sec-h"><span class="rpt-sec-icon">🔯</span>${esc(L.chart)}</div><div class="rpt-card"><div class="rpt-chart">${chartSVG}</div></div></div>`:''}
   ${navamsaSVG?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">💍</span>${esc(L.navamsa)}</div><div class="rpt-card"><div class="rpt-chart">${navamsaSVG}</div><p class="rpt-navamsa-note">${esc(L.navamsaNote)}</p></div></div>`:''}
-  ${ascHTML?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">🌅</span>${esc(L.ascendant)}</div><div class="rpt-card rpt-asc-card">${ascHTML}</div></div>`:''}
+  ${vargaChartsHTML?`<div class="rpt-sec rpt-break"><div class="rpt-sec-h"><span class="rpt-sec-icon">🪐</span>Divisional Charts (Varga)</div><div class="rpt-card"><p class="rpt-navamsa-note">A varga magnifies one part of life. The same planets are re-plotted by dividing each sign into equal parts, so a planet strong in the birth chart but weak in a varga promises less than it appears to.</p><div class="rpt-varga-grid">${vargaChartsHTML}</div></div></div>`:''}
+  ${houseTableHTML?`<div class="rpt-sec rpt-break"><div class="rpt-sec-h"><span class="rpt-sec-icon">🏠</span>The Twelve Houses</div><div class="rpt-card">${houseTableHTML}</div></div>`:''}
+  ${antarTableHTML?`<div class="rpt-sec rpt-break"><div class="rpt-sec-h"><span class="rpt-sec-icon">⏳</span>Antardasha — inside the running Mahadasha</div><div class="rpt-card">${antarTableHTML}</div></div>`:''}
+  ${ascHTML?`<div class="rpt-sec rpt-break"><div class="rpt-sec-h"><span class="rpt-sec-icon">🌅</span>${esc(L.ascendant)}</div><div class="rpt-card rpt-asc-card">${ascHTML}</div></div>`:''}
   <div class="rpt-sec">
     <div class="rpt-sec-h"><span class="rpt-sec-icon">🌙</span>${esc(L.basics)}</div>
     <div class="rpt-card">${rowsHTML(basics)}</div>
   </div>
-  ${planetAnalysisHTML?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">🪐</span>${esc(L.planetAnalysis)}</div><div class="rpt-planet-grid">${planetAnalysisHTML}</div>${vargottamaList.length?`<p class="rpt-vargottama-summary">${esc(L.vargottamaIntro)} ${esc(vargottamaList.join(', '))}</p>`:''}</div>`:''}
+  ${planetAnalysisHTML?`<div class="rpt-sec rpt-break"><div class="rpt-sec-h"><span class="rpt-sec-icon">🪐</span>${esc(L.planetAnalysis)}</div><div class="rpt-planet-grid">${planetAnalysisHTML}</div>${vargottamaList.length?`<p class="rpt-vargottama-summary">${esc(L.vargottamaIntro)} ${esc(vargottamaList.join(', '))}</p>`:''}</div>`:''}
   <div class="rpt-sec">
     <div class="rpt-sec-h"><span class="rpt-sec-icon">🍀</span>${esc(L.lucky)}</div>
     <div class="rpt-card">${rowsHTML(lucky)}</div>
   </div>
-  <div class="rpt-sec">
+  <div class="rpt-sec rpt-break">
     <div class="rpt-sec-h"><span class="rpt-sec-icon">⚠️</span>${esc(L.doshas)}</div>
     <div class="rpt-card">${rowsHTML(doshas)}</div>
   </div>
-  <div class="rpt-sec">
+  <div class="rpt-sec rpt-break">
     <div class="rpt-sec-h"><span class="rpt-sec-icon">🪐</span>${esc(L.dasha)}</div>
     <div class="rpt-card">${rowsHTML(dashaRows)}</div>
   </div>
-  ${pred?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">✨</span>${esc(L.prediction)}</div><div class="rpt-pred">${esc(pred)}</div></div>`:''}
-  ${remItems.length?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">🙏</span>${esc(L.remedies)}</div><div class="rpt-card">${listHTML(remItems)}</div></div>`:''}
+  ${pred?`<div class="rpt-sec rpt-break"><div class="rpt-sec-h"><span class="rpt-sec-icon">✨</span>${esc(L.prediction)}</div><div class="rpt-pred">${esc(pred)}</div></div>`:''}
+  ${remItems.length?`<div class="rpt-sec rpt-break"><div class="rpt-sec-h"><span class="rpt-sec-icon">🙏</span>${esc(L.remedies)}</div><div class="rpt-card">${listHTML(remItems)}</div></div>`:''}
   ${rudHTML?`<div class="rpt-sec"><div class="rpt-sec-h"><span class="rpt-sec-icon">🕉️</span>${esc(L.rudraksha)}</div><div class="rpt-card rpt-rud-card">${rudHTML}</div></div>`:''}
   <div class="rpt-sec">
     <div class="rpt-sec-h"><span class="rpt-sec-icon">📜</span>${esc(L.disclaimer)}</div>
