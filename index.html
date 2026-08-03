@@ -1499,21 +1499,21 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
     <div class="acard">
       <div class="alogo"><div class="alogo-icon">🤚</div><h1>AstroHand</h1></div>
       <div class="at">Welcome Back</div>
-      <div class="asub">Sign in to access your Kundli, readings, and AI consultations.</div>
-      <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="li-em" placeholder="your@email.com" autocomplete="email"></div>
-      <div class="fg"><label class="fl">Password</label>
-        <div class="pwr"><input class="fi" type="password" id="li-pw" placeholder="Your password" autocomplete="current-password">
-        <button class="eye-btn" type="button" onclick="toggleEye('li-pw',this)">👁</button></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="li-rem" style="accent-color:var(--gold);"> <span style="font-size:.73rem;color:var(--muted);">Remember me</span></label>
-        <a onclick="router('forgot')" style="color:var(--gold);font-size:.73rem;cursor:pointer;text-decoration:none;">Forgot password?</a>
-      </div>
-      <div class="gen-err" id="li-err"></div>
-      <button class="asbtn" id="login-btn" onclick="doLogin()">Sign In ✦</button>
-      <div class="adiv">or continue with</div>
-      <button class="asbtn" onclick="socialLogin('Google')" style="background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;"><span style="font-size:1.15em;">🇬</span> Continue with Google</button>
-      <p class="asw">New to AstroHand? <a onclick="router('signup')">Create free account →</a></p>
+        <div class="asub">Sign in to access your Kundli, readings, and AI consultations.</div>
+        <button class="asbtn" onclick="socialLogin('Google')" style="background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;"><span style="font-size:1.15em;">🇬</span> Continue with Google</button>
+        <div class="adiv">accounts made before Google sign-in</div>
+        <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="li-em" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="fg"><label class="fl">Password</label>
+          <div class="pwr"><input class="fi" type="password" id="li-pw" placeholder="Your password" autocomplete="current-password">
+          <button class="eye-btn" type="button" onclick="toggleEye('li-pw',this)">👁</button></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="li-rem" style="accent-color:var(--gold);"> <span style="font-size:.73rem;color:var(--muted);">Remember me</span></label>
+          <a onclick="router('forgot')" style="color:var(--gold);font-size:.73rem;cursor:pointer;text-decoration:none;">Forgot password?</a>
+        </div>
+        <div class="gen-err" id="li-err"></div>
+        <button class="asbtn" id="login-btn" onclick="doLogin()" style="background:transparent;border:1px solid rgba(var(--gold-rgb),.4);color:var(--g2c);box-shadow:none;">Sign In ✦</button>
+        <p class="asw">New to AstroHand? <a onclick="socialLogin('Google')">Continue with Google →</a></p>
     </div>
   </div>
 </div>
@@ -1523,33 +1523,11 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
     <div class="acard">
       <div class="alogo"><div class="alogo-icon">✨</div><h1>AstroHand</h1></div>
       <div class="at">Begin Your Journey</div>
-      <div class="asub">Free account. No card needed. Start reading the cosmos today.</div>
-      <button class="asbtn" onclick="socialLogin('Google')" style="background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;margin-bottom:4px;"><span style="font-size:1.15em;">🇬</span> Sign up with Google — instant</button>
-      <div class="adiv">or fill in your details</div>
-      <div class="frm2">
-        <div class="fg"><label class="fl">First Name *</label><input class="fi" type="text" id="su-fn" placeholder="Rahul" autocomplete="given-name"></div>
-        <div class="fg"><label class="fl">Last Name *</label><input class="fi" type="text" id="su-ln" placeholder="Mehta" autocomplete="family-name"></div>
-      </div>
-      <div class="fg"><label class="fl">Email Address *</label><input class="fi" type="email" id="su-em" placeholder="your@email.com" autocomplete="email"></div>
-      <div class="fg"><label class="fl">Phone (optional)</label><input class="fi" type="tel" id="su-ph" placeholder="+91 98765 43210"></div>
-      <div class="frm2">
-        <div class="fg"><label class="fl">Date of Birth *</label><input class="fi" type="date" id="su-db"></div>
-        <div class="fg"><label class="fl">Gender</label><select class="fi" id="su-gn"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select></div>
-      </div>
-      <div class="fg"><label class="fl">Password *</label>
-        <div class="pwr"><input class="fi" type="password" id="su-pw" placeholder="Min. 8 characters" autocomplete="new-password" oninput="pwStrength(this,'su-sb','su-sl')">
-        <button class="eye-btn" type="button" onclick="toggleEye('su-pw',this)">👁</button></div>
-        <div class="sbar"><div class="sbar-f" id="su-sb" style="width:0%"></div></div>
-        <div class="slbl" id="su-sl"></div>
-      </div>
-      <div class="fg"><label class="fl">Confirm Password *</label>
-        <div class="pwr"><input class="fi" type="password" id="su-cp" placeholder="Re-enter password" autocomplete="new-password">
-        <button class="eye-btn" type="button" onclick="toggleEye('su-cp',this)">👁</button></div>
-      </div>
-      <div class="chk-row"><input type="checkbox" id="su-tc"><label for="su-tc">I agree to the <a onclick="polPage('terms')">Terms & Conditions</a> and <a onclick="polPage('privacy')">Privacy Policy</a>. I understand astrology readings are for guidance only.</label></div>
-      <div class="gen-err" id="su-err"></div>
-      <button class="asbtn" id="signup-btn" onclick="doSignup()">Create Free Account ✦</button>
-      <p class="asw">Already have an account? <a onclick="router('login')">Sign in →</a></p>
+        <div class="asub">Free account. No card needed. One tap and the cosmos opens.</div>
+        <button class="asbtn" onclick="socialLogin('Google')" style="background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;"><span style="font-size:1.15em;">🇬</span> Continue with Google</button>
+        <p style="margin-top:16px;font-size:.78rem;line-height:1.65;color:var(--muted);text-align:center;">Google is the only way to create an AstroHand account. One tap, no password to invent, and it is the only method that actually confirms the address is yours.</p>
+        <p style="margin-top:14px;font-size:.72rem;line-height:1.6;color:var(--muted);text-align:center;opacity:.8;">🔒 We never share your details &nbsp;·&nbsp; ✦ Free, no card needed</p>
+        <p class="asw">Signed up before with an email &amp; password? <a onclick="router('login')">Sign in →</a></p>
     </div>
   </div>
 </div>
@@ -1837,31 +1815,31 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
     <button class="gate-x" onclick="closeGate()">✕</button>
     <div class="gate-ico">🤚</div>
     <div class="gate-t" id="gate-t">Sign in to see your reading</div>
-    <div class="gate-sub" id="gate-sub">Your chart is ready. Create a free account to open it — takes 10 seconds, and your readings are saved for next time.</div>
+      <div class="gate-sub" id="gate-sub">Your chart is ready. One tap with Google opens it — and every reading you make is saved for next time.</div>
 
-    <!-- PRIMARY path: Google — a real, verified account in one tap, no password,
-         no fake emails. Most users have Gmail, so this is the fastest + safest. -->
-    <button class="asbtn" id="gate-google-btn" onclick="gateGoogle()" style="background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;">
-      <span style="font-size:1.15em;">🇬</span> Continue with Google
-    </button>
-    <div class="adiv">or use your email</div>
+      <!-- Google is the ONLY way to create an account: one tap, no password, and
+           the only method that confirms the address really belongs to them. -->
+      <button class="asbtn" id="gate-google-btn" onclick="gateGoogle()" style="background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;">
+        <span style="font-size:1.15em;">🇬</span> Continue with Google
+      </button>
 
-    <div class="fg" id="gate-fn-wrap" style="display:none;">
-      <label class="fl">First Name *</label>
-      <input class="fi" type="text" id="gate-fn" placeholder="Your first name" autocomplete="given-name">
-    </div>
-    <div class="fg"><label class="fl">Email Address *</label>
-      <input class="fi" type="email" id="gate-em" placeholder="your@email.com" autocomplete="email" inputmode="email">
-    </div>
-    <div class="fg"><label class="fl">Password *</label>
-      <div class="pwr"><input class="fi" type="password" id="gate-pw" placeholder="At least 8 characters" autocomplete="current-password">
-      <button class="eye-btn" type="button" onclick="toggleEye('gate-pw',this)">👁</button></div>
-    </div>
+      <!-- Kept only so accounts made before the switch can still sign in. -->
+      <div id="gate-legacy" style="display:none;">
+        <div class="adiv">accounts made before Google sign-in</div>
+        <div class="fg"><label class="fl">Email Address</label>
+          <input class="fi" type="email" id="gate-em" placeholder="your@email.com" autocomplete="email" inputmode="email">
+        </div>
+        <div class="fg"><label class="fl">Password</label>
+          <div class="pwr"><input class="fi" type="password" id="gate-pw" placeholder="Your password" autocomplete="current-password">
+          <button class="eye-btn" type="button" onclick="toggleEye('gate-pw',this)">👁</button></div>
+        </div>
+        <button class="asbtn" id="gate-btn" onclick="gateSubmit()" style="background:transparent;border:1px solid rgba(var(--gold-rgb),.4);color:var(--g2c);box-shadow:none;">Sign In &amp; Show My Reading ✦</button>
+      </div>
 
-    <div class="gen-err" id="gate-err"></div>
-    <button class="asbtn" id="gate-btn" onclick="gateSubmit()" style="background:transparent;border:1px solid rgba(var(--gold-rgb),.4);color:var(--g2c);box-shadow:none;">Sign In &amp; Show My Reading ✦</button>
+      <!-- Outside the collapsible block: Google failures must be visible too. -->
+      <div class="gen-err" id="gate-err"></div>
 
-    <p class="gate-sw" id="gate-sw">New to AstroHand? <a onclick="gateMode('up')">Create a free account →</a></p>
+      <p class="gate-sw" id="gate-sw"><a onclick="gateShowEmail()">Signed up earlier with an email &amp; password?</a></p>
     <div class="gate-trust">
       <span>🔒 We never share your details</span><span>✦ Free account, no card needed</span>
     </div>
@@ -2830,7 +2808,6 @@ function needFields(pairs){
    a wall. The gate is a popup layered OVER the tool modal (z-index 3200 > .ov 2000),
    so nothing they typed is lost, and on success we re-run the exact same handler. */
 let _gateResume=null;   // the handler to re-run once they're signed in
-let _gateMode='in';     // 'in' = sign in | 'up' = create account
 
 function needLogin(resume){
   if(CU)return true;
@@ -2842,12 +2819,12 @@ function openGate(){
   const el=document.getElementById('mGate');
   if(!el)return;
   clearErr('gate-err');
-  // Returning visitors are far more likely to already have an account, so default to
-  // Sign In; brand-new visitors get the "Create a free account" link right below it.
-  gateMode(DB.getSess()||localStorage.getItem('ah_seen_signup')?'in':'up');
+  // Always opens on the Google button; the legacy email form stays folded
+  // away behind the link underneath it.
+  const lg=document.getElementById('gate-legacy');if(lg)lg.style.display='none';
+  const gsw=document.getElementById('gate-sw');if(gsw)gsw.style.display='';
   el.classList.add('open');
   document.body.style.overflow='hidden';
-  setTimeout(()=>{const f=document.getElementById(_gateMode==='up'?'gate-fn':'gate-em');if(f)try{f.focus();}catch(e){}},120);
 }
 function closeGate(){
   const el=document.getElementById('mGate');
@@ -2857,24 +2834,14 @@ function closeGate(){
   const anyOpen=document.querySelector('.ov.open');
   if(!anyOpen)document.body.style.overflow='';
 }
-function gateMode(m){
-  _gateMode=(m==='up')?'up':'in';
-  const up=_gateMode==='up';
-  const fnWrap=document.getElementById('gate-fn-wrap'),t=document.getElementById('gate-t'),
-        sub=document.getElementById('gate-sub'),btn=document.getElementById('gate-btn'),
-        sw=document.getElementById('gate-sw'),pw=document.getElementById('gate-pw');
-  if(fnWrap)fnWrap.style.display=up?'block':'none';
-  if(t)t.textContent=up?'Create your free account':'Sign in to see your reading';
-  if(sub)sub.textContent=up
-    ?'Your chart is ready. A free account opens it and saves every reading you generate — no card needed.'
-    :'Your chart is ready. Sign in to open it — your past readings are waiting too.';
-  if(btn)btn.textContent=up?'Create Account & Show My Reading ✦':'Sign In & Show My Reading ✦';
-  if(pw){pw.setAttribute('autocomplete',up?'new-password':'current-password');
-         pw.setAttribute('placeholder',up?'At least 8 characters':'Your password');}
-  if(sw)sw.innerHTML=up
-    ?'Already have an account? <a onclick="gateMode(\'in\')">Sign in instead →</a>'
-    :'New to AstroHand? <a onclick="gateMode(\'up\')">Create a free account →</a>';
+/* The email form is folded away by default. Accounts are created with Google
+   now, so this only ever serves someone who signed up before that change. */
+function gateShowEmail(){
+  const box=document.getElementById('gate-legacy'),sw=document.getElementById('gate-sw');
+  if(box)box.style.display='block';
+  if(sw)sw.style.display='none';
   clearErr('gate-err');
+  setTimeout(()=>{const f=document.getElementById('gate-em');if(f)try{f.focus();}catch(e){}},80);
 }
 /* Runs the pending tool handler once the user is in. Small delay so the gate has
    visually closed first and the result doesn't render behind a fading overlay. */
@@ -2884,89 +2851,51 @@ function gateResumeNow(){
   updNav();
   if(f)setTimeout(()=>{try{f();}catch(e){console.warn('Resume failed:',e&&e.message);}},220);
 }
+/* Sign-in only — creating an account goes through gateGoogle(). */
 async function gateSubmit(){
-  const up=_gateMode==='up';
-  const fn=(v('gate-fn')||'').trim(),em=(v('gate-em')||'').toLowerCase().trim(),pw=v('gate-pw');
+  const em=(v('gate-em')||'').toLowerCase().trim(),pw=v('gate-pw');
   clearErr('gate-err');
-  if(up&&!fn){showErr('gate-err','Please enter your first name.');return;}
   if(!isEmail(em)){showErr('gate-err','Please enter a valid email address.');return;}
-  if(up&&isDisposableEmail(em)){showErr('gate-err','Please use a real email you can access — or just tap "Continue with Google" above.');return;}
   if(!pw){showErr('gate-err','Please enter your password.');return;}
-  if(up&&pw.length<8){showErr('gate-err','Password must be at least 8 characters.');return;}
 
   const sb=getSB();
   if(!sb){showErr('gate-err','Sign-in is unavailable right now. Please refresh and try again.');return;}
-  setBtnLoading('gate-btn',true,up?'Creating account…':'Signing in…');
+  setBtnLoading('gate-btn',true,'Signing in…');
   try{
-    let user=null,session=null,profile=null;
-    if(up){
-      const {data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{first_name:fn,last_name:''}}});
-      if(error){
-        const low=(error.message||'').toLowerCase();
-        if(low.includes('already registered')||low.includes('already been registered')||low.includes('user already')){
-          throw new Error('This email already has an account. Tap "Sign in instead" above.');
-        }
-        throw new Error(error.message);
+    const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
+    if(error){
+      const low=(error.message||'').toLowerCase();
+      if(error.status===429||low.includes('rate limit')||low.includes('too many')){
+        throw new Error('Too many attempts just now. Please wait about 30 seconds and try again.');
       }
-      user=data.user;session=data.session;
-      // Supabase returns NO session when "Confirm email" is enabled. Without a session
-      // the profile insert below is blocked by RLS and nothing ever syncs to the cloud
-      // (plan, report credits, saved readings) — so we must never fake a signed-in
-      // state here. Try to establish a real session, otherwise say so honestly.
-      if(!session){
-        try{
-          const {data:si}=await sb.auth.signInWithPassword({email:em,password:pw});
-          if(si&&si.session){session=si.session;user=si.user||user;}
-        }catch(e){}
+      if(error.message==='Invalid login credentials'){
+        throw new Error('Incorrect email or password. New here? Tap "Continue with Google" above.');
       }
-      if(!session){
-        throw new Error('Account created — please check your email to confirm it, then sign in. Or tap "Continue with Google" below for instant access.');
+      if(low.includes('not confirmed')||low.includes('email not confirmed')){
+        throw new Error('Please confirm your email first (check your inbox and spam), then sign in. Or tap "Continue with Google" above.');
       }
+      throw new Error(error.message);
+    }
+    const user=data.user,session=data.session;
+    let profile=null;
+    try{
+      const {data:pData}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+      profile=pData;
+    }catch(e){console.warn('Gate profile fetch:',e&&e.message);}
+    if(!profile){
+      // Self-heal a missing profile row, exactly like doLogin() does.
       try{
         const {data:created}=await sb.from('profiles').upsert({
-          id:user.id,email:em,first_name:fn,last_name:'',
-          plan:'free',joined_at:new Date().toISOString()
+          id:user.id,email:em,first_name:em.split('@')[0],last_name:'',
+          plan:'free',joined_at:user.created_at||new Date().toISOString()
         }).select().maybeSingle();
         profile=created;
-      }catch(e){console.warn('Gate profile create:',e&&e.message);}
-      try{localStorage.setItem('ah_seen_signup','1');}catch(e){}
-      gaEvent('sign_up',{method:'gate'});
-      try{setTimeout(redeemPendingRef,600);}catch(e){}
-    }else{
-      const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
-      if(error){
-        const low=(error.message||'').toLowerCase();
-        if(error.status===429||low.includes('rate limit')||low.includes('too many')){
-          throw new Error('Too many attempts just now. Please wait about 30 seconds and try again.');
-        }
-        if(error.message==='Invalid login credentials'){
-          throw new Error('Incorrect email or password. New here? Tap "Create a free account".');
-        }
-        if(low.includes('not confirmed')||low.includes('email not confirmed')){
-          throw new Error('Please confirm your email first (check your inbox and spam), then sign in. Or tap "Continue with Google" below.');
-        }
-        throw new Error(error.message);
-      }
-      user=data.user;session=data.session;
-      try{
-        const {data:pData}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
-        profile=pData;
-      }catch(e){console.warn('Gate profile fetch:',e&&e.message);}
-      if(!profile){
-        // Self-heal a missing profile row, exactly like doLogin() does.
-        try{
-          const {data:created}=await sb.from('profiles').upsert({
-            id:user.id,email:em,first_name:em.split('@')[0],last_name:'',
-            plan:'free',joined_at:user.created_at||new Date().toISOString()
-          }).select().maybeSingle();
-          profile=created;
-        }catch(e){console.warn('Gate profile self-heal:',e&&e.message);}
-      }
+      }catch(e){console.warn('Gate profile self-heal:',e&&e.message);}
     }
 
     CU={
       id:user.id,em:user.email||em,
-      fn:(profile&&profile.first_name)||fn||em.split('@')[0],
+      fn:(profile&&profile.first_name)||em.split('@')[0],
       ln:(profile&&profile.last_name)||'',
       plan:(profile&&profile.plan)||'free',
       report_credits:(profile&&profile.report_credits)||0,
@@ -2976,7 +2905,7 @@ async function gateSubmit(){
     DB.setU(CU.em,CU);
     DB.setSess({em:CU.em,tok:(session&&session.access_token)||'sb',at:Date.now(),rem:true});
     setBtnLoading('gate-btn',false);
-    toast((up?'Welcome to AstroHand, ':'Welcome back, ')+CU.fn+'! ✨','ok');
+    toast('Welcome back, '+CU.fn+'! ✨','ok');
     if(typeof syncPlanUI==='function')try{syncPlanUI();}catch(e){}
     gateResumeNow();
   }catch(err){
@@ -3259,20 +3188,9 @@ function isEmail(e){
   if(dom.startsWith('.')||dom.endsWith('.')||dom.startsWith('-')||dom.endsWith('-'))return false;
   return true;
 }
-// Obvious placeholder / disposable / throwaway domains — refused at SIGN-UP only
-// (never at login, so an existing account is never locked out). This can't verify
-// an email truly exists, but it stops the "andazi koi bhi email" fakes.
-const FAKE_EMAIL_DOMAINS=['test.com','test.co','example.com','example.org','example.net','asdf.com','aaa.com','abc.com','abcd.com','xyz.com','fake.com','fakemail.com','email.com','mail.com','demo.com','sample.com','none.com','no.com','a.com','mailinator.com','10minutemail.com','10minutemail.net','guerrillamail.com','guerrillamail.info','tempmail.com','temp-mail.org','tempmail.net','yopmail.com','trashmail.com','sharklasers.com','getnada.com','nada.email','maildrop.cc','throwaway.email','dispostable.com','fakeinbox.com','mvrht.com','tempr.email','1secmail.com','mohmal.com','emailondeck.com','discard.email','spam4.me','grr.la','trbvm.com'];
-function isDisposableEmail(e){
-  e=String(e||'').toLowerCase().trim();
-  const dom=e.split('@')[1]||'', local=e.split('@')[0]||'';
-  if(FAKE_EMAIL_DOMAINS.includes(dom))return true;
-  // asdf@asdf.com, test@test.in etc. — name equals the domain root ⇒ almost always fake.
-  const domRoot=dom.split('.')[0]||'';
-  const realProviders=['gmail','yahoo','ymail','outlook','hotmail','live','icloud','me','proton','protonmail','rediff','zoho','aol','gmx'];
-  if(local&&local===domRoot&&!realProviders.includes(domRoot))return true;
-  return false;
-}
+// The disposable-domain blocklist that guarded sign-up is gone along with
+// sign-up. It was never winnable — ncjdcbksdbvk@gmail.com passes every such
+// test. Google proves ownership; a blocklist only ever guessed.
 function cap(s){return s?(s[0].toUpperCase()+s.slice(1)):'';}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function hp(p){let h=0;for(let i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0;}return 'ah'+Math.abs(h)+p.length;}
@@ -4426,82 +4344,9 @@ function readOTPBoxes(prefix){
 }
 
 /* ── SIGN UP ── */
-async function doSignup(){
-  const fn=v('su-fn'),ln=v('su-ln'),em=v('su-em').toLowerCase(),ph=v('su-ph'),
-        db=v('su-db'),gn=v('su-gn'),pw=v('su-pw'),cp=v('su-cp');
-  const tc=document.getElementById('su-tc');
-  clearErr('su-err');
-
-  if(!fn){showErr('su-err','Please enter your first name.');return;}
-  if(!ln){showErr('su-err','Please enter your last name.');return;}
-  if(!isEmail(em)){showErr('su-err','Please enter a valid email address.');return;}
-  if(isDisposableEmail(em)){showErr('su-err','Please use a real email you can access — or sign up with Google instead.');return;}
-  if(!db){showErr('su-err','Please enter your date of birth.');return;}
-  if(pw.length<8){showErr('su-err','Password must be at least 8 characters.');return;}
-  if(pw!==cp){showErr('su-err','Passwords do not match.');return;}
-  if(tc&&!tc.checked){showErr('su-err','Please agree to the Terms & Privacy Policy.');return;}
-
-  const sb=getSB();
-  setBtnLoading('signup-btn',true,'Creating account…');
-
-  if(sb){
-    try{
-      const {data,error}=await sb.auth.signUp({
-        email:em,password:pw,
-        options:{data:{first_name:fn,last_name:ln,gender:gn,dob:db,phone:ph}}
-      });
-      if(error)throw new Error(error.message);
-
-      let session=data.session,user=data.user;
-      // Same rule as the sign-in gate: no session means "Confirm email" is on, the
-      // profile insert would be blocked by RLS, and nothing would sync to the cloud.
-      // Never fake a signed-in state — get a real session or say so.
-      if(!session){
-        try{
-          const {data:si}=await sb.auth.signInWithPassword({email:em,password:pw});
-          if(si&&si.session){session=si.session;user=si.user||user;}
-        }catch(e){}
-      }
-      if(!session){
-        setBtnLoading('signup-btn',false);
-        showErr('su-err','Account created — please check your email to confirm it, then sign in. Or use "Continue with Google" for instant access.');
-        return;
-      }
-
-      // NOTE: `profiles` has no `phone` column — including one made the whole upsert
-      // fail, which left accounts with no profile row (so plan/credits never synced).
-      const {error:profErr}=await sb.from('profiles').upsert({
-        id:user.id,email:em,first_name:fn,last_name:ln,
-        gender:gn,dob:db,plan:'free',joined_at:new Date().toISOString()
-      });
-      if(profErr)console.warn('Profile creation warning:',profErr.message);
-
-      const localUser={id:user.id,fn,ln,em,ph,gn,dob:db,pw:hp(pw),plan:'free',joinedAt:new Date().toISOString()};
-      DB.setU(em,localUser);
-      CU=localUser;DB.setSess({em,tok:session.access_token,at:Date.now(),rem:true});
-      setBtnLoading('signup-btn',false);
-      toast('Welcome to AstroHand, '+fn+'! ✨','ok');
-      gaEvent('sign_up',{method:'email'}); // this path never reported sign-ups to GA4
-      try{setTimeout(redeemPendingRef,600);}catch(e){}
-      enterDash();
-      return;
-    }catch(err){
-      setBtnLoading('signup-btn',false);
-      showErr('su-err',err.message||'Signup failed. Please try again.');
-      return;
-    }
-  }
-
-  // Fallback: localStorage-only signup with OTP verification screen
-  setBtnLoading('signup-btn',false);
-  if(DB.getU(em)){showErr('su-err','An account with this email already exists.');return;}
-  pendSU={fn,ln,em,ph,gn,dob:db,pw:hp(pw),plan:'free',joinedAt:new Date().toISOString()};
-  OTP=rstr(6,'0123456789');
-  console.log('[DEV OTP]',OTP);
-  const otpEm=document.getElementById('otp-em');if(otpEm)otpEm.textContent=em;
-  router('otp');
-  startOTPTimer(60);
-}
+/* The old doSignup handler is gone: accounts are created by socialLogin('Google')
+   alone. The OTP screen below is the old offline-only fallback and is now
+   unreachable — left in place rather than risk unpicking it. */
 
 /* ── VERIFY OTP (signup path) ── */
 function verifyOTP(){
@@ -4750,7 +4595,11 @@ async function handleOAuthSignIn(session){
     const {data}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
     profile=data||null;
   }catch(e){console.warn('OAuth profile fetch:',e&&e.message);}
-  if(!profile){
+  // No profile row means this is the very first login for this account — the
+  // sign-up itself. Nothing else can tell GA4 about it now that the email
+  // sign-up form is gone.
+  const isNewAccount=!profile;
+  if(isNewAccount){
     // First Google login — create the profile (same self-heal pattern as email login).
     const meta=user.user_metadata||{};
     const full=(meta.full_name||meta.name||'').trim();
@@ -4775,6 +4624,7 @@ async function handleOAuthSignIn(session){
   };
   DB.setU(CU.em,CU);
   DB.setSess({em:CU.em,tok:(session.access_token||'sb-oauth'),at:Date.now(),rem:true});
+  if(isNewAccount)gaEvent('sign_up',{method:'google'});
   // If Google login was started from a tool's sign-in gate, go back to that tool
   // instead of the dashboard — otherwise the user loses their place entirely.
   let pendingTool='';
