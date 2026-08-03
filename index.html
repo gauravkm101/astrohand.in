@@ -3442,25 +3442,42 @@ function getSB(){
 }
 
 /* ── AI backend proxy call ── */
-async function callAI(systemPrompt,messages,maxTokens){
+/* opts.temperature — lower means "translate faithfully", higher means "write warmly".
+   opts.meta — resolve {text,truncated} instead of a bare string, so a caller can
+   tell a complete answer from one the model ran out of room for. */
+/* Indic scripts cost roughly 3x the tokens of the same words in English, so a
+   budget sized for an English answer truncates every other language
+   mid-sentence. Any call whose prompt says "reply in <language>" wants this. */
+function langTokens(base,lang){
+  if(!lang||/^\s*english\s*$/i.test(String(lang)))return base;
+  return Math.min(8000,Math.round(base*3));
+}
+
+async function callAI(systemPrompt,messages,maxTokens,opts){
   maxTokens=maxTokens||1000;
+  opts=opts||{};
   // Abort the request if it hangs (slow network / server cold-start) so the
   // caller's catch block can show fallback content instead of spinning forever.
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),45000);
   try{
+    const payload={systemPrompt,messages,maxTokens};
+    if(typeof opts.temperature==='number')payload.temperature=opts.temperature;
     const r=await fetch(API_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({systemPrompt,messages,maxTokens}),
+      body:JSON.stringify(payload),
       signal:controller.signal
     });
     if(!r.ok){
       const e=await r.json().catch(()=>({}));
-      throw new Error(e.error||'HTTP '+r.status);
+      const err=new Error(e.error||'HTTP '+r.status);
+      err.status=r.status;                 // 429 is retryable; the rest are not
+      throw err;
     }
     const data=await r.json();
     if(!data.text)throw new Error('Empty response');
+    if(opts.meta)return {text:data.text,truncated:!!data.truncated};
     return data.text;
   }catch(err){
     if(err.name==='AbortError')throw new Error('Request timed out. Please try again.');
@@ -4111,6 +4128,70 @@ function mountTranslateBar(barId,targetId){
   </div>`;
 }
 
+/* Long readings are translated a piece at a time. One big request is what got
+   truncated and rate-limited; several small ones finish, can be retried
+   individually, and let us show honest progress. */
+function splitForTranslation(text,limit){
+  limit=limit||1200;
+  const paras=String(text).split(/\n\s*\n/).filter(p=>p.trim());
+  const chunks=[];let buf='';
+  const push=()=>{if(buf.trim())chunks.push(buf.trim());buf='';};
+  for(let p of paras){
+    // A single paragraph longer than the limit gets broken at sentence ends.
+    if(p.length>limit*1.5){
+      push();
+      const sentences=p.match(/[^.।!?]+[.।!?]+\s*|[^.।!?]+$/g)||[p];
+      let s='';
+      for(const sen of sentences){
+        if((s+sen).length>limit&&s){chunks.push(s.trim());s='';}
+        s+=sen;
+      }
+      if(s.trim())chunks.push(s.trim());
+      continue;
+    }
+    if((buf+'\n\n'+p).length>limit&&buf)push();
+    buf=buf?buf+'\n\n'+p:p;
+  }
+  push();
+  return chunks.length?chunks:[String(text).trim()];
+}
+
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function translateChunk(chunk,lang){
+  const sys=`You are a professional translator. Translate the user's text into ${lang}. Output ONLY the translation in ${lang} script — no preamble, no notes, no English. Preserve line breaks and the overall structure (headings, lists). Keep proper nouns and Sanskrit/astrological terms (like Nakshatra names, planet names, Rashi names) recognizable — you may transliterate them into ${lang} script. Do not add or remove information.`;
+  // Indic output runs longer than the English source; give it room, and ask for
+  // fidelity rather than flair.
+  const budget=Math.min(8000,Math.max(700,Math.round(chunk.length*2.2)));
+  let lastErr=null;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const r=await callAI(sys,[{role:'user',content:chunk}],budget,{temperature:0.2,meta:true});
+      if(r.text&&r.text.trim())return r.text.trim();
+      lastErr=new Error('empty');
+    }catch(e){
+      lastErr=e;
+      // Only a rate limit is worth waiting out; a 400 will fail again instantly.
+      if(e.status!==429&&attempt>=1)break;
+    }
+    await sleep(attempt===0?3500:9000);
+  }
+  throw lastErr||new Error('translation failed');
+}
+
+/* Translates any length of text. onProgress(done,total) drives the status text. */
+async function translateLongText(sourceText,lang,onProgress){
+  const chunks=splitForTranslation(sourceText,1200);
+  const out=[];
+  for(let i=0;i<chunks.length;i++){
+    if(onProgress)onProgress(i,chunks.length);
+    out.push(await translateChunk(chunks[i],lang));
+    if(i<chunks.length-1)await sleep(700);   // stay under the per-minute burst limit
+  }
+  if(onProgress)onProgress(chunks.length,chunks.length);
+  return out.join('\n\n');
+}
+
 async function translateContainer(targetId,lang,selectEl){
   const el=document.getElementById(targetId);
   if(!el)return;
@@ -4137,9 +4218,11 @@ async function translateContainer(targetId,lang,selectEl){
   if(statusEl)statusEl.textContent='translating…';
   if(selectEl)selectEl.disabled=true;
   try{
-    const sys=`You are a professional translator. Translate the user's text into ${lang}. Output ONLY the translation in ${lang} script — no preamble, no notes, no English. Preserve line breaks and the overall structure (headings, lists). Keep proper nouns and Sanskrit/astrological terms (like Nakshatra names, planet names, Rashi names) recognizable — you may transliterate them into ${lang} script. Do not add or remove information.`;
-    const translated=await callAI(sys,[{role:'user',content:sourceText}],2000);
-    if(translated){
+    const translated=await translateLongText(sourceText,lang,(done,total)=>{
+      if(!statusEl)return;
+      statusEl.textContent=total>1?`translating ${Math.min(done+1,total)}/${total}…`:'translating…';
+    });
+    if(translated&&translated.trim()){
       // Render as escaped text with line breaks preserved (safe — no HTML injection).
       el.innerHTML=`<div class="tr-translated">${esc(translated).replace(/\n/g,'<br>')}</div>`;
       if(statusEl)statusEl.textContent='';
@@ -4147,10 +4230,15 @@ async function translateContainer(targetId,lang,selectEl){
       throw new Error('empty');
     }
   }catch(e){
-    if(statusEl)statusEl.textContent='translation failed';
+    // Say which wall we hit — "translation failed" told the user nothing, and a
+    // rate limit clears on its own in under a minute.
+    const rate=e&&(e.status===429||/rate limit/i.test(e.message||''));
+    if(statusEl)statusEl.textContent=rate?'too busy — try again':'translation failed';
     el.innerHTML=_translateOriginals[targetId]; // restore original on failure
     if(selectEl)selectEl.value='Original';
-    toast('Translation failed. Please try again.','');
+    toast(rate
+      ?'Our translator is busy right now. Please try again in a minute.'
+      :'Translation failed. Please try again.','');
   }finally{
     if(selectEl)selectEl.disabled=false;
   }
@@ -7593,7 +7681,7 @@ Make it feel premium, personal, and hopeful — this is the flagship VIP feature
     const userPrompt=`Name: ${name}. Moon sign: ${rashiName}. Nakshatra: ${nakName}. ${city?`Birth place: ${city}. `:''}Born: ${d}. Forecast for the year ${year}. Provide the full annual forecast.`;
 
     let txt;
-    try{txt=await callAI(sys,[{role:'user',content:userPrompt}],1600);}catch(aiErr){txt=null;}
+    try{txt=await callAI(sys,[{role:'user',content:userPrompt}],langTokens(1600,lang));}catch(aiErr){txt=null;}
     if(!txt)txt=`✨ ${name}, your ${year} unfolds under the ${rashiName} Moon and ${nakName} Nakshatra — a year of meaningful growth. The cosmic currents favour steady progress in career, deepening bonds in relationships, and renewed vitality. Trust your timing, honour your health, and the year will reward your patience.`;
     document.getElementById('fc-ldr').style.display='none';document.getElementById('fc-cnt').style.display='block';
     document.getElementById('fc-txt').textContent=txt;
@@ -7711,7 +7799,7 @@ Keep it warm, hopeful, and around 400-450 words. End with a short blessing for t
     if(isPaid()){
       nbTxtWrap.classList.remove('lock-blurred');nbTxtLock.style.display='none';
       let txt;
-      try{txt=await callAI(sys,[{role:'user',content:userPrompt}],1200);}catch(aiErr){txt=null;}
+      try{txt=await callAI(sys,[{role:'user',content:userPrompt}],langTokens(1200,lang));}catch(aiErr){txt=null;}
       if(!txt)txt=nbFallback;
       document.getElementById('nb-txt').textContent=txt;
       if(typeof mountTranslateBar==='function'){mountTranslateBar('nb-tr-bar','nb-txt');resetTranslation('nb-txt');}
@@ -8019,7 +8107,7 @@ async function genKundli(){
       predWrap.classList.remove('lock-blurred');predLock.style.display='none';
       // AI call is allowed to fail — fall back to the deterministic reading, never block the report
       let txt;
-      try{txt=await callAI("You are AstroHand's master Vedic astrologer. Be mystical yet precise.",[{role:'user',content:prompt}],1000);}catch(aiErr){txt=null;}
+      try{txt=await callAI("You are AstroHand's master Vedic astrologer. Be mystical yet precise.",[{role:'user',content:prompt}],langTokens(1000,lang));}catch(aiErr){txt=null;}
       if(!txt)txt=fallbackKundli(n,ri,li,ni,rp);
       document.getElementById('k-pred').textContent=txt;addTranslate('k-pred');
       if(CU)addRd({type:'kundli',icon:'📜',title:'Kundli — '+n,sub:RASHIS[ri]+' Moon · '+RASHIS[li]+' Lagna',preview:txt.substring(0,200)+'…',text:txt});
@@ -8366,7 +8454,7 @@ async function sendMsgLang(){
   cHistLang.push({role:'user',content:msg});
   if(!isGoldOrVip())chatQuotaInc();
   try{
-    const reply=await callAI(a.sys+ASTRO_ASK_FIRST+astroTiming(),cHistLang.slice(-14),900)||a.greet;
+    const reply=await callAI(a.sys+ASTRO_ASK_FIRST+astroTiming(),cHistLang.slice(-14),langTokens(900,a.lang))||a.greet;
     cHistLang.push({role:'assistant',content:reply});
     typ.style.color='var(--text)';typ.innerHTML=`<div style="font-size:.58rem;letter-spacing:.08em;color:var(--sub);margin-bottom:4px;font-family:'Cinzel',serif;">${a.n.toUpperCase()}</div>${esc(reply)}`;
     if(CU)addRd({type:'chat',icon:'🌐',title:a.lang+' AI Chat — '+a.n,sub:'Astrology Consultation ('+a.lang+')',preview:reply.substring(0,180)+'…',text:msg+'\\n\\n'+reply});
