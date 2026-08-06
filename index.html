@@ -1297,7 +1297,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
       <div class="fc"><div class="ficon">📜</div><h3 class="ftit">Complete Vedic Kundli</h3><p class="fdsc">Birth chart with planets, houses, doshas, yogas, Vimshottari dasha — personalized AI predictions in 10+ languages.</p></div>
       <div class="fc"><div class="ficon">🤖</div><h3 class="ftit">8 AI Astrologers</h3><p class="fdsc">Vedic, Western, Chinese, Nadi, KP, Lal Kitab & Arabic traditions — each with unique expertise and personality.</p></div>
       <div class="fc"><div class="ficon">💍</div><h3 class="ftit">Advanced Match Making</h3><p class="fdsc">36-guna Ashtakoota Milan, Manglik analysis, dosha matching, marriage timing, and compatibility reports.</p></div>
-      <div class="fc"><div class="ficon">🤚</div><h3 class="ftit">AI Palm Reading</h3><p class="fdsc">Upload your palm — AI reads all 8 major & minor lines using Vedic Samudrika Shastra + Western chiromancy.</p></div>
+      <div class="fc"><div class="ficon">🤚</div><h3 class="ftit">AI Palm Reading</h3><p class="fdsc">Upload your palm — we verify the photo, then read what the life, heart, head and fate lines classically signify for your Vedic birth profile.</p></div>
       <div class="fc"><div class="ficon">🔢</div><h3 class="ftit">Deep Numerology</h3><p class="fdsc">Life path, destiny, soul urge numbers using Pythagorean and Chaldean systems with full AI interpretation.</p></div>
       <div class="fc"><div class="ficon">📅</div><h3 class="ftit">Daily Panchang</h3><p class="fdsc">Real-time Tithi, Nakshatra, Yoga, Karana, Rahu Kaal, Muhurat timings and festival calendar.</p></div>
     </div>
@@ -2215,6 +2215,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
       <div class="full"><button class="gbtn" onclick="calcNum()">Calculate My Numbers ✦</button></div>
     </div>
     <div id="nm-res" style="display:none;margin-top:18px;">
+      <div id="nm-note" style="display:none;background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:11px 14px;margin-bottom:12px;font-size:.72rem;color:var(--sub);line-height:1.6;"></div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
         <div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:18px;text-align:center;"><div style="font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;">Life Path</div><div style="font-family:'Cinzel Decorative',serif;font-size:2.1rem;color:var(--gold);line-height:1;margin-bottom:4px;" id="nm-lp">—</div><div style="font-size:.7rem;color:var(--text);line-height:1.45;" id="nm-lpd">—</div></div>
         <div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:18px;text-align:center;"><div style="font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;">Destiny</div><div style="font-family:'Cinzel Decorative',serif;font-size:2.1rem;color:var(--gold);line-height:1;margin-bottom:4px;" id="nm-dest">—</div><div style="font-size:.7rem;color:var(--text);line-height:1.45;" id="nm-destd">—</div></div>
@@ -2230,7 +2231,7 @@ canvas.kchart{width:100%;max-width:420px;border-radius:var(--r2);border:1px soli
   <div class="mbox">
     <button class="mc" onclick="closeOv('mPalm')">✕</button>
     <div class="mt">🤚 AI Palm Reading</div>
-    <div class="ms">Upload your palm for a complete Vedic + Western chiromancy analysis. Your image is never stored.</div>
+    <div class="ms">Upload your palm — we check that it really is a palm photo, then your reading is drawn from Samudrika Shastra and your Vedic birth details: what the life, heart, head and fate lines classically signify for your birth profile. The photo itself is never stored and is not sent to the reading AI.</div>
     <div id="p-zone" style="border:2px dashed rgba(var(--gold-rgb),.28);border-radius:var(--r2);padding:44px 24px;text-align:center;cursor:pointer;transition:all .3s;position:relative;background:rgba(255,255,255,.02);" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(var(--gold-rgb),.28)'">
       <input type="file" accept="image/*" id="p-file" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" onchange="setPalm(event)">
       <div style="font-size:2.8rem;margin-bottom:12px;">🤚</div>
@@ -8023,7 +8024,13 @@ async function genKundli(){
 
     const vsiV=sunSignIdx; // real Vedic (sidereal) Sun sign
     const _vseq=vimshottariSeq(realPos.positions.Moon,yr,mo+1,dy);
-    const rp=currentDashaLord(_vseq),ln=GEMS[DASHA_P.indexOf(rp)],col=COLS[ri],day=DAYS_W[(dy+mo)%7];
+    /* Lucky colour was COLS[ri]. COLS holds nine entries but ri runs 0-11, so a
+       Capricorn, Aquarius or Pisces Moon — a quarter of all visitors — was shown
+       "Lucky Colour: undefined". Lucky day was DAYS_W[(dy+mo)%7], arithmetic on
+       the birth date that no shastra prescribes. Both now follow the lord of the
+       Moon sign, which is the classical rule and matches the Gemstone/Remedies
+       tools, so the same person no longer gets two different answers. */
+    const rp=currentDashaLord(_vseq),ln=GEMS[DASHA_P.indexOf(rp)],col=PLANET_COLOR[SIGN_LORD[ri]],day=PLANET_DAY[SIGN_LORD[ri]];
     const lnum=((yr+mo+dy)%9)||9;
     document.getElementById('k-av').textContent=RSYM[ri];
     document.getElementById('k-rname').textContent=n;
@@ -8620,15 +8627,44 @@ async function calcNum(){
   if(!needLogin(calcNum))return;
   const lv={a:1,b:2,c:3,d:4,e:5,f:6,g:7,h:8,i:9,j:1,k:2,l:3,m:4,n:5,o:6,p:7,q:8,r:9,s:1,t:2,u:3,v:4,w:5,x:6,y:7,z:8};
   const red=x=>{while(x>9&&x!==11&&x!==22&&x!==33)x=String(x).split('').reduce((a,c)=>a+parseInt(c),0);return x;};
-  let lp=d?red(d.replace(/-/g,'').split('').reduce((a,c)=>a+parseInt(c),0)):red(n.toLowerCase().replace(/[^a-z]/g,'').split('').reduce((a,c)=>a+(lv[c]||0),0));
-  const nl=n.toLowerCase().replace(/[^a-z]/g,'');
-  const dest=red(nl.split('').reduce((a,c)=>a+(lv[c]||0),0))||lp;
-  const soul=red(nl.split('').filter(c=>'aeiou'.includes(c)).reduce((a,c)=>a+(lv[c]||0),0))||(lp>1?lp-1:2);
-  document.getElementById('nm-lp').textContent=lp;document.getElementById('nm-dest').textContent=dest;document.getElementById('nm-soul').textContent=soul;
-  document.getElementById('nm-lpd').textContent=NM[lp]||'—';document.getElementById('nm-destd').textContent=NM[dest]||'—';document.getElementById('nm-souled').textContent=NM[soul]||'—';
+  /* A name written in its own script is transliterated to Latin first. The old
+     first step was  n.toLowerCase().replace(/[^a-z]/g,'')  which DELETED every
+     Devanagari/Bangla/Tamil letter and then produced a number from whatever
+     survived: "कुमार गौरव" came out as Destiny 1 / Soul Urge 2 (the real values
+     for that name are 8 and 9) and "নিতিশ কুমার" as Soul Urge 32 — 32 is not a
+     numerology number at all. On a Hindi-first site that is simply a wrong answer.
+     We now transliterate, and tell the reader which Latin spelling we scored. */
+  const tr=indicToLatin(n||'');
+  const nl=tr.latin.toLowerCase().replace(/[^a-z]/g,'');
+  const lp=red(d.replace(/-/g,'').split('').reduce((a,c)=>a+parseInt(c),0));
+  const vow=nl.split('').filter(c=>'aeiou'.includes(c));
+  /* No scoreable letters means no Destiny and no Soul Urge. We say so. The old
+     code fell back to `lp` and `lp-1`, i.e. it printed a confident number that
+     had nothing to do with the name at all. */
+  const dest=nl?red(nl.split('').reduce((a,c)=>a+(lv[c]||0),0)):null;
+  const soul=vow.length?red(vow.reduce((a,c)=>a+(lv[c]||0),0)):null;
+  const nmNote=document.getElementById('nm-note');
+  let note='';
+  if(!nl)note='Destiny and Soul Urge are counted from the letters of your name, and "'+n+'" is in a script we cannot score letter by letter. Please type your name in English (for example: Kumar Gaurav) and run it again. Your Life Path comes from your date of birth, so it is shown below and is unaffected.';
+  else if(tr.script)note='Your name is written in '+tr.script+' script. Numerology is worked out on the Latin spelling, so we read it as “'+tr.latin.trim()+'”. If you normally spell it differently in English, enter that spelling instead — the numbers follow the spelling.';
+  nmNote.textContent=note;nmNote.style.display=note?'block':'none';
+  document.getElementById('nm-lp').textContent=lp;document.getElementById('nm-dest').textContent=dest==null?'—':dest;document.getElementById('nm-soul').textContent=soul==null?'—':soul;
+  document.getElementById('nm-lpd').textContent=NM[lp]||'—';
+  document.getElementById('nm-destd').textContent=dest==null?'Needs your name in Latin letters':(NM[dest]||'—');
+  document.getElementById('nm-souled').textContent=soul==null?'Needs your name in Latin letters':(NM[soul]||'—');
   document.getElementById('nm-res').style.display='block';document.getElementById('nm-read').textContent='Consulting the cosmic number matrix…';
-  try{const txt=await callAI('You are a master numerologist trained in Pythagorean and Chaldean systems. Be mystical and uplifting.',[{role:'user',content:`${n?`Name: "${n}".`:''} ${d?`DOB: ${d}.`:''} Life Path: ${lp}, Destiny: ${dest}, Soul Urge: ${soul}. Write a poetic 130-word personalized numerology reading weaving all three numbers together. Speak to soul purpose, life direction, and current cycle insights. Note this is guidance for self-reflection.`}],500);document.getElementById('nm-read').textContent=txt||`Your Life Path ${lp}, Destiny ${dest}, and Soul Urge ${soul} form a sacred trinity of purpose.`;}
-  catch{document.getElementById('nm-read').textContent=`Your Life Path ${lp}, Destiny ${dest}, and Soul Urge ${soul} together reveal a unique cosmic signature. ${NM[lp]} The interplay of these three numbers creates a powerful framework for understanding your soul's journey and deepest calling in this lifetime.`;}
+  /* Both the prompt and the offline fallback used to interpolate ${dest}/${soul}
+     unconditionally. Now that those can legitimately be "not computable", the AI
+     is told so explicitly and instructed not to invent them. */
+  const haveAll=(dest!=null&&soul!=null);
+  const numLine=haveAll
+    ?`Life Path: ${lp}, Destiny: ${dest}, Soul Urge: ${soul}. Weave all three numbers together.`
+    :`Life Path: ${lp}. The Destiny and Soul Urge numbers could NOT be computed because the name was not given in Latin letters — do not invent them, and do not mention any number other than the Life Path.`;
+  const plain=haveAll
+    ?`Your Life Path ${lp}, Destiny ${dest}, and Soul Urge ${soul} together reveal a unique cosmic signature. ${NM[lp]}`
+    :`Your Life Path ${lp} is drawn from your date of birth. ${NM[lp]} Enter your name in Latin letters to add the Destiny and Soul Urge numbers.`;
+  try{const txt=await callAI('You are a master numerologist trained in Pythagorean and Chaldean systems. Be mystical and uplifting.',[{role:'user',content:`${n?`Name: "${n}".`:''} ${d?`DOB: ${d}.`:''} ${numLine} Write a poetic 130-word personalized numerology reading. Speak to soul purpose, life direction, and current cycle insights. Note this is guidance for self-reflection.`}],500);document.getElementById('nm-read').textContent=txt||plain;}
+  catch{document.getElementById('nm-read').textContent=plain;}
   addTranslate('nm-res');
   startTeaser('nm-res','Your numerology reading is locked','Unlock a plan to keep your Life Path, Destiny and Soul Urge numbers — plus the full personalised reading — open whenever you want them.');
 }
@@ -8776,7 +8812,14 @@ async function doPalm(){
   btn.textContent='✨ Reading your palm…';
   document.getElementById('p-res').style.display='block';document.getElementById('p-ldr').style.display='block';document.getElementById('p-cnt').style.display='none';
   const sys=`You are AstroHand's master palm reader trained in Vedic Samudrika Shastra, Western chiromancy (Cheiro/Benham tradition), Chinese palmistry, and Arabic Ilmu'l-Kaff. For each reading analyze systematically: HEART LINE (depth, length, curvature, starting point) → emotional life, love capacity, romantic destiny; HEAD LINE (slope, length, depth) → intellect, decision style, creativity vs logic; LIFE LINE (arc width, depth, markings) → vital energy, health constitution, major life turning points; FATE LINE (presence/absence, starting point) → career path, self-determination; SUN LINE → success, recognition, creative fulfillment; MERCURY LINE → health, communication gifts; MARRIAGE LINES → relationship timing; MOUNTS (Venus, Jupiter, Saturn, Apollo, Mercury, Moon, Mars) → personality amplifiers. Write 400-450 words. Be specific with approximate age timings (e.g., "around age 28–34"). Close with one Vedic gemstone remedy and one mantra. State readings provide guidance, not certainty.`;
-  const userPrompt=`Hand: ${selH}.${dob?` DOB: ${dob}.`:''}${t?` Time: ${t}.`:''}${city?` Birth city: ${city}.`:''} The user has uploaded a photo of their palm. Provide a detailed Vedic and Western palmistry reading of the hand, describing the lines and mounts as observed.`;
+  /* The uploaded photo is checked by the vision service to confirm it really is a
+     palm, but it is NOT sent to the model that writes the reading — callAI() below
+     receives only the fields in this string. The prompt used to say "the user has
+     uploaded a photo of their palm … describing the lines and mounts as observed",
+     so the model wrote "your heart line runs deep" about a hand it had never seen.
+     Until the image is genuinely passed to a vision model, the prompt must not
+     pretend otherwise, and the screen says the same thing. */
+  const userPrompt=`Hand: ${selH}.${dob?` DOB: ${dob}.`:''}${t?` Time: ${t}.`:''}${city?` Birth city: ${city}.`:''} You have NOT seen this person's palm — no image is available to you. Give a Samudrika Shastra reading built from the birth details above: explain what the life, heart, head and fate lines classically signify for someone of this birth profile, and how their Vedic Moon nakshatra colours each one. Never claim to observe, see or measure any specific marking on their hand.`;
   try{
     const txt=await callAI(sys,[{role:'user',content:userPrompt}],900)||'The oracle momentarily meditates. Please try again.';
     document.getElementById('p-ldr').style.display='none';document.getElementById('p-cnt').style.display='block';document.getElementById('p-txt').textContent=txt;addTranslate('p-txt');
@@ -8787,6 +8830,122 @@ async function doPalm(){
 }
 function toB64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLASSICAL TABLES + MUHURAT MATH
+   Shared by Kundli, Gemstone, Remedies and Panchang so all four agree.
+
+   Why this block exists: the Gemstone and Remedies tools used to derive a whole
+   "birth chart" from  seed = (yr + mo*31 + dy*7 + th*13 + tm*3) % 10000  and then
+   report Moon sign as seed%12, Manglik as seed%3===0 and the recommended stone as
+   seed%9. The Kundli was migrated to the real ephemeris; this second code path
+   was missed, so the same person could be told "Not Manglik" here and "Manglik"
+   by the dedicated Mangal Dosha tool. Everything below is a classical rule keyed
+   off the REAL chart — nothing is keyed off the birth date's digits.
+═══════════════════════════════════════════════════════════════════════════ */
+
+// Lord of each rashi — 0 = Aries … 11 = Pisces.
+const SIGN_LORD=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+// What each graha rules, per Ratna Shastra and the standard graha attributions.
+const PLANET_GEM={Sun:'Ruby',Moon:'Pearl',Mars:'Red Coral',Mercury:'Emerald',Jupiter:'Yellow Sapphire',Venus:'Diamond',Saturn:'Blue Sapphire',Rahu:'Hessonite',Ketu:"Cat's Eye"};
+const PLANET_DAY={Sun:'Sunday',Moon:'Monday',Mars:'Tuesday',Mercury:'Wednesday',Jupiter:'Thursday',Venus:'Friday',Saturn:'Saturday',Rahu:'Saturday',Ketu:'Tuesday'};
+const PLANET_DIR={Sun:'East',Moon:'North-West',Mars:'South',Mercury:'North',Jupiter:'North-East',Venus:'South-East',Saturn:'West',Rahu:'South-West',Ketu:'North-West'};
+const PLANET_METAL={Sun:'Gold',Moon:'Silver',Mars:'Copper',Mercury:'Bronze',Jupiter:'Gold',Venus:'Silver',Saturn:'Iron',Rahu:'Panchdhatu',Ketu:'Panchdhatu'};
+const PLANET_NUM={Sun:1,Moon:2,Jupiter:3,Rahu:4,Mercury:5,Venus:6,Ketu:7,Saturn:8,Mars:9};
+// 12 entries, one per rashi. The old COLS array had only 9 and was indexed by
+// rashi, so a Capricorn/Aquarius/Pisces Moon printed "Lucky Colour: undefined".
+const PLANET_COLOR={Sun:'Ruby Red',Moon:'Pearl White',Mars:'Coral Red',Mercury:'Emerald Green',Jupiter:'Golden Yellow',Venus:'Pure White',Saturn:'Deep Blue',Rahu:'Smoky Grey',Ketu:'Ash Grey'};
+
+/* ── Muhurats, computed from the day's real sunrise and sunset ──
+   Sunrise→sunset is divided into 8 equal parts and one part is inauspicious;
+   which part depends on the weekday, so the window moves every single day and
+   also drifts through the year as sunrise moves. The page used to print one
+   frozen set of strings ("Rahu Kaal 7:30 AM – 9:00 AM") for every date and every
+   city, which is wrong on six days out of seven. */
+const RAHU_PART  =[8,2,7,5,6,4,3]; // Sunday … Saturday
+const GULIKA_PART=[7,6,5,4,3,2,1];
+const YAMA_PART  =[5,4,3,2,1,7,6];
+function _fmtClock(min){
+  min=((min%1440)+1440)%1440;
+  const h=Math.floor(min/60),m=Math.round(min%60);
+  return (((h+11)%12)+1)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM');
+}
+function _span(a,b){return _fmtClock(a)+' – '+_fmtClock(b);}
+/* `st` must be the computeSunTimes() result for THIS city and date. Without it we
+   return null and the caller says so — we never fall back to a printed guess. */
+function computeMuhurats(st,date){
+  if(!st||st.sunriseMin==null||st.sunsetMin==null)return null;
+  const sr=st.sunriseMin,ss=st.sunsetMin,dayLen=ss-sr;
+  if(!(dayLen>0))return null;
+  const eighth=dayLen/8,wd=date.getDay();
+  const part=n=>[sr+(n-1)*eighth,sr+n*eighth];
+  const muh=dayLen/15;                 // the daylight span holds 15 muhurtas
+  const R=part(RAHU_PART[wd]),G=part(GULIKA_PART[wd]),Y=part(YAMA_PART[wd]);
+  return [
+    {n:'Brahma Muhurta',t:_span(sr-96,sr-48),q:true},        // 2 muhurtas before sunrise
+    {n:'Abhijit Muhurta',t:_span(sr+7*muh,sr+8*muh),q:true}, // 8th muhurta — straddles midday
+    {n:'Vijaya Muhurta',t:_span(sr+10*muh,sr+11*muh),q:true},// 11th muhurta
+    {n:'Rahu Kaal',t:_span(R[0],R[1]),q:false},
+    {n:'Gulika Kaal',t:_span(G[0],G[1]),q:false},
+    {n:'Yamaghanta',t:_span(Y[0],Y[1]),q:false}
+  ];
+}
+
+/* ── Indic script → Latin, for numerology ──
+   Pythagorean numerology is defined on A–Z. calcNum() used to run
+   replace(/[^a-z]/g,'') as its first step, which DELETED every Devanagari or
+   Bangla letter and then produced a number from whatever survived: "कुमार गौरव"
+   came out as Soul Urge 2 and "নিতিশ কুমার" as Soul Urge 32 — and 32 is not a
+   numerology number at all. On a Hindi-first site that is a straight wrong answer,
+   so we transliterate first and show the reader the spelling we used.
+   The nine Indic blocks below are codepoint-parallel (all ISCII-derived), so one
+   Devanagari table serves every one of them. A script we cannot transliterate is
+   reported honestly rather than guessed at. */
+const _DEVA_CONS={
+  0x0915:'k',0x0916:'kh',0x0917:'g',0x0918:'gh',0x0919:'ng',
+  0x091A:'ch',0x091B:'chh',0x091C:'j',0x091D:'jh',0x091E:'ny',
+  0x091F:'t',0x0920:'th',0x0921:'d',0x0922:'dh',0x0923:'n',
+  0x0924:'t',0x0925:'th',0x0926:'d',0x0927:'dh',0x0928:'n',0x0929:'n',
+  0x092A:'p',0x092B:'ph',0x092C:'b',0x092D:'bh',0x092E:'m',
+  0x092F:'y',0x0930:'r',0x0931:'r',0x0932:'l',0x0933:'l',0x0934:'l',
+  0x0935:'v',0x0936:'sh',0x0937:'sh',0x0938:'s',0x0939:'h',
+  0x0958:'q',0x0959:'kh',0x095A:'g',0x095B:'z',0x095C:'r',0x095D:'rh',0x095E:'f',0x095F:'y'
+};
+// Single Latin vowels, not doubled — this reproduces how these names are actually
+// spelled in English (कुमार → Kumar, the spelling a numerologist would work from).
+const _DEVA_VOWEL={0x0905:'a',0x0906:'a',0x0907:'i',0x0908:'i',0x0909:'u',0x090A:'u',0x090B:'ri',0x090C:'li',0x090D:'e',0x090E:'e',0x090F:'e',0x0910:'ai',0x0911:'o',0x0912:'o',0x0913:'o',0x0914:'au'};
+const _DEVA_MATRA={0x093A:'a',0x093B:'a',0x093E:'a',0x093F:'i',0x0940:'i',0x0941:'u',0x0942:'u',0x0943:'ri',0x0944:'ri',0x0945:'e',0x0946:'e',0x0947:'e',0x0948:'ai',0x0949:'o',0x094A:'o',0x094B:'o',0x094C:'au'};
+const _INDIC_BLOCKS=[[0x0900,'Devanagari'],[0x0980,'Bangla'],[0x0A00,'Gurmukhi'],[0x0A80,'Gujarati'],[0x0B00,'Odia'],[0x0B80,'Tamil'],[0x0C00,'Telugu'],[0x0C80,'Kannada'],[0x0D00,'Malayalam']];
+function indicToLatin(str){
+  const cp=Array.from(str||'').map(ch=>{
+    const c=ch.codePointAt(0);
+    for(const [b,name] of _INDIC_BLOCKS){if(c>=b+1&&c<=b+0x7F)return{c:0x0900+(c-b),indic:true,raw:ch,script:name};}
+    return{c:c,indic:false,raw:ch,script:null};
+  });
+  let out='',script=null,dropped=false;
+  for(let i=0;i<cp.length;i++){
+    const t=cp[i];
+    if(!t.indic){out+=t.raw;continue;}
+    if(!script)script=t.script;
+    if(t.c===0x093C||t.c===0x094D)continue;               // nukta, virama (virama kills the inherent a)
+    if(t.c===0x0901||t.c===0x0902){out+='n';continue;}    // chandrabindu, anusvara
+    if(t.c===0x0903){out+='h';continue;}                  // visarga
+    const m=_DEVA_MATRA[t.c];if(m!=null){out+=m;continue;}
+    const v=_DEVA_VOWEL[t.c];if(v!=null){out+=v;continue;}
+    const k=_DEVA_CONS[t.c];
+    if(k==null){dropped=true;continue;}
+    out+=k;
+    // Every consonant carries an inherent 'a' unless a matra or virama follows.
+    // Hindi drops that 'a' at the end of a word — कुमार is Kumar, not Kumara.
+    let j=i+1;
+    if(j<cp.length&&cp[j].indic&&cp[j].c===0x093C)j++;    // step over a nukta
+    const nx=(j<cp.length&&cp[j].indic)?cp[j].c:0;
+    const vowelFollows=(_DEVA_MATRA[nx]!=null)||nx===0x094D;
+    const wordEnds=!(nx&&(_DEVA_CONS[nx]!=null||_DEVA_VOWEL[nx]!=null||nx===0x0901||nx===0x0902||nx===0x0903));
+    if(!vowelFollows&&!wordEnds)out+='a';
+  }
+  return{latin:out,script:script,dropped:dropped};
+}
+
 /* ══ PANCHANG ══ */
 const PANCH={ti:'Saptami (7th) — Krishna Paksha',va:'Monday (Somavar)',na:'Rohini — 3rd Pada',yo:'Siddha Yoga (Auspicious)',ka:'Garaja',sr:'5:47 AM',ss:'7:14 PM',mr:'10:43 PM',ms:'10:12 AM',muh:[{n:'Brahma Muhurta',t:'4:10 AM – 4:57 AM',q:true},{n:'Abhijit Muhurta',t:'11:44 AM – 12:36 PM',q:true},{n:'Vijaya Muhurta',t:'2:15 PM – 3:05 PM',q:true},{n:'Rahu Kaal',t:'7:30 AM – 9:00 AM',q:false},{n:'Gulika Kaal',t:'1:30 PM – 3:00 PM',q:false},{n:'Yamaghanta',t:'10:30 AM – 12:00 PM',q:false}]};
 function loadPanch(){
@@ -8796,18 +8955,31 @@ function loadPanch(){
   // REAL sunrise/sunset AND real Tithi/Nakshatra/Yoga/Karana — all computed from the
   // ephemeris at this city's actual sunrise. Only moonrise/moonset stay approximate (~).
   const coords=CITY_COORDS[city]||CITY_COORDS['New Delhi, Delhi']||{lat:28.6139,lng:77.2090};
-  let sunrise=p.sr, sunset=p.ss;
+  let sunrise=p.sr, sunset=p.ss, st=null;
   try{
-    const st=computeSunTimes(coords.lat,coords.lng,now,5.5);
+    st=computeSunTimes(coords.lat,coords.lng,now,5.5);
     if(st&&st.sunrise){sunrise=st.sunrise;sunset=st.sunset;}
-  }catch(e){}
+  }catch(e){st=null;}
   let rl=null;
+  /* The tithi must be read AT SUNRISE — that is what "today's tithi" means in the
+     panchang. `st` used to be declared with `const` inside the try block above, so
+     this line could never see it: `typeof st === 'undefined'` was true every single
+     time and the fallback 360 (06:00) was always used, while the label underneath
+     read "At sunrise · computed". Both halves of that label were false. */
+  const _sm=(st&&st.sunriseMin!=null)?st.sunriseMin:null;
   try{
-    const _sm=(typeof st!=='undefined'&&st&&st.sunriseMin!=null)?st.sunriseMin:360;
-    rl=realPanchangAt(now.getFullYear(),now.getMonth()+1,now.getDate(),Math.floor(_sm/60),Math.round(_sm%60));
+    if(_sm!=null)rl=realPanchangAt(now.getFullYear(),now.getMonth()+1,now.getDate(),Math.floor(_sm/60),Math.round(_sm%60));
   }catch(e){}
   document.getElementById('panch-grid').innerHTML=[['Tithi',rl?rl.tithi:p.ti,rl?'At sunrise · computed':'Lunar day ~'],['Vara',now.toLocaleDateString('en-IN',{weekday:'long'}),'Weekday · computed'],['Nakshatra',rl?rl.nak:p.na,rl?'Moon\'s star · computed':'Moon\'s star ~'],['Yoga',rl?rl.yoga:p.yo,rl?'Nitya yoga · computed':'Nitya yoga ~'],['Karana',rl?rl.karana:p.ka,rl?'Half-tithi · computed':'Half-tithi ~'],['Sunrise',sunrise,'For this city'],['Sunset',sunset,'For this city'],['Moonrise',p.mr,'Lunar timing ~'],['Moonset',p.ms,'Lunar timing ~']].map(([l,val,s])=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px;"><div style="font-size:.6rem;letter-spacing:.09em;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">${l}</div><div style="font-family:'Cinzel',serif;font-size:.86rem;color:var(--g2c);">${val}</div><div style="font-size:.66rem;color:var(--muted);margin-top:1px;">${s}</div></div>`).join('');
-  document.getElementById('panch-muh').innerHTML=p.muh.map(m=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bdr2);font-size:.8rem;"><span style="color:var(--text);">${m.n}</span><span style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${m.t}</span><span style="${m.q?'background:rgba(22,163,74,.12);color:#4ade80;border:1px solid rgba(22,163,74,.18);':'background:rgba(220,38,38,.12);color:#f87171;border:1px solid rgba(220,38,38,.18);'}padding:2px 8px;border-radius:100px;font-size:.62rem;">${m.q?'Auspicious':'Avoid'}</span></div>`).join('');
+  /* Muhurat windows, computed from THIS city's sunrise and sunset for TODAY.
+     These used to be the fixed strings in PANCH.muh, printed unchanged for every
+     date and every city — so Rahu Kaal read "7:30 AM – 9:00 AM" always, which is
+     wrong on six days out of seven and drifts further as sunrise moves with the
+     season. If sunrise cannot be computed we say so instead of printing a guess. */
+  const muhList=computeMuhurats(st,now);
+  document.getElementById('panch-muh').innerHTML=muhList
+    ?muhList.map(m=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bdr2);font-size:.8rem;"><span style="color:var(--text);">${m.n}</span><span style="font-family:'Cinzel',serif;font-size:.76rem;color:var(--g2c);">${m.t}</span><span style="${m.q?'background:rgba(22,163,74,.12);color:#4ade80;border:1px solid rgba(22,163,74,.18);':'background:rgba(220,38,38,.12);color:#f87171;border:1px solid rgba(220,38,38,.18);'}padding:2px 8px;border-radius:100px;font-size:.62rem;">${m.q?'Auspicious':'Avoid'}</span></div>`).join('')
+    :'<div style="padding:12px 0;font-size:.76rem;color:var(--muted);line-height:1.6;">Sunrise and sunset for this city could not be computed today, so the muhurat windows are not shown — every one of them is measured from sunrise, and we would rather show nothing than show a guess.</div>';
   // Important days now live in renderPanchMonth() so the month dropdown drives them.
   try{ renderPanchMonth(); }catch(e){}
 }
@@ -8891,36 +9063,87 @@ function subNL(e){e.preventDefault();toast('✨ You\'re aligned! Weekly cosmic u
 /* ══ GEMSTONE DATA ══ */
 const DP_G=['Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus'];
 
-function calcBirthChartG(dob,time){
+/* Birth chart for the Gemstone and Remedies tools — the REAL one.
+
+   What this used to be: every value below was derived from
+       seed = (yr + mo*31 + dy*7 + th*13 + tm*3) % 10000
+   so the Moon sign was seed%12, the nakshatra (seed*7)%27, the Sun always exactly
+   6 signs from the Moon (which is only true at a full moon), Manglik seed%3===0
+   and the recommended stone seed%9. The birth place was asked for and then never
+   used at all. The Kundli was moved onto the verified ephemeris earlier; this
+   second path was missed, so the same person could be told "Not Manglik" here and
+   "Manglik" by the dedicated Mangal Dosha tool, and a free user — who only ever
+   sees this path — got a fabricated chart end to end. The AI prompt was fed the
+   same fabricated values, so paying did not fix it either.
+
+   Now it runs computeRealPositions() + trueLagnaSidereal(), the same engine the
+   Kundli uses, and every "lucky" attribute follows a classical rule keyed off the
+   real Moon sign rather than off the digits of the birth date. */
+function calcBirthChartG(dob,time,place){
   const dt=new Date(dob);
   const yr=dt.getFullYear(),mo=dt.getMonth(),dy=dt.getDate();
   let th=6,tm=0;
-  if(time){const tp=time.split(':');th=parseInt(tp[0])||6;tm=parseInt(tp[1])||0;}
-  const seed=(yr+mo*31+dy*7+th*13+tm*3)%10000;
-  const mIdx=seed%12;
-  const lIdx=(mIdx+Math.floor((th*60+tm)/120))%12;
-  const nIdx=(seed*7)%27;
-  const RASHI=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-  const NAK=['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','Purva Phalguni','Uttara Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','Purva Ashadha','Uttara Ashadha','Shravana','Dhanishtha','Shatabhisha','Purva Bhadrapada','Uttara Bhadrapada','Revati'];
-  const NL=['Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury','Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury'];
-  const RL=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+  if(time&&time.indexOf(':')>-1){
+    const tp=time.split(':');
+    const ph=parseInt(tp[0],10),pm=parseInt(tp[1],10);
+    th=isNaN(ph)?6:Math.min(23,Math.max(0,ph));
+    tm=isNaN(pm)?0:Math.min(59,Math.max(0,pm));
+  }
   const RSYM=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
-  let dStart=DP_G.indexOf(NL[nIdx]);if(dStart<0)dStart=0;
+  const P=computeRealPositions(yr,mo+1,dy,th,tm,5.5).positions;
+  const _sign=x=>Math.floor(P[x]/30);
+  const mIdx=_sign('Moon'),sIdx=_sign('Sun');
+  const nIdx=Math.floor(P.Moon/(360/27));
+  const pada=Math.floor((P.Moon%(360/27))/((360/27)/4))+1;
+  // True sidereal Lagna when the birth city is known; otherwise the same
+  // equal-house approximation the Kundli falls back to, so the two never diverge.
+  let lIdx;
+  const _c=place?CITY_COORDS[place]:null;
+  if(_c){lIdx=Math.floor(trueLagnaSidereal(yr,mo+1,dy,th,tm,_c.lat,_c.lng)/30);}
+  else{lIdx=(mIdx+Math.floor((th*60+tm)/120))%12;}
+
+  // Manglik — Mars in house 1/2/4/7/8/12 counted from the Lagna or from the Moon.
+  const _mBad=[1,2,4,7,8,12];
+  const _marsL=(_sign('Mars')-lIdx+12)%12+1,_marsM=(_sign('Mars')-mIdx+12)%12+1;
+  const manglik=_mBad.includes(_marsL)||_mBad.includes(_marsM);
+  // Kaal Sarp — all seven classical planets on one side of the Rahu–Ketu axis.
+  const _arc=x=>((P[x]-P.Rahu)+360)%360;
+  const _inside=['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'].filter(p=>_arc(p)<180).length;
+  const kaalSarp=(_inside===7||_inside===0);
+  // Sade Sati — Saturn transiting the 12th, 1st or 2nd from the natal Moon today.
+  let sade=false;
+  try{
+    const n=new Date();
+    const satNow=Math.floor(computeRealPositions(n.getFullYear(),n.getMonth()+1,n.getDate(),12,0,5.5).positions.Saturn/30);
+    const rel=(satNow-mIdx+12)%12;
+    sade=(rel===11||rel===0||rel===1);
+  }catch(e){}
+
+  const lagnaLord=SIGN_LORD[lIdx],moonLord=SIGN_LORD[mIdx];
+  let dashaLord=moonLord;
+  try{dashaLord=currentDashaLord(vimshottariSeq(P.Moon,yr,mo+1,dy));}catch(e){}
+  let dStart=DP_G.indexOf(dashaLord);if(dStart<0)dStart=0;
+  const rud=rudrakshaForNakshatra(NAK[nIdx]);
+  const nakLord=NAKSHATRA_LORD[NAK[nIdx]]||moonLord;
+
   return{
-    yr,mo,dy,th,tm,seed,
-    lagnaIdx:lIdx,lagnaSign:RASHI[lIdx],lagnaSym:RSYM[lIdx],
-    moonIdx:mIdx,moonSign:RASHI[mIdx],moonSym:RSYM[mIdx],
-    sunSign:RASHI[(mIdx+6)%12],
-    nakshatra:NAK[nIdx],nakPada:(seed%4)+1,nakLord:NL[nIdx],
-    rulingPlanet:RL[lIdx],dashaStart:dStart,seed,
-    luckyDays:[['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][(dy+mo)%7]],
-    luckyGems:[['Ruby','Pearl','Red Coral','Hessonite','Yellow Sapphire','Blue Sapphire','Emerald',"Cat's Eye",'Diamond'][seed%9]],
-    luckyColors:[['Ruby Red','Pearl White','Crimson','Silver','Golden Yellow','Deep Blue','Sea Green','Orange','Purple'][seed%9]],
-    luckyNums:[(seed%9)||9],
-    luckyDir:['East','West','North','South','NE','NW','SE','SW'][seed%8],
-    luckyMetal:['Gold','Silver','Copper','Iron'][seed%4],
-    rudraksha:['5 Mukhi','7 Mukhi','1 Mukhi','14 Mukhi','3 Mukhi'][seed%5],
-    manglik:seed%3===0,kaalSarp:seed%5===0,sade:seed%7===0
+    yr,mo,dy,th,tm,
+    lagnaIdx:lIdx,lagnaSign:RASHIS[lIdx],lagnaSym:RSYM[lIdx],
+    moonIdx:mIdx,moonSign:RASHIS[mIdx],moonSym:RSYM[mIdx],
+    sunIdx:sIdx,sunSign:RASHIS[sIdx],
+    nakIdx:nIdx,nakshatra:NAK[nIdx],nakPada:pada,nakLord:nakLord,
+    rulingPlanet:lagnaLord,lagnaLord:lagnaLord,moonLord:moonLord,
+    dashaLord:dashaLord,dashaStart:dStart,
+    // Classical attributions of the Moon-sign lord, not arithmetic on the date.
+    luckyDays:[PLANET_DAY[moonLord]],
+    luckyGems:[PLANET_GEM[moonLord]],
+    luckyColors:[PLANET_COLOR[moonLord]],
+    luckyNums:[PLANET_NUM[moonLord]],
+    luckyDir:PLANET_DIR[moonLord],
+    luckyMetal:PLANET_METAL[moonLord],
+    rudraksha:(rud?rud.mukhi:5)+' Mukhi',
+    manglik:manglik,kaalSarp:kaalSarp,sade:sade,
+    placeUsed:!!_c
   };
 }
 
@@ -8981,8 +9204,11 @@ function runGemEngine(){
   if(!needFields([['gem-d','Date of Birth'],['gem-p','Birth Place']]))return;
   if(!needLogin(runGemEngine))return;
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
-  const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t):curKundliForGuru;
-  const lagna=kd?kd.lagnaSign:'Aries',moon=kd?kd.moonSign:'Cancer',nak=kd?kd.nakshatra:'Rohini',rp=kd?kd.rulingPlanet:'Jupiter',seed=kd?(kd.seed||42):42;
+  // `curKundliForGuru` was never declared anywhere in this file, so a short or
+  // malformed date would have thrown a ReferenceError and killed the whole tool.
+  // null lets the per-field fallbacks below do their job instead.
+  const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t,v('gem-p')):null;
+  const lagna=kd?kd.lagnaSign:'Aries',moon=kd?kd.moonSign:'Cancer',nak=kd?kd.nakshatra:'Rohini',rp=kd?kd.rulingPlanet:'Jupiter';
   const resEl=document.getElementById('gem-res'),ldrEl=document.getElementById('gem-ldr'),outEl=document.getElementById('gem-grid-out');
   resEl.style.display='block';ldrEl.style.display='block';outEl.innerHTML='';outEl.style.display='none';
   setTimeout(()=>resEl.scrollIntoView({behavior:'smooth',block:'nearest'}),150);
@@ -8991,11 +9217,26 @@ function runGemEngine(){
     for(let i=0;i<Math.min(gems.length,3);i++){
       const g=gems[i],name=g.name||g.n||'Ruby',planet=g.planet||g.pl||'Sun',benefit=g.benefit||('Strengthens '+planet);
       const gd=GEM_DATA.find(x=>x.n.toLowerCase()===name.toLowerCase())||GEM_DATA[0],rec=g.recType||'wear';
-      html+='<div class="gem-card"><div class="gem-top" style="background:'+gd.bg+'">'+gemSVG(gd.svgKey)+'<div class="gem-sc">'+(g.confScore||gd.conf)+'% Match</div></div><div class="gem-body"><div class="gem-nm">'+name+'</div><div class="gem-pl">Planet: '+planet+'</div><div class="gem-arow"><span class="gem-ak">Benefit</span><span class="gem-av">'+String(benefit).substring(0,50)+'</span></div><div class="gem-arow"><span class="gem-ak">Finger</span><span class="gem-av">'+(g.finger||gd.finger)+'</span></div><div class="gem-arow"><span class="gem-ak">Best Day</span><span class="gem-av">'+(g.day||gd.day)+'</span></div><div class="gem-arow"><span class="gem-ak">Metal</span><span class="gem-av">'+(g.metal||gd.metal)+'</span></div><div class="gem-arow"><span class="gem-ak">Mantra</span><span class="gem-av">'+(g.mantra||gd.mantra)+'</span></div><div class="gem-rec '+(rec==='avoid'?'gem-avoid':rec==='caution'?'gem-caut':'gem-wear')+'">'+( rec==='avoid'?'Avoid':rec==='caution'?'Consult first':'Recommended')+'</div></div></div>';
+      html+='<div class="gem-card"><div class="gem-top" style="background:'+gd.bg+'">'+gemSVG(gd.svgKey)+'<div class="gem-sc">'+(g.role||('For '+planet))+'</div></div><div class="gem-body"><div class="gem-nm">'+name+'</div><div class="gem-pl">Planet: '+planet+'</div><div class="gem-arow"><span class="gem-ak">Benefit</span><span class="gem-av">'+String(benefit).substring(0,50)+'</span></div><div class="gem-arow"><span class="gem-ak">Finger</span><span class="gem-av">'+(g.finger||gd.finger)+'</span></div><div class="gem-arow"><span class="gem-ak">Best Day</span><span class="gem-av">'+(g.day||gd.day)+'</span></div><div class="gem-arow"><span class="gem-ak">Metal</span><span class="gem-av">'+(g.metal||gd.metal)+'</span></div><div class="gem-arow"><span class="gem-ak">Mantra</span><span class="gem-av">'+(g.mantra||gd.mantra)+'</span></div><div class="gem-rec '+(rec==='avoid'?'gem-avoid':rec==='caution'?'gem-caut':'gem-wear')+'">'+( rec==='avoid'?'Avoid':rec==='caution'?'Consult first':'Recommended')+'</div></div></div>';
     }
     outEl.innerHTML=html;ldrEl.style.display='none';outEl.style.display='grid';outEl.style.gridTemplateColumns='repeat(auto-fit,minmax(200px,1fr))';outEl.style.gap='12px';addTranslate(outEl.id);
   }
-  showGems([GEM_DATA[seed%9],GEM_DATA[(seed+3)%9],GEM_DATA[(seed+6)%9]].map(g=>({name:g.n,planet:g.pl,benefit:'Ideal for '+lagna+' Lagna',finger:g.finger,day:g.day,metal:g.metal,mantra:g.mantra,confScore:g.conf,recType:'wear'})));
+  /* The three stones a jyotishi actually starts from: the lord of the Moon sign
+     (janma rashi), the lord of the Lagna, and the lord of the running Vimshottari
+     mahadasha — with the nakshatra lord stepping in if two of those coincide.
+     This used to be GEM_DATA[seed%9], [seed+3]%9 and [seed+6]%9: three stones
+     chosen by arithmetic on the birth date, unrelated to the person's chart. */
+  const _gemFor=pl=>GEM_DATA.find(x=>x.pl===pl);
+  const _picks=[];
+  const _addGem=(pl,role)=>{const g=pl?_gemFor(pl):null;if(!g||_picks.some(x=>x.n===g.n))return;_picks.push(Object.assign({},g,{role:role}));};
+  if(kd){
+    _addGem(kd.moonLord,'Moon sign lord');
+    _addGem(kd.lagnaLord,'Lagna lord');
+    _addGem(kd.dashaLord,'Running '+kd.dashaLord+' dasha');
+    _addGem(kd.nakLord,'Nakshatra lord');
+  }
+  if(!_picks.length)_addGem('Jupiter','General wellbeing');
+  showGems(_picks.slice(0,3).map(g=>({name:g.n,planet:g.pl,benefit:'Strengthens '+g.pl+' in a '+lagna+' Lagna chart',finger:g.finger,day:g.day,metal:g.metal,mantra:g.mantra,role:g.role,recType:'wear'})));
   startTeaser('gem-res','Your gemstone report is locked','Unlock a plan to keep your full gemstone recommendations open — the right stone, finger, metal, day and mantra for your chart.');
   callAI('Reply ONLY with a JSON array. No markdown.',[{role:'user',content:'Lagna:'+lagna+' Moon:'+moon+' Nakshatra:'+nak+' Planet:'+rp+(h?' Concern:'+h:'')+'. Top 3 gemstones JSON:[{"name":"","planet":"","benefit":"","finger":"","day":"","metal":"","mantra":"","confScore":85,"recType":"wear"}]'}],600).then(txt=>{try{const s=txt.indexOf('['),e=txt.lastIndexOf(']');if(s>=0&&e>s){const g=JSON.parse(txt.substring(s,e+1));if(g&&g.length>0){showGems(g);toast('AI gemstone analysis ready!','ok');}}}catch(ex){}}).catch(()=>{});
 }
@@ -9008,9 +9249,12 @@ function runRemedies(){
   if(!needFields([['rem-d','Date of Birth'],['rem-p','Birth Place'],['rem-c','Current Concern']]))return;
   if(!needLogin(runRemedies))return;
   let dob=d;if(d&&d.includes('/')){const p=d.split('/');if(p.length===3)dob=p[2]+'-'+p[1]+'-'+p[0];}
-  const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t):curKundliForGuru;
+  // Birth place is now passed through — it is a required field on this form and
+  // was previously collected and then ignored. Same `curKundliForGuru` fix as the
+  // Gemstone tool above: that identifier does not exist, so it could only throw.
+  const kd=(dob&&dob.length>=8)?calcBirthChartG(dob,t,v('rem-p')):null;
   const lagna=kd?kd.lagnaSign:'Aries',moon=kd?kd.moonSign:'Cancer',nak=kd?kd.nakshatra:'Rohini',rp=kd?kd.rulingPlanet:'Jupiter';
-  const dasha=kd?DP_G[kd.dashaStart]:'Jupiter',lD=kd&&kd.luckyDays?kd.luckyDays[0]:'Thursday';
+  const dasha=kd?(kd.dashaLord||DP_G[kd.dashaStart]):'Jupiter',lD=kd&&kd.luckyDays?kd.luckyDays[0]:'Thursday';
   const gemR=kd&&kd.luckyGems?kd.luckyGems[0]:'Yellow Sapphire',dir=kd?kd.luckyDir:'East';
   const rud=kd?kd.rudraksha:'5 Mukhi',col=kd&&kd.luckyColors?kd.luckyColors[0]:'Golden Yellow',manglik=kd?kd.manglik:false;
   const resEl=document.getElementById('rem-res'),ldrEl=document.getElementById('rem-ldr'),outEl=document.getElementById('rem-grid-out');
@@ -9021,7 +9265,7 @@ function runRemedies(){
     {icon:'&#128197;',title:'Weekly Remedies',remedies:['Fast on '+lD+'s for '+rp+' blessings','Visit Shiva temple every '+lD,'Donate '+col.toLowerCase()+' items on '+lD+'s',(manglik?'Mangal puja on Tuesdays':'Feed crows on Saturdays')]},
     {icon:'&#129335;',title:'Mantras & Chants',remedies:[rp+' Beej Mantra 108x on '+lD,'Maha Mrityunjaya Mantra 108x daily','Gayatri Mantra 108x at sunrise','Hanuman Chalisa daily for protection']},
     {icon:'&#127963;',title:'Puja Recommendations',remedies:['Rudrabhishek on Mondays','Satyanarayana puja on full moon','Navgraha puja monthly','Lakshmi puja every Friday']},
-    {icon:'&#128142;',title:'Gemstone & Rudraksha',remedies:['Wear '+gemR+' in silver ring on right ring finger',rud+' Mukhi Rudraksha in red thread','Energize with '+rp+' mantra 108x on '+lD,'Wear '+col.toLowerCase()+' clothes on '+lD+'s']},
+    {icon:'&#128142;',title:'Gemstone & Rudraksha',remedies:['Wear '+gemR+' in a '+((kd&&kd.luckyMetal)||'silver').toLowerCase()+' ring on the right ring finger',rud+' Rudraksha in red thread','Energize with '+rp+' mantra 108x on '+lD,'Wear '+col.toLowerCase()+' clothes on '+lD+'s']},
     {icon:'&#127807;',title:'Lifestyle',remedies:['Face '+dir+' while working and praying','Anulom-Vilom pranayama 10 min daily','Keep Tulsi plant at home entrance',nak+' Nakshatra: Stay positive']}
   ];
   function showRems(rems){
