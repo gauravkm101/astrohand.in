@@ -8890,6 +8890,67 @@ function computeMuhurats(st,date){
   ];
 }
 
+/* ── Moonrise / moonset, computed ──
+   These were `PANCH.mr` and `PANCH.ms`: the fixed strings "10:43 PM" and
+   "10:12 AM", printed for every date and every city under the label "Lunar
+   timing ~". They were not approximate, they were constant — the same defect as
+   the muhurat row above, sitting on the same panel.
+
+   The Moon needs a real rise/set search rather than the Sun's closed-form hour
+   angle: its ecliptic latitude swings ±5°, it moves ~13° a day, and it rises
+   roughly 50 minutes later each day, so its declination changes materially within
+   a single day. We walk its altitude across the local day and bisect each horizon
+   crossing. On about one day a month the Moon genuinely does not rise (or does not
+   set) between local midnights — then we return null and the page says so rather
+   than inventing a time. */
+function moonEquatorial(d){
+  const sun=sunPosition(d);
+  const m=moonPosition(d,sun);
+  const ecl=23.4393-3.563E-7*d;
+  const xg=_cosd(m.lon)*_cosd(m.lat), yg=_sind(m.lon)*_cosd(m.lat), zg=_sind(m.lat);
+  const xe=xg, ye=yg*_cosd(ecl)-zg*_sind(ecl), ze=yg*_sind(ecl)+zg*_cosd(ecl);
+  return {ra:_norm360(_atan2d(ye,xe)),
+          dec:_deg(Math.atan2(ze,Math.sqrt(xe*xe+ye*ye))),
+          r:m.r, sun:sun};
+}
+/* Degrees the Moon's centre stands ABOVE its rise/set threshold at `localMin`
+   minutes past local midnight. Positive means the Moon is up. The threshold is
+   the standard 0.7275·parallax − 0.583°, with the parallax taken from the Moon's
+   actual distance (moonPosition returns r in Earth radii), which is why it is not
+   a constant either. */
+function moonAltAbove(lat,lng,yr,mo,dy,localMin,tz){
+  const ut=localMin/60-tz;
+  const d=dayNumber(yr,mo,dy,ut);
+  const q=moonEquatorial(d);
+  const LST=_norm360(_norm360(q.sun.M+q.sun.w)+180+ut*15.0410686+lng);
+  const HA=_norm360(LST-q.ra);
+  const alt=_deg(Math.asin(_sind(lat)*_sind(q.dec)+_cosd(lat)*_cosd(q.dec)*_cosd(HA)));
+  const par=_deg(Math.asin(1/q.r));
+  return alt-(0.7275*par-0.583);
+}
+function computeMoonTimes(lat,lng,date,tz){
+  const yr=date.getFullYear(),mo=date.getMonth()+1,dy=date.getDate();
+  const f=t=>moonAltAbove(lat,lng,yr,mo,dy,t,tz);
+  // The crossing is bracketed by the scan below, so plain bisection is enough.
+  const cross=(a,b)=>{
+    let fa=f(a);
+    for(let k=0;k<40&&(b-a)>0.02;k++){
+      const mid=(a+b)/2,fm=f(mid);
+      if((fa<0)===(fm<0)){a=mid;fa=fm;}else{b=mid;}
+    }
+    return (a+b)/2;
+  };
+  let rise=null,set=null,prev=f(0);
+  for(let t=5;t<=1440;t+=5){
+    const cur=f(t);
+    if(prev<0&&cur>=0&&rise===null)rise=cross(t-5,t);
+    if(prev>=0&&cur<0&&set===null)set=cross(t-5,t);
+    prev=cur;
+  }
+  return {moonrise:rise==null?null:_fmtClock(rise),
+          moonset:set==null?null:_fmtClock(set)};
+}
+
 /* ── Indic script → Latin, for numerology ──
    Pythagorean numerology is defined on A–Z. calcNum() used to run
    replace(/[^a-z]/g,'') as its first step, which DELETED every Devanagari or
@@ -8946,16 +9007,20 @@ function indicToLatin(str){
   return{latin:out,script:script,dropped:dropped};
 }
 
-/* ══ PANCHANG ══ */
-const PANCH={ti:'Saptami (7th) — Krishna Paksha',va:'Monday (Somavar)',na:'Rohini — 3rd Pada',yo:'Siddha Yoga (Auspicious)',ka:'Garaja',sr:'5:47 AM',ss:'7:14 PM',mr:'10:43 PM',ms:'10:12 AM',muh:[{n:'Brahma Muhurta',t:'4:10 AM – 4:57 AM',q:true},{n:'Abhijit Muhurta',t:'11:44 AM – 12:36 PM',q:true},{n:'Vijaya Muhurta',t:'2:15 PM – 3:05 PM',q:true},{n:'Rahu Kaal',t:'7:30 AM – 9:00 AM',q:false},{n:'Gulika Kaal',t:'1:30 PM – 3:00 PM',q:false},{n:'Yamaghanta',t:'10:30 AM – 12:00 PM',q:false}]};
+/* ══ PANCHANG ══
+   The `PANCH` constant that used to sit here is gone. It held one fixed day's
+   panchang — tithi Saptami, Rohini nakshatra, sunrise 5:47 AM, moonrise 10:43 PM,
+   Rahu Kaal 7:30 AM – 9:00 AM — and every field was printed verbatim to every
+   visitor on every date in every city. Each of those values is now computed, and
+   where a value genuinely cannot be computed the panel shows a dash and says why.
+   Nothing on this panel falls back to a stored answer any more; keep it that way. */
 function loadPanch(){
   const now=new Date(),city=v('panch-city')||'New Delhi, Delhi';
   document.getElementById('panch-hdr').textContent=now.toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' — '+city;
-  const p=PANCH;
   // REAL sunrise/sunset AND real Tithi/Nakshatra/Yoga/Karana — all computed from the
   // ephemeris at this city's actual sunrise. Only moonrise/moonset stay approximate (~).
   const coords=CITY_COORDS[city]||CITY_COORDS['New Delhi, Delhi']||{lat:28.6139,lng:77.2090};
-  let sunrise=p.sr, sunset=p.ss, st=null;
+  let sunrise='—', sunset='—', st=null;
   try{
     st=computeSunTimes(coords.lat,coords.lng,now,5.5);
     if(st&&st.sunrise){sunrise=st.sunrise;sunset=st.sunset;}
@@ -8970,7 +9035,15 @@ function loadPanch(){
   try{
     if(_sm!=null)rl=realPanchangAt(now.getFullYear(),now.getMonth()+1,now.getDate(),Math.floor(_sm/60),Math.round(_sm%60));
   }catch(e){}
-  document.getElementById('panch-grid').innerHTML=[['Tithi',rl?rl.tithi:p.ti,rl?'At sunrise · computed':'Lunar day ~'],['Vara',now.toLocaleDateString('en-IN',{weekday:'long'}),'Weekday · computed'],['Nakshatra',rl?rl.nak:p.na,rl?'Moon\'s star · computed':'Moon\'s star ~'],['Yoga',rl?rl.yoga:p.yo,rl?'Nitya yoga · computed':'Nitya yoga ~'],['Karana',rl?rl.karana:p.ka,rl?'Half-tithi · computed':'Half-tithi ~'],['Sunrise',sunrise,'For this city'],['Sunset',sunset,'For this city'],['Moonrise',p.mr,'Lunar timing ~'],['Moonset',p.ms,'Lunar timing ~']].map(([l,val,s])=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px;"><div style="font-size:.6rem;letter-spacing:.09em;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">${l}</div><div style="font-family:'Cinzel',serif;font-size:.86rem;color:var(--g2c);">${val}</div><div style="font-size:.66rem;color:var(--muted);margin-top:1px;">${s}</div></div>`).join('');
+  // Moonrise/moonset for THIS city and date. These were PANCH.mr / PANCH.ms —
+  // "10:43 PM" and "10:12 AM" printed for every date and every city.
+  let mt=null;
+  try{ mt=computeMoonTimes(coords.lat,coords.lng,now,5.5); }catch(e){}
+  /* The Tithi/Nakshatra/Yoga/Karana fallbacks used to be PANCH.ti/.na/.yo/.ka —
+     one fixed day's panchang shown under a "~" label whenever the real value could
+     not be computed. A dash is the honest answer there. */
+  const _dash='—';
+  document.getElementById('panch-grid').innerHTML=[['Tithi',rl?rl.tithi:_dash,rl?'At sunrise · computed':'Sunrise unavailable for this city'],['Vara',now.toLocaleDateString('en-IN',{weekday:'long'}),'Weekday · computed'],['Nakshatra',rl?rl.nak:_dash,rl?'Moon\'s star · computed':'Sunrise unavailable for this city'],['Yoga',rl?rl.yoga:_dash,rl?'Nitya yoga · computed':'Sunrise unavailable for this city'],['Karana',rl?rl.karana:_dash,rl?'Half-tithi · computed':'Sunrise unavailable for this city'],['Sunrise',sunrise,'For this city'],['Sunset',sunset,'For this city'],['Moonrise',(mt&&mt.moonrise)||_dash,mt?(mt.moonrise?'For this city · computed':'Does not rise today'):'Could not be computed'],['Moonset',(mt&&mt.moonset)||_dash,mt?(mt.moonset?'For this city · computed':'Does not set today'):'Could not be computed']].map(([l,val,s])=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px;"><div style="font-size:.6rem;letter-spacing:.09em;color:var(--sub);text-transform:uppercase;margin-bottom:4px;">${l}</div><div style="font-family:'Cinzel',serif;font-size:.86rem;color:var(--g2c);">${val}</div><div style="font-size:.66rem;color:var(--muted);margin-top:1px;">${s}</div></div>`).join('');
   /* Muhurat windows, computed from THIS city's sunrise and sunset for TODAY.
      These used to be the fixed strings in PANCH.muh, printed unchanged for every
      date and every city — so Rahu Kaal read "7:30 AM – 9:00 AM" always, which is
