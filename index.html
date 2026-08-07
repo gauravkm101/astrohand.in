@@ -8019,6 +8019,13 @@ async function genKundli(){
     // the planet analysis silently never printed. Hand the data over.
     window.LAST_KUNDLI={planets:REAL_PLANETS,lagnaIdx:li,moonIdx:ri};
 
+    /* The three renderers below were written against `RP`, but `RP` only exists
+       inside exportKundliPDF() (`const RP = LK.planets`). In this function it was
+       never declared, so the first chart render threw "RP is not defined" and
+       took the whole Kundli down with it — no chart, no planets, no doshas, no
+       dasha, nothing. Live since 2026-08-03. Same name, same data, declared here. */
+    const RP=REAL_PLANETS;
+
     // Render North Indian Kundli chart with computed Lagna + REAL planetary positions
     const kcWrap=document.getElementById('kundli-chart-wrap');
     if(kcWrap){
