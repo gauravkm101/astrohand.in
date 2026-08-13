@@ -6825,22 +6825,47 @@ const MUHURAT_CATEGORIES={
 };
 const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
 let muhuratActiveCategory='wedding';
-let muhuratActiveMonth=new Date().getMonth(); // default to current month
+/* "YYYY-M" of the month on screen. It used to be a bare month index, with the
+   year printed as the literal string "2026" and the filter matching on month
+   alone — so on 1 January 2027 the picker would have said "January" and served
+   January 2026's dates without a word. The year is now always read back out of
+   the data itself, so the label cannot drift away from what is being shown. */
+let muhuratActiveKey='';
+
+/* Every (year, month) the chosen category actually has dates for. */
+function muhuratMonths(cat){
+  const seen=new Map();
+  (cat&&cat.data||[]).forEach(d=>{
+    const dt=new Date(d.date+'T00:00:00');
+    if(isNaN(dt))return;
+    const k=dt.getFullYear()+'-'+dt.getMonth();
+    if(!seen.has(k))seen.set(k,{y:dt.getFullYear(),m:dt.getMonth()});
+  });
+  return [...seen.values()].sort((a,b)=>a.y-b.y||a.m-b.m);
+}
 
 function initMuhuratMonthSelector(){
   const sel=document.getElementById('muhurat-month-select');
   if(!sel)return;
-  sel.innerHTML=MONTH_NAMES.map((m,i)=>`<option value="${i}">${m} 2026</option>`).join('');
-  sel.value=muhuratActiveMonth;
+  const months=muhuratMonths(MUHURAT_CATEGORIES[muhuratActiveCategory]);
+  if(!months.length){sel.innerHTML='';muhuratActiveKey='';return;}
+  sel.innerHTML=months.map(o=>`<option value="${o.y}-${o.m}">${MONTH_NAMES[o.m]} ${o.y}</option>`).join('');
+  /* Land on this month if it is covered, else the next month still ahead of
+     today, else the last month the source has. */
+  const now=new Date(),nowKey=now.getFullYear()*12+now.getMonth();
+  const pick=months.find(o=>o.y*12+o.m===nowKey)||months.find(o=>o.y*12+o.m>nowKey)||months[months.length-1];
+  muhuratActiveKey=pick.y+'-'+pick.m;
+  sel.value=muhuratActiveKey;
 }
 function selectMuhuratCategory(btn,cat){
   document.querySelectorAll('.muhurat-cat-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   muhuratActiveCategory=cat;
+  initMuhuratMonthSelector();   // each category covers a different set of months
   renderMuhuratResults();
 }
 function onMuhuratMonthChange(){
-  muhuratActiveMonth=parseInt(document.getElementById('muhurat-month-select').value,10);
+  muhuratActiveKey=document.getElementById('muhurat-month-select').value;
   renderMuhuratResults();
 }
 function renderMuhuratResults(){
@@ -6853,21 +6878,44 @@ function renderMuhuratResults(){
   // freshly-rendered category/month. Done after the content is set below via a microtask.
   setTimeout(()=>{if(typeof mountMuhuratTranslate==='function')mountMuhuratTranslate();},0);
 
-  const monthEntries=cat.data.filter(d=>new Date(d.date+'T00:00:00').getMonth()===muhuratActiveMonth);
+  if(!muhuratActiveKey)initMuhuratMonthSelector();
+  const selY=parseInt((muhuratActiveKey||'').split('-')[0],10);
+  const selM=parseInt((muhuratActiveKey||'').split('-')[1],10);
+
+  const monthEntries=(cat.data||[]).filter(d=>{
+    const dt=new Date(d.date+'T00:00:00');
+    return !isNaN(dt)&&dt.getFullYear()===selY&&dt.getMonth()===selM;
+  });
   // Bhoomi Pujan's source coverage is genuinely thinner than the other 7 categories
   // (real, cited dates — just fewer of them, since sources disagree on this one more
   // than any other category). Say so plainly rather than let a sparse month look broken.
   const thinNote=cat.thin?`<div style="text-align:center;font-size:.66rem;color:var(--sub);margin-bottom:14px;font-style:italic;">Bhoomi Pujan sources vary more than other categories — this reflects one published source's dated shortlist, not a complete verified year like the others.</div>`:'';
+
+  /* These dates come from a published panchang, not from our ephemeris, so the
+     tool can only cover the years that were transcribed. When today has moved
+     past the last year on file, say so — the alternative is quietly handing
+     someone a stale date for their wedding. */
+  const years=[...new Set((cat.data||[]).map(d=>parseInt(String(d.date).slice(0,4),10)).filter(y=>y))].sort((a,b)=>a-b);
+  const lastYear=years[years.length-1],thisYear=new Date().getFullYear();
+  const staleNote=(lastYear&&lastYear<thisYear)?`<div style="text-align:center;font-size:.7rem;color:var(--rose);border:1px solid var(--bdr2);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;">These muhurat dates are from a published <b>${years.join(' & ')}</b> panchang and have not been updated for ${thisYear} yet. Nothing below is computed for the current year — please confirm with a panchang before fixing a date.</div>`:'';
+  const head=staleNote+thinNote;
+
   if(!monthEntries.length){
-    wrap.innerHTML=thinNote+`<div style="text-align:center;padding:30px 20px;color:var(--muted);font-size:.85rem;">No auspicious ${cat.label.replace(/^\S+\s/,'')} dates in ${MONTH_NAMES[muhuratActiveMonth]} 2026 per this source — often due to Chaturmas, Khar Maas, or planetary combustion during this period.</div>`;
+    wrap.innerHTML=head+`<div style="text-align:center;padding:30px 20px;color:var(--muted);font-size:.85rem;">No auspicious ${cat.label.replace(/^\S+\s/,'')} dates in ${MONTH_NAMES[selM]||''} ${selY||''} per this source — often due to Chaturmas, Khar Maas, or planetary combustion during this period.</div>`;
     return;
   }
-  wrap.innerHTML=thinNote+monthEntries.map(d=>{
+  const today=new Date();today.setHours(0,0,0,0);
+  wrap.innerHTML=head+monthEntries.map(d=>{
     const dt=new Date(d.date+'T00:00:00');
     const dayNum=dt.getDate();
-    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px 16px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--g2c);">${MONTH_NAMES[muhuratActiveMonth].substring(0,3)} ${dayNum}, ${d.day}</div>
+    const past=dt<today;
+    // A muhurat that has already gone by is not a choice — mark it instead of
+    // letting it sit in the list looking bookable.
+    const pastPill=past?`<span style="font-size:.6rem;letter-spacing:.08em;color:var(--sub);border:1px solid var(--bdr2);border-radius:999px;padding:2px 8px;">PAST</span>`:'';
+    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr2);border-radius:var(--r2);padding:14px 16px;margin-bottom:10px;${past?'opacity:.5;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:10px;">
+        <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--g2c);">${MONTH_NAMES[selM].substring(0,3)} ${dayNum}, ${selY} · ${d.day}</div>
+        ${pastPill}
       </div>
       <div style="font-size:.78rem;color:var(--text);margin-bottom:4px;"><b>Muhurat:</b> ${d.time}</div>
       ${(d.nakshatra||d.tithi)?`<div style="font-size:.72rem;color:var(--muted);">${d.nakshatra?'Nakshatra: '+d.nakshatra:''}${d.nakshatra&&d.tithi?' · ':''}${d.tithi?'Tithi: '+d.tithi:''}</div>`:''}
