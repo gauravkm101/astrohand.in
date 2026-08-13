@@ -2,7 +2,7 @@
 
 > AstroHand (astrohand.in) is a free, AI-powered Vedic astrology (Jyotish) platform by AstroHand Technologies Pvt. Ltd. It generates real, computed birth charts (Kundli), Rashifal, 36-guna Kundli matching, dosha analysis (Sade Sati, Kaal Sarp, Mangal Dosha), Panchang, Muhurat, gemstone and remedy guidance, numerology and palm reading — every result computed from real astronomical positions using the Lahiri Ayanamsa, never fabricated. It also offers AI astrologers in English and 12 Indian languages.
 
-AstroHand's guiding principle is honesty: readings are for guidance and self-reflection, never guaranteed predictions, and where a calculation is an approximation it is stated plainly. Company: AstroHand Technologies Pvt. Ltd., Khunti, Jharkhand, India. Founders: Nitish Kumar (CEO, Vedic astrology practitioner) and Kumar Gaurav (CTO). Contact: support@astrohand.ai.
+AstroHand's guiding principle is honesty: readings are for guidance and self-reflection, never guaranteed predictions, and where a calculation is an approximation it is stated plainly. Company: AstroHand Technologies Pvt. Ltd., Khunti, Jharkhand, India. Founders: Nitish Kumar (CEO, Vedic astrology practitioner) and Kumar Gaurav (CTO). Contact: support@astrohand.in.
 
 ## Free Tools
 - [Free Vedic Kundli](https://astrohand.in/): Generate a complete birth chart — Lagna, Moon sign, Sun sign, Nakshatra, planetary placements and North Indian chart, computed from real astronomy.
